@@ -9,12 +9,12 @@ metavar Tvar, X ::=
         {{ tex \mathit{[[Tvar]]} }} {{ com term variable }}
 
 grammar
-  type, A, B :: 'type_' ::= {{ com type }}
+  type, A, B, C, D :: 'type_' ::= {{ com type }}
         | Int :: :: int {{ com int }}
         | Top :: :: top {{ com top }}
         | X :: :: var {{ com variable }}
-        | A -> B :: arrow {{ com function }}
-        | A & B :: intersection {{ com intersection type }}
+        | A -> B :: :: arrow {{ com function }}
+        | A & B :: :: intersection {{ com intersection type }}
 
 
   term, e :: 'term_' ::= {{ com term }}
@@ -38,26 +38,26 @@ grammar
   defn
     A <: B :: :: sub :: sub_ {{ com [[A]] is subtype of [[B]] }} by
 
-    ---------- :: S-Int
+    ---------- :: S_Int
     Int <: Int
 
-    --------- :: S-Top
+    --------- :: S_Top
     A <: Top
 
     C <: A
     B <: D
-    ----------------- :: S-Arrow
+    ----------------- :: S_Arrow
     A -> B <: C -> D
 
     A <: B
     A <: C
-    ----------- :: S-And
+    ----------- :: S_And
     A <: B & C
 
     A <: C
-    ----------- :: S-AndL
+    ----------- :: S_AndL
     A & B <: C
 
     B <: C
-    ----------- :: S-AndR
+    ----------- :: S_AndR
     A & B <: C
