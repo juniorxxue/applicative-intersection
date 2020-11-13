@@ -1,0 +1,63 @@
+% Applicative Interection Types
+
+metavar tvar, x ::=
+        {{ repr-locally-nameless }}
+        {{ tex \mathit{[[tvar]]} }} {{ com term variable }}
+
+metavar Tvar, X ::=
+        {{ repr-locally-nameless }}
+        {{ tex \mathit{[[Tvar]]} }} {{ com term variable }}
+
+grammar
+  type, A, B :: 'type_' ::= {{ com type }}
+        | Int :: :: int {{ com int }}
+        | Top :: :: top {{ com top }}
+        | X :: :: var {{ com variable }}
+        | A -> B :: arrow {{ com function }}
+        | A & B :: intersection {{ com intersection type }}
+
+
+  term, e :: 'term_' ::= {{ com term }}
+        | n :: :: int {{ com int }}
+        | x :: :: var {{ com variable }}
+        | \ x . e :: :: abs (+ bind x in e +) {{ com abstraction }}
+        | e1 e2 :: :: app {{ com application }}
+        | e1 ,, e2 :: :: merge {{ com merge }}
+        | e : A :: :: annotation {{ com type annotation }}
+
+  env, T :: 'env_' ::= {{ com env }}
+        | . :: :: empty {{ com empty }}
+        | T, x : A :: :: bind {{ com bind }}
+
+  arg, S :: 'arg_' ::= {{ com argument }}
+       | . :: :: empty {{ com empty }}
+       | S, A :: :: withargs {{ com with arg }}
+
+  defns
+    subtyping :: '' ::=
+  defn
+    A <: B :: :: sub :: sub_ {{ com [[A]] is subtype of [[B]] }} by
+
+    ---------- :: S-Int
+    Int <: Int
+
+    --------- :: S-Top
+    A <: Top
+
+    C <: A
+    B <: D
+    ----------------- :: S-Arrow
+    A -> B <: C -> D
+
+    A <: B
+    A <: C
+    ----------- :: S-And
+    A <: B & C
+
+    A <: C
+    ----------- :: S-AndL
+    A & B <: C
+
+    B <: C
+    ----------- :: S-AndR
+    A & B <: C
