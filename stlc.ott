@@ -38,6 +38,7 @@ grammar
        | -> :: :: arrow {{ tex \rightarrow }}
        | <: :: :: subtype {{ tex <: }}
        | & :: :: intersection {{ tex \& }}
+       | |- :: :: turnstile {{ tex \vdash }}
 
   defns
     subtyping :: '' ::=
@@ -67,3 +68,32 @@ grammar
     B <: C
     ----------- :: S_AndR
     A & B <: C
+
+  defns
+    appsubtyping :: '' ::=
+  defn
+    S |- A <: B :: :: appsub :: appsub_ {{ com Under aguments of [[S]] a function of type [[A]] has the output type [[B]] }} by
+
+    ----------- :: AS_Refl
+    . |- A <: A
+    
+    C <: A
+    S |- B <: D
+    ------------------- :: AS_Fun
+    S, C |- A -> B <: D
+
+    S, C |- A <: D
+    ------------------- :: AS_AndL
+    S, C |- A & B <: D
+
+    S, C |- B <: D
+    ------------------ :: AS_AndR
+    S, C |- A & B <: D
+
+    S, A |- C <: D
+    ------------------ :: AS_And1
+    S, A & B |- C <: D
+
+    S, B |- C <: D
+    ------------------ :: AS_And2
+    S, A & B |- C <: D
