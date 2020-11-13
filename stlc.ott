@@ -33,6 +33,12 @@ grammar
        | . :: :: empty {{ com empty }}
        | S, A :: :: withargs {{ com with arg }}
 
+  terminals :: 'terminals_' ::=
+       | \ :: :: lambda {{ tex \lambda }}
+       | -> :: :: arrow {{ tex \rightarrow }}
+       | <: :: :: subtype {{ tex <: }}
+       | & :: :: intersection {{ tex \& }}
+
   defns
     subtyping :: '' ::=
   defn
