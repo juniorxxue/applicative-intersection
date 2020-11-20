@@ -12,7 +12,6 @@ grammar
   type, A, B, C, D :: 'type_' ::= {{ com type }}
         | Int :: :: int {{ com int }}
         | Top :: :: top {{ com top }}
-        | X :: :: var {{ com variable }}
         | A -> B :: :: arrow {{ com function }}
         | A & B :: :: intersection {{ com intersection type }}
 
