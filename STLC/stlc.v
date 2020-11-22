@@ -140,7 +140,18 @@ Proof.
     + apply sub_S_AndR. apply IHt2.
 Qed.
 
-Check lt_wf_rec.
+(* Some properties of TOP *)
+Inductive TopLike : type -> Prop :=
+| tl_top : TopLike type_top
+| tl_and : forall A B, TopLike A -> TopLike B
+                  -> TopLike (type_intersection A B).
+
+Lemma sub_top_is_toplike :
+  forall t, sub type_top t -> TopLike t.
+Proof.
+  intros t H.
+  induction t.
+Admitted.
 
 Theorem sub_transitivity :
   forall t1 t2 t3, sub t1 t2 -> sub t2 t3 -> sub t1 t3.
@@ -157,19 +168,43 @@ Proof.
         inversion H2; eauto.
     + inversion H1; eauto.
     + inversion H1; eauto.
-  - induction t1; eauto.
-    + induction t3; eauto.
-      * inversion H2; eauto.
-      * apply sub_S_And.
-        apply IHt3_1.
-        inversion H2; eauto.
-        apply IHt3_2.
-        inversion H2; eauto.
-    + assert(H12: sub t1_2 type_top).
-      apply sub_S_Top.
-      assert(H11: sub t1_1 type_top).
-      apply sub_S_Top.
-      apply IHt1_2 in H12.
-      apply IHt1_1 in H11.
-      inversion H2; eauto.
+  - induction t3; eauto.
+    + induction t1; eauto.
+      inversion H2.
+    + inversion H2.
+    + inversion H2.
       apply sub_S_And.
+      * apply IHt3_1. assumption.
+      * apply IHt3_2. assumption.
+  -
+
+  (* - induction t3; eauto. *)
+  (*   + inversion H2; eauto. *)
+  (*   + inversion H2; eauto. *)
+  (*     induction t1; eauto. *)
+  (*      * inversion H1. *)
+  (*      * inversion H1. *)
+  (*      * inversion H1. *)
+  (*        apply IHt2_1. *)
+
+  (* - induction t3; eauto. *)
+  (*   + inversion H2; eauto. *)
+  (*   + inversion H2; eauto. *)
+  (*     inversion H1; eauto. *)
+  (*     apply sub_S_Arrow. *)
+
+    (* + inversion H2; eauto. *)
+    (*   induction t1. *)
+    (*   * inversion H1. *)
+    (*   * inversion H1. *)
+    (*   * inversion H1. *)
+    (*     apply sub_S_Arrow. *)
+    (*     (* subgoal == theorem :( *) *)
+
+  (* - induction t1; eauto. *)
+  (*   + inversion H1; eauto. *)
+  (*   + inversion H1. *)
+  (*   + inversion H1. *)
+  (*     induction t3; eauto. *)
+  (*     inversion H2; eauto. *)
+  (*     apply sub_S_Arrow. *)
