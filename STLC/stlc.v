@@ -151,11 +151,12 @@ Theorem sub_transitivity :
   forall t1 t2 t3, sub t1 t2 -> sub t2 t3 -> sub t1 t3.
 Proof.
   intros t1 t2 t3 H1 H2.
-  induction t1.
-  - induction t2.
+  induction t2; intros; eauto.
+  - inversion H1.
+    (* t1 is Int *)
     + apply H2.
-    + apply sub_top in H2. rewrite H2. apply sub_S_Top.
-      Admitted.
-
+    + inversion H2.
+      * rewrite H0. apply H1.
+      * apply sub_S_Top.
 
 
