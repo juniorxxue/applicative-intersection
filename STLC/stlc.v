@@ -38,7 +38,7 @@ Inductive env : Set :=  (*r env *)
 (** opening up abstractions *)
 Fixpoint open_term_wrt_term_rec (k:nat) (e_5:term) (e__6:term) {struct e__6}: term :=
   match e__6 with
-  | term_int => term_int 
+  | term_int => term_int
   | (term_var_b nat) => if (k === nat) then e_5 else (term_var_b nat)
   | (term_var_f x) => term_var_f x
   | (term_abs e) => term_abs (open_term_wrt_term_rec (S k) e_5 e)
@@ -54,7 +54,7 @@ Definition open_term_wrt_term e_5 e__6 := open_term_wrt_term_rec 0 e__6 e_5.
 
 (* defns LC_term *)
 Inductive lc_term : term -> Prop :=    (* defn lc_term *)
- | lc_term_int : 
+ | lc_term_int :
      (lc_term term_int)
  | lc_term_var_f : forall (x:tvar),
      (lc_term (term_var_f x))
@@ -140,23 +140,36 @@ Proof.
     + apply sub_S_AndR. apply IHt2.
 Qed.
 
-Lemma sub_top :
-  forall t, sub type_top t -> t = type_top.
-Proof.
-  intros t H.
-  induction t.
-Admitted.
+Check lt_wf_rec.
 
 Theorem sub_transitivity :
   forall t1 t2 t3, sub t1 t2 -> sub t2 t3 -> sub t1 t3.
 Proof.
   intros t1 t2 t3 H1 H2.
   induction t2; intros; eauto.
-  - inversion H1.
-    (* t1 is Int *)
-    + apply H2.
-    + inversion H2.
-      * rewrite H0. apply H1.
-      * apply sub_S_Top.
-
-
+  - induction t1; eauto.
+    + induction t3; eauto.
+      * inversion H2; eauto.
+      * apply sub_S_And.
+        apply IHt3_1.
+        inversion H2; eauto.
+        apply IHt3_2.
+        inversion H2; eauto.
+    + inversion H1; eauto.
+    + inversion H1; eauto.
+  - induction t1; eauto.
+    + induction t3; eauto.
+      * inversion H2; eauto.
+      * apply sub_S_And.
+        apply IHt3_1.
+        inversion H2; eauto.
+        apply IHt3_2.
+        inversion H2; eauto.
+    + assert(H12: sub t1_2 type_top).
+      apply sub_S_Top.
+      assert(H11: sub t1_1 type_top).
+      apply sub_S_Top.
+      apply IHt1_2 in H12.
+      apply IHt1_1 in H11.
+      inversion H2; eauto.
+      apply sub_S_And.
