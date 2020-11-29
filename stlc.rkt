@@ -11,7 +11,7 @@
      )
   (n ::=
      number)
-  (A B C D::=
+  (A B C D ::=
      Int ;; int type
      Top ;; top type
      (A → B) ;; function type
@@ -20,8 +20,8 @@
   (x ::= variable-not-otherwise-mentioned))
 
 (define-judgment-form AppL
-  #:mode (subtype I O)
-  ;; #:contract (subtype A B)
+  #:mode (subtype I I)
+  #:contract (subtype A B)
   [--------------- sub_int
    (subtype Int Int)]
   [--------------- sub_top
