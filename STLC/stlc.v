@@ -3,6 +3,7 @@ Require Import Bool.
 Require Import Metalib.Metatheory.
 Require Import List.
 Require Import Ott.ott_list_core.
+Require Import Coq.Program.Equality.
 (** syntax *)
 Definition tvar : Set := var. (*r term variable *)
 Definition Tvar : Set := var. (*r term variable *)
@@ -140,6 +141,17 @@ Proof.
     + apply sub_S_AndR. apply IHt2.
 Qed.
 
+Lemma sub_and:
+  forall t1 t2 t3, sub t1 (type_intersection t2 t3) -> sub t1 t2 /\ sub t1 t3.
+Proof.
+  intros t1 t2 t3 H.
+  dependent induction H; eauto.
+  destruct (IHsub t2 t3); split; constructor; eauto.
+  destruct (IHsub t2 t3); split.
+  apply sub_S_AndR. assumption.
+  apply sub_S_AndR. assumption.
+Qed.
+
 Theorem sub_transitivity :
   forall t2 t1 t3, sub t1 t2 -> sub t2 t3 -> sub t1 t3.
 Proof.
@@ -158,28 +170,15 @@ Proof.
       assumption.
       apply IHt3_2.
       assumption.
-  - induction t1; eauto.
-    + inversion H.
-    + inversion H.
-    + induction t3; eauto.
-      * inversion H0.
-      * inversion H0; subst.
-        inversion H; subst.
-        constructor.
-        apply IHt2_1 with (t1:=t3_1) (t3:=t1_1) in H4.
-        assumption.
-        assumption.
-        apply IHt2_2 with (t1:=t1_2) (t3:=t3_2) in H8.
-        assumption.
-        assumption.
-      * constructor.
-        inversion H; subst.
-        inversion H0; subst.
-        (* t3_1 *)
-        apply IHt3_1.
-        assumption.
-        intros Ht31.
-        (* t3_2 *)
+  - dependent induction H; eauto.
+    clear IHsub1 IHsub2.
+    dependent induction H1; eauto.
+  - apply sub_and in H.
+    destruct H.
+    dependent induction H0; eauto.
+Qed.
+
+
 
 
 
