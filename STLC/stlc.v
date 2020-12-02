@@ -8,29 +8,48 @@ Inductive type : Set :=  (*r type *)
  | type_int(*r int *)
  | type_top(*r top *)
  | type_arrow (A:type) (B:type) (*r function *)
- | type_intersection (A:type) (B:type). (*r intersection type *)
+ | type_and (A:type) (B:type). (*r intersection type *)
 
-Check type_int.
+Inductive arg : Set :=
+| arg_empty
+| args (A : type) (S : arg).
+
+Check arg_empty.
+Check (args type_top (args type_int arg_empty)).
 
 Inductive sub : type -> type -> Prop :=    (* defn sub *)
- | sub_S_Int :
+ | sub_Int :
      sub type_int type_int
- | sub_S_Top : forall (A:type),
+ | sub_Top : forall (A:type),
      sub A type_top
- | sub_S_Arrow : forall (A B C D:type),
+ | sub_Arrow : forall (A B C D:type),
      sub C A ->
      sub B D ->
      sub (type_arrow A B) (type_arrow C D)
- | sub_S_And : forall (A B C:type),
+ | sub_And : forall (A B C:type),
      sub A B ->
      sub A C ->
-     sub A (type_intersection B C)
- | sub_S_AndL : forall (A B C:type),
+     sub A (type_and B C)
+ | sub_AndL : forall (A B C:type),
      sub A C ->
-     sub (type_intersection A B) C
- | sub_S_AndR : forall (A B C:type),
+     sub (type_and A B) C
+ | sub_AndR : forall (A B C:type),
      sub B C ->
-     sub (type_intersection A B) C.
+     sub (type_and A B) C.
+
+(* S |- A <: B *)
+Inductive appsub : arg -> type -> type -> Prop :=
+| as_Refl : forall (A : type), appsub arg_empty A A
+| as_Fun : forall (C A B D : type) (S : arg),
+    sub C A ->
+    appsub S B D ->
+    appsub (args C S) (type_arrow A B) D
+| as_AndL : forall (A B D : type) (S : arg),
+    appsub S A D ->
+    appsub S (type_and A B) D
+| as_AndR : forall (A B D : type) (S : arg),
+    appsub S B D ->
+    appsub S (type_and A B) D.
 
 Hint Constructors sub : core.
 
@@ -38,25 +57,25 @@ Theorem sub_reflexivity :
   forall t, sub t t.
 Proof.
   induction t.
-  - apply sub_S_Int.
-  - apply sub_S_Top.
-  - apply sub_S_Arrow.
+  - apply sub_Int.
+  - apply sub_Top.
+  - apply sub_Arrow.
     + apply IHt1.
     + apply IHt2.
-  - apply sub_S_And.
-    + apply sub_S_AndL. apply IHt1.
-    + apply sub_S_AndR. apply IHt2.
+  - apply sub_And.
+    + apply sub_AndL. apply IHt1.
+    + apply sub_AndR. apply IHt2.
 Qed.
 
-Lemma sub_and:
-  forall t1 t2 t3, sub t1 (type_intersection t2 t3) -> sub t1 t2 /\ sub t1 t3.
+Lemma lemma_sub_and:
+  forall t1 t2 t3, sub t1 (type_and t2 t3) -> sub t1 t2 /\ sub t1 t3.
 Proof.
   intros t1 t2 t3 H.
   dependent induction H; eauto.
   destruct (IHsub t2 t3); split; constructor; eauto.
   destruct (IHsub t2 t3); split.
-  apply sub_S_AndR. assumption.
-  apply sub_S_AndR. assumption.
+  apply sub_AndR. assumption.
+  apply sub_AndR. assumption.
 Qed.
 
 Theorem sub_transitivity :
@@ -80,7 +99,8 @@ Proof.
   - dependent induction H; eauto.
     clear IHsub1 IHsub2.
     dependent induction H1; eauto.
-  - apply sub_and in H.
+  - apply lemma_sub_and in H.
     destruct H.
     dependent induction H0; eauto.
 Qed.
+
