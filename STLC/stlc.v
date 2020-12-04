@@ -120,8 +120,8 @@ Proof.
   induction H; eauto.
   - exists A. unfold type_stack. auto.
   - destruct IHappsub. rewrite H1.
-    simpl. exists x.
-Admitted.
+    simpl. exists x. reflexivity.
+Qed.
 
 Lemma appsub_reflexivity :
   forall (S : arg) (A : type),
@@ -134,13 +134,13 @@ Proof.
     apply IHS.
 Qed.
 
-(* Lemma appsub_transitivity : *)
-(*   forall (S1 S2 : arg) (A B C : type), *)
-(*     appsub S1 A (type_stack S1 B) -> *)
-(*     appsub S2 B (type_stack S2 C) -> *)
-(*     appsub (cons S2 S1) A (type_stack S1 (type_stack S2 C)). *)
-(* Proof. *)
-(* Admitted. *)
+Lemma appsub_transitivity :
+  forall (S1 S2 : arg) (A B C : type),
+    appsub S1 A (type_stack S1 B) ->
+    appsub S2 B (type_stack S2 C) ->
+    appsub (S1 ++ S2) A (type_stack S1 (type_stack S2 C)).
+Proof.
+Admitted.
 
 Lemma appsub_to_sub :
   forall (S : arg) (A B : type),
