@@ -10,10 +10,6 @@ Inductive type : Set :=  (*r type *)
  | type_arrow (A:type) (B:type) (*r function *)
  | type_and (A:type) (B:type). (*r intersection type *)
 
-Inductive arg : Set :=
-| arg_empty
-| args (S : arg) (A : type).
-
 Inductive sub : type -> type -> Prop :=    (* defn sub *)
  | sub_Int :
      sub type_int type_int
@@ -33,88 +29,6 @@ Inductive sub : type -> type -> Prop :=    (* defn sub *)
  | sub_AndR : forall (A B C:type),
      sub B C ->
      sub (type_and A B) C.
-
-(* S |- A <: B *)
-Inductive appsub : arg -> type -> type -> Prop :=
-| as_Refl : forall (A : type), appsub arg_empty A A
-| as_Fun : forall (C A B D : type) (S : arg),
-    sub C A ->
-    appsub S B D ->
-    appsub (args S C) (type_arrow A B) D
-| as_AndL : forall (A B D : type) (S : arg),
-    appsub S A D ->
-    appsub S (type_and A B) D
-| as_AndR : forall (A B D : type) (S : arg),
-    appsub S B D ->
-    appsub S (type_and A B) D.
-
-Fixpoint type_stack (S : arg) (A : type) : type :=
-  match S with
-  | arg_empty => A
-  | args S' A' => type_arrow A' (type_stack S' A)
-  end.
-
-Compute (type_stack (args (args (args arg_empty type_int) type_int) type_top)
-                    type_int).
-
-Lemma appsub_coincides_with_sub :
-  forall (S : arg) (A B : type),
-    appsub S A B ->
-    exists (B' : type), B = (type_stack S B').
-Proof.
-  intros S A B H.
-  induction H; eauto.
-  - exists A. unfold type_stack. reflexivity.
-  - inversion IHappsub; subst.
-    exists x. simpl.
-Admitted.
-
-Lemma appsub_reflexivity :
-  forall (S : arg) (A : type),
-    appsub S (type_stack S A) (type_stack S A).
-Proof.
-Admitted.
-
-Fixpoint union_args (S2 S1 : arg) :=
-  match S1 with
-  | arg_empty => S2
-  | args S' A' => union_args (args S2 A') S'
-  end.
-
-(* ., Int, Top, Int *)
-Definition test_union_S2 :=
-  (args (args (args arg_empty type_int) type_top) type_int).
-
-(* ., Top Int, Int *)
-Definition test_union_S1 :=
-  (args (args (args arg_empty type_top) type_int) type_int).
-
-(* ., Int, Top, Int, Top, Int, Int *)
-Compute (union_args test_union_S2 test_union_S1).
-
-Lemma appsub_transitivity :
-  forall (S1 S2 : arg) (A B C : type),
-    appsub S1 A (type_stack S1 B) ->
-    appsub S2 B (type_stack S2 C) ->
-    appsub (union_args S2 S1) A (type_stack S1 (type_stack S2 C)).
-Proof.
-Admitted.
-
-Lemma appsub_to_sub :
-  forall (S : arg) (A B : type),
-  appsub S A B ->
-  sub A B.
-Proof.
-  Admitted.
-
-Lemma sub_to_appsub :
-  forall (S : arg) (A B1 : type),
-    sub A (type_stack S B1) ->
-    exists B2 : type,
-      appsub S A (type_stack S B2) /\ (sub B2 B1).
-Proof.
-  Admitted.
-
 
 Hint Constructors sub : core.
 
@@ -168,4 +82,84 @@ Proof.
     destruct H.
     dependent induction H0; eauto.
 Qed.
+
+(* ----------------------------- *)
+(*   Applicative Subtyping *)
+(* ----------------------------- *)
+
+Definition arg := list type.
+
+(* S |- A <: B *)
+Inductive appsub : arg -> type -> type -> Prop :=
+| as_Refl : forall (A : type), appsub nil A A
+| as_Fun : forall (C A B D : type) (S : arg),
+    sub C A ->
+    appsub S B D ->
+    appsub (cons C S) (type_arrow A B) (type_arrow C D)
+| as_AndL : forall (A B D : type) (S : arg),
+    appsub S A D ->
+    appsub S (type_and A B) D
+| as_AndR : forall (A B D : type) (S : arg),
+    appsub S B D ->
+    appsub S (type_and A B) D.
+
+Fixpoint type_stack (S : arg) (A : type) : type :=
+  match S with
+  | nil => A
+  | cons A' S' => type_arrow A' (type_stack S' A)
+  end.
+
+Compute (type_stack (cons type_int (cons type_int nil)) type_top).
+
+Lemma appsub_coincides_with_sub :
+  forall (S : arg) (A B : type),
+    appsub S A B ->
+    exists (B' : type), B = (type_stack S B').
+Proof.
+  intros.
+  induction H; eauto.
+  - exists A. unfold type_stack. auto.
+  - destruct IHappsub. rewrite H1.
+    simpl. exists x.
+Admitted.
+
+Lemma appsub_reflexivity :
+  forall (S : arg) (A : type),
+    appsub S (type_stack S A) (type_stack S A).
+Proof.
+  induction S; intros.
+  - constructor.
+  - simpl. apply as_Fun.
+    apply sub_reflexivity.
+    apply IHS.
+Qed.
+
+(* Lemma appsub_transitivity : *)
+(*   forall (S1 S2 : arg) (A B C : type), *)
+(*     appsub S1 A (type_stack S1 B) -> *)
+(*     appsub S2 B (type_stack S2 C) -> *)
+(*     appsub (cons S2 S1) A (type_stack S1 (type_stack S2 C)). *)
+(* Proof. *)
+(* Admitted. *)
+
+Lemma appsub_to_sub :
+  forall (S : arg) (A B : type),
+  appsub S A B ->
+  sub A B.
+Proof.
+  intros S A B H.
+  induction H; eauto; subst.
+  apply sub_reflexivity.
+Qed.
+
+Lemma sub_to_appsub :
+  forall (S : arg) (A B1 : type),
+    sub A (type_stack S B1) ->
+    exists B2 : type,
+      appsub S A (type_stack S B2) /\ (sub B2 B1).
+Proof.
+  Admitted.
+
+
+
 
