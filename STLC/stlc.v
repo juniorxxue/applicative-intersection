@@ -135,12 +135,28 @@ Proof.
 Qed.
 
 Lemma appsub_transitivity :
-  forall (S1 S2 : arg) (A B C : type),
+  forall (S1 S2 : arg) (A B C: type),
     appsub S1 A (type_stack S1 B) ->
-    appsub S2 B (type_stack S2 C) ->
-    appsub (S1 ++ S2) A (type_stack S1 (type_stack S2 C)).
+    appsub S2 B C ->
+    appsub (S1 ++ S2) A (type_stack S1 C).
 Proof.
-Admitted.
+  intros S1 S2 A B C H1 H2.
+  dependent induction H1; subst.
+  - simpl in *.
+    assumption.
+  - simpl in *.
+    constructor. assumption.
+    apply IHappsub with B.
+    reflexivity. assumption.
+  - apply as_AndL.
+    apply IHappsub with B.
+    reflexivity.
+    assumption.
+  - apply as_AndR.
+    apply IHappsub with B.
+    reflexivity.
+    assumption.
+Qed.
 
 Lemma appsub_to_sub :
   forall (S : arg) (A B : type),
@@ -158,7 +174,24 @@ Lemma sub_to_appsub :
     exists B2 : type,
       appsub S A (type_stack S B2) /\ (sub B2 B1).
 Proof.
-  Admitted.
+  intros S A B1 H.
+  dependent induction H.
+  - destruct S.
+    simpl. exists type_int. split.
+    constructor. simpl in x. rewrite <- x.
+    constructor.
+    inversion x.
+  - destruct S; simpl in *; subst.
+    exists A. split. constructor. constructor.
+    inversion x.
+  - destruct S; simpl in *; subst.
+    exists (type_arrow A B). split.
+    constructor.
+    constructor. assumption. assumption.
+    inversion x; subst.
+Admitted.
+
+
 
 
 
