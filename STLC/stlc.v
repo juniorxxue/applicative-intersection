@@ -189,7 +189,42 @@ Proof.
     constructor.
     constructor. assumption. assumption.
     inversion x; subst.
-Admitted.
+    pose proof (IHsub2 S B1) as IHsub2'.
+    assert (IHsub2_help: type_stack S B1 = type_stack S B1).
+    reflexivity.
+    apply IHsub2' in IHsub2_help.
+    destruct IHsub2_help.
+    exists x0. split.
+    constructor. assumption.
+    destruct H1 as [H11 H12].
+    assumption.
+    destruct H1 as [H11 H12].
+    assumption.
+  - destruct S; simpl in *; subst.
+    exists A. split. constructor. constructor. assumption. assumption.
+    inversion x.
+  - destruct S; simpl in *; subst.
+    exists (type_and A B). split. constructor. apply sub_AndL. assumption.
+    pose proof (IHsub (cons t S) B1) as IHsub'.
+    assert(IHsub_help: type_arrow t (type_stack S B1) = type_stack (t :: S) B1).
+    simpl. reflexivity.
+    apply IHsub' in IHsub_help.
+    destruct IHsub_help.
+    destruct H0 as [H01 H02].
+    exists x. split. apply as_AndL.
+    simpl in H01. assumption. assumption.
+  - destruct S; simpl in *; subst.
+    exists (type_and A B). split. constructor. apply sub_AndR. assumption.
+    pose proof (IHsub (cons t S) B1) as IHsub'.
+    assert(IHsub_help: type_arrow t (type_stack S B1) = type_stack (t :: S) B1).
+    simpl. reflexivity.
+    apply IHsub' in IHsub_help.
+    destruct  IHsub_help.
+    destruct  H0 as [H01 H02].
+    exists x. split. apply as_AndR.
+    simpl in H01. assumption. assumption.
+Qed.
+
 
 
 
