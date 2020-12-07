@@ -276,6 +276,14 @@ Another observation is that there is a checking rule for lambdas
 and another checking rule for applications. So, the TSub
 rule only needs to deal with the remaining constructs. We could
 potentially create a syntactic distinction, to eliminate the
-overalpping.
+overalapping.
 
+Lemmas to be proved next:
 
+Regularity of typing: If T |- e : A then T |- A and |- T    
+
+Weakening of typing: If T1,T2 |- e : A then T1,x:A,T2 |- e : A 
+
+These lemmas should be in Ningning's previous formalization. They
+probably have a slightly different form due to bi-directional type-checking.
+Better ask Ningning for more details on those.
