@@ -26,9 +26,10 @@ Subtyping
 =========
 
 ------
-A <: B
-
+A <: B     (Subtyping, rule form)
 ------
+
+
 Int <: Int         S-Int
 
 A <: Top           S-Top
@@ -114,20 +115,41 @@ In this program the merge is disjoint, but there is ambiguity
 because the argument type of either function matches
 the input type. Without any further annotations I think
 this program should be rejected on ambiguity grounds.
-But I'm not sure exactly how to make the type system reject
-this program yet (or if this is actually an easy thing todo). 
-However, with distributivity rules (which we do not yet have here),
-then this program should be ok and apply the two functions to
-the input.
+See the discussion on ambiguity below.
 
-ACTION: Some more thought is needed here!
+2) (\f . f 1 : (Int -> Int) -> Int) (succ,,not)
 
-NINGNING: I think the easiest fix is to require that both components of the
-intersection type cannot subtype the current stack at the same time. e.g.
+Here we should pick succ from the merge. I think that,
+for this case, we would like the following to hold for
+    our application subtyping judgement: 
+
+(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
+
+As Ningning pointed out the rules above seem to be sufficient to
+deal with this case too.
+
+=========
+Ambiguity
+=========
+
+Regarding the ambiguity issue, I think Ningning's suggestion (without
+using distributivity) is worthwhile trying first. Thus we should
+replace the rules AS-AndL and AS-AndR by the following 2 rules:
 
 S, C |- A <: D      not (S, C |- B <: E)
------------------------- AS-AndL2
+---------------------------------------- AS-AndL2
 S, C |- A & B <: D
+
+S, C |- B <: D     not (S, C |- A <: E)
+----------------------------------------- AS-AndR2
+S, C |- A & B <: D
+
+When the 2nd conditions are broken, a programming language using
+those rules should report an ambiguity error.
+
+Later on we may also try to extend the system with distributivity,
+which should also work, but required more changes to the system.
+I'll leave Ningning's notes on distributity next:
 
 Or we can actually have distributivity on applicative subtyping:
 
@@ -155,29 +177,6 @@ S, C |- A <: D   S, C |- B <: E
 S, C |- A & B <: D & E                       D & E <: D
 -------------------------------------------------------------
 S, C |- A & B <: D
-
-
-
-2) (\f . f 1 : (Int -> Int) -> Int) (succ,,not)
-
-Here we should pick succ from the merge. I think that,
-for this case, we would like the following to hold for
-    our application subtyping judgement: 
-
-(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
-
-This seems to suggest that we need rules like AS-And1 and AS-And2,
-but I haven't given this much thought yet.
-ACTION: We have to play with a few more examples and gain
-some confidence about the rules for application subtyping. 
-
-NINGNING: AS-And1 and AS-And2 feel redundant as they should be subsumed by
-AS-Fun and S-AndL/S-AndR.
-
--------------------------------------------- S-AndL  ---------------- AS-Refl
- (Int -> Int) & (Bool -> Bool) <: Int -> Int          . |- Int <: Int
-----------------------------------------------------------------------------
-(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
 
 ======
 Typing
@@ -257,3 +256,26 @@ T |- e1 => A   T |- e2 => B
 T |- e1 ,, e2 => A & B
 
 Note overlapping between TSub and TApp2?
+
+I guess one option would be to drop TApp2. What kind of programs
+would be rejected if TApp2 is dropped?
+
+I guess it would be something like:
+
+(succ ,, f : Int -> Bool) 3 : Bool
+
+The idea would be for TApp2 to exploit the output type to remove
+the ambiguity. Now we can check the merge against:
+
+(succ,, f : Int -> Bool) <= Int -> Bool
+
+So it seems that T-App2 would be useful in such cases. Thus dropping
+T-App2 would be undesirable.
+
+Another observation is that there is a checking rule for lambdas
+and another checking rule for applications. So, the TSub
+rule only needs to deal with the remaining constructs. We could
+potentially create a syntactic distinction, to eliminate the
+overalpping.
+
+
