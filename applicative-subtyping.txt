@@ -65,23 +65,15 @@ Under arguments S a "function" of type A has the output type B
 
 C <: A      S |- B <: D
 ------------------------ AS-Fun
-S, C |- A -> B <: D
+S, C |- A -> B <: C -> D
 
-S, C |- A <: D
+S |- A <: D
 ------------------------ AS-AndL
-S, C |- A & B <: D
+S |- A & B <: D
 
-S, C |- B <: D
+S |- B <: D
 ------------------------ AS-AndR
-S, C |- A & B <: D
-
-S, A |- C <: D
------------------------- AS-And1
-S, A & B |- C <: D
-
-S, A |- C <: D
------------------------- AS-And2
-S, A & B |- C <: D
+S |- A & B <: D
 
 Some examples to justify the rules, and some issues. Assume:
 
