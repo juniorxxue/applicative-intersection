@@ -1,0 +1,259 @@
+A simple calculus with Intersection Types and the merge operator.
+Similar to the calculus presented in the ICFP 2016 paper.
+
+===============
+Relevant papers
+===============
+
+Disjoint Intersection Types (ICFP 2016)
+Let Arguments go First (ESOP 2018)
+A Type-Directed Operational Semantics for a Calculus with a Merge Operator (ECOOP 2020)
+
+======
+Syntax
+======
+
+A, B ::= Int | Top | A -> B | A & B
+e ::= n | x | \x . e | e1 e2 | e1,,e2 | (e : A)
+T ::= . | T, x : A
+S ::= . | S, A
+
+We assume a well-formedness relation for contexts (|- T),
+which is defined in the standard way.
+
+=========
+Subtyping
+=========
+
+------
+A <: B
+
+------
+Int <: Int         S-Int
+
+A <: Top           S-Top
+
+C <: A    B <: D
+----------------   S-Arrow
+A -> B <: C -> D
+
+A <: B    A <: C
+----------------   S-And
+A <: B & C
+
+A <: C
+----------         S-AndL
+A & B <: C
+
+B <: C
+----------         S-AndR
+A & B <: C
+
+=====================
+Application Subtyping
+=====================
+
+-----------
+S |- A <: B
+-----------
+
+The meaning of the judgement is:
+Under arguments S a "function" of type A has the output type B 
+
+. |- A <: A    AS-Refl
+
+C <: A      S |- B <: D
+------------------------ AS-Fun
+S, C |- A -> B <: D
+
+S, C |- A <: D
+------------------------ AS-AndL
+S, C |- A & B <: D
+
+S, C |- B <: D
+------------------------ AS-AndR
+S, C |- A & B <: D
+
+S, A |- C <: D
+------------------------ AS-And1
+S, A & B |- C <: D
+
+S, A |- C <: D
+------------------------ AS-And2
+S, A & B |- C <: D
+
+Some examples to justify the rules, and some issues. Assume:
+
+succ : Int -> Int
+not : Bool -> Bool
+The type of (succ ,, not) is (Int -> Int) & (Bool -> Bool)
+
+1) (succ ,, not) 3 
+
+Here we want to automatically pick succ and apply it to 3.
+I think this would lead to the following application subtyping statement:
+
+Int |- (Int -> Int) & (Bool -> Bool) <: Int
+
+For this example, the rules above (in particular AS-AndL and AS-AndR)
+should work. The full derivation, using the rules above is as follows:
+
+               --------------- AS-Refl
+Int <: Int     . |- Int <: Int
+------------------------------ AS-Fun
+Int |- (Int -> Int) <: Int
+------------------------------------------- AS-AndL
+Int |- (Int -> Int) & (Bool -> Bool) <: Int
+
+However, how about the following program:
+          
+(succ ,, f : Int -> Bool) 3 
+
+The type of (succ ,, f : Int -> Bool) is (Int -> Int)&(Int -> Bool)
+In this program the merge is disjoint, but there is ambiguity
+because the argument type of either function matches
+the input type. Without any further annotations I think
+this program should be rejected on ambiguity grounds.
+But I'm not sure exactly how to make the type system reject
+this program yet (or if this is actually an easy thing todo). 
+However, with distributivity rules (which we do not yet have here),
+then this program should be ok and apply the two functions to
+the input.
+
+ACTION: Some more thought is needed here!
+
+NINGNING: I think the easiest fix is to require that both components of the
+intersection type cannot subtype the current stack at the same time. e.g.
+
+S, C |- A <: D      not (S, C |- B <: E)
+------------------------ AS-AndL2
+S, C |- A & B <: D
+
+Or we can actually have distributivity on applicative subtyping:
+
+S, C |- A <: D     S, C |- B <: E
+---------------------------- AS-And
+S, C |- A & B <: D & E
+
+In this case
+
+Int |- Int -> Int <: Int     Int |- Int -> Bool <: Bool
+------------------------------------------------------ AS-And
+Int |- (Int -> Int) & (Int -> Bool) <: Int & Bool
+
+It coincides with the distributivity of plain subtyping.
+
+(Int -> Int) & (Int -> Bool) <: Int -> (Int & Bool)     Int |- Int -> (Int & Bool) <: Int & Bool
+--------------------------------------------------------------------------
+Int |- (Int -> Int) & (Int -> Bool) <: Int & Bool
+
+
+Also works well with AS-AndL as
+
+S, C |- A <: D   S, C |- B <: E
+-------------------------------- AS-And     ------------ S-AndL
+S, C |- A & B <: D & E                       D & E <: D
+-------------------------------------------------------------
+S, C |- A & B <: D
+
+
+
+2) (\f . f 1 : (Int -> Int) -> Int) (succ,,not)
+
+Here we should pick succ from the merge. I think that,
+for this case, we would like the following to hold for
+    our application subtyping judgement: 
+
+(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
+
+This seems to suggest that we need rules like AS-And1 and AS-And2,
+but I haven't given this much thought yet.
+ACTION: We have to play with a few more examples and gain
+some confidence about the rules for application subtyping. 
+
+NINGNING: AS-And1 and AS-And2 feel redundant as they should be subsumed by
+AS-Fun and S-AndL/S-AndR.
+
+-------------------------------------------- S-AndL  ---------------- AS-Refl
+ (Int -> Int) & (Bool -> Bool) <: Int -> Int          . |- Int <: Int
+----------------------------------------------------------------------------
+(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
+
+======
+Typing
+======
+
+The main novelty is on typing: instead of the bi-directional
+type-system used in the ICFP 2016 paper, we use a let
+arguments go first approach.
+However I think we must employ a let-arguments go first
+approach together with a checking mode. The reason is that,
+for the purposes of defining the type-directed operational
+semantics, we need the typing information for the output
+of functions. If we just have lambdas with annotations
+on the arguments (\x : A. e) we do not have the information
+of the outputs available. Thus, we have problems when we encounter
+programs such as:
+
+(\(f : Int -> Int). f 1) ((\x : Int . x + 1) ,, (\x : Int. False))
+
+In the program above, when doing reduction, we should be able to
+extract (\x : Int . x + 1) from the first component of the merge,
+and use it to replace f in the body. But without the output
+type, we can't do this.
+Snow's ECOOP 2020 describes this issue. 
+Thus, we use (\x . e : A -> B) to have the whole information
+about the type of the function.
+There are two typing judgements:
+
+--------------
+T; S |- e => A
+
+and
+
+T |- e <= A
+--------------
+
+when S is empty, we abreviate the judgement to T |- e => A.
+In other words, we have the following syntactic sugar:
+T |- e => A   ==   T; . |- e => A
+
+The rules for the typing judgement are: 
+
+|- T
+------------ TInt
+T |- n => Int
+
+|- T   x : A \in T
+--------------------- TVar
+T |- x => A
+
+T, x : A |- e <= B
+----------------------------- TLam1
+T |- \x. e <= A -> B
+
+T, x : A ; S |- e => B
+------------------------------ TLam2
+T ; S, A |- \x. e => A -> B
+
+S |- A <: B    T |- e <= A
+----------------------------- TAnn
+T ; S |- e : A => B
+
+T |- e2 => A   T ; S, A |- e1 => A -> B
+----------------------------------------- TApp1
+T ; S |- e1 e2 => B
+
+T |- e2 => A    T |- e1 <= A -> B
+----------------------------------- TApp2
+T |- e1 e2 <= B
+
+T |- e => B     B <: A
+------------------------- TSub
+T |- e <= A
+
+T |- e1 => A   T |- e2 => B
+----------------------------- TMerge
+T |- e1 ,, e2 => A & B
+
+Note overlapping between TSub and TApp2?
