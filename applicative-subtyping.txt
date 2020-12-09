@@ -270,6 +270,14 @@ rule only needs to deal with the remaining constructs. We could
 potentially create a syntactic distinction, to eliminate the
 overalapping.
 
+NINGNING: On the other hand I feel this overlapping might be fine.
+That is, we can have multiple derivations for one expression but it
+does not hurt coherence or anything. In particular, the overlapping
+happens in the checking mode, which means no matter which rule we
+apply, the final type would be the same (the type which you check the
+expression against). Not sure if that's true; we may want to prove that.
+
+
 Lemmas to be proved next:
 
 Regularity of typing: If T |- e : A then T |- A and |- T    
