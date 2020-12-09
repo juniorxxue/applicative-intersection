@@ -277,6 +277,19 @@ happens in the checking mode, which means no matter which rule we
 apply, the final type would be the same (the type which you check the
 expression against). Not sure if that's true; we may want to prove that.
 
+Another example that hurts from removing TAPP2 is if the application
+contains lambdas. e.g.
+
+((\x. \y. y) 1) : Bool -> Bool
+
+This example can be fixed by type inference, but the type anontation
+can be more complicated, e.g., one that cannot be inferred 
+
+((\x. \f. (f 1, f 'a') 1) : (\/a. a -> a) -> (Int, Char)
+
+Having TAPP2 is one advantage of the applicative mode as the above
+example is something that doesn't type-check under traditional
+bi-directional type-checking.
 
 Lemmas to be proved next:
 
