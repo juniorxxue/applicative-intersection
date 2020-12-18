@@ -2,33 +2,59 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 
 Definition tvar : Set := var. (*r term variable *)
-Definition Tvar : Set := var. (*r term variable *)
+Definition Tvar : Set := var. (*r type variable *)
 
 Inductive type : Set :=  (*r type *)
- | type_int(*r int *)
- | type_top(*r top *)
- | type_arrow (A:type) (B:type) (*r function *)
- | type_and (A:type) (B:type). (*r intersection type *)
+| type_int(*r int *)
+| type_top(*r top *)
+| type_arrow (A:type) (B:type) (*r function *)
+| type_and (A:type) (B:type). (*r intersection type *)
+
+Inductive typep : type -> Prop :=
+| typep_int : typep type_int
+| typep_top : typep type_top
+| typep_arrow : forall (A B : type),
+    typep A -> typep B -> typep (type_arrow A B)
+| typep_and : forall (A B : type),
+    typep A -> typep B -> typep (type_and A B).
+
+Inductive term : Set :=
+| term_nat : nat -> term
+| term_bvar : nat -> term
+| term_fvar : var -> term
+| term_abs : term -> term
+| term_app : term -> term -> term
+| term_merge : term -> term -> term
+| term_anno : term -> type -> term.
+
+Inductive termp : term -> Prop :=
+| termp_nat : forall (n : nat), termp (term_nat n)
+| termp_bvar : forall (n : nat), termp (term_bvar n)
+| termp_fvar : forall (x : var), termp (term_fvar x)
+| termp_abs : forall (e : term), termp (term_abs e)
+| termp_app : forall (e1 e2 : term), termp (term_app e1 e2)
+| termp_merge : forall (e1 e2 : term), termp (term_merge e1 e2)
+| termp_anno : forall (e : term) (A : type), termp (term_anno e A).
 
 Inductive sub : type -> type -> Prop :=    (* defn sub *)
- | sub_Int :
-     sub type_int type_int
- | sub_Top : forall (A:type),
-     sub A type_top
- | sub_Arrow : forall (A B C D:type),
-     sub C A ->
-     sub B D ->
-     sub (type_arrow A B) (type_arrow C D)
- | sub_And : forall (A B C:type),
-     sub A B ->
-     sub A C ->
-     sub A (type_and B C)
- | sub_AndL : forall (A B C:type),
-     sub A C ->
-     sub (type_and A B) C
- | sub_AndR : forall (A B C:type),
-     sub B C ->
-     sub (type_and A B) C.
+| sub_Int :
+    sub type_int type_int
+| sub_Top : forall (A:type),
+    sub A type_top
+| sub_Arrow : forall (A B C D:type),
+    sub C A ->
+    sub B D ->
+    sub (type_arrow A B) (type_arrow C D)
+| sub_And : forall (A B C:type),
+    sub A B ->
+    sub A C ->
+    sub A (type_and B C)
+| sub_AndL : forall (A B C:type),
+    sub A C ->
+    sub (type_and A B) C
+| sub_AndR : forall (A B C:type),
+    sub B C ->
+    sub (type_and A B) C.
 
 Hint Constructors sub : core.
 
@@ -225,9 +251,79 @@ Proof.
     simpl in H01. assumption. assumption.
 Qed.
 
+(* ----------------------------- *)
+(*   Typing Relation *)
+(* ----------------------------- *)
+
+Definition ctx : Set := list (atom * type).
+
+Inductive ctxp : ctx -> Prop :=
+| ctxp_empty : ctxp nil
+| ctxp_cons : forall (T : ctx) (x : var) (A : type),
+    ctxp T -> typep A -> ctxp ((x ~ A) ++ T).
+
+Inductive mode := check_mode | infer_mode.
+
+Fixpoint open_rec (k : nat) (u : term) (t : term) {struct t} : term :=
+  match t with
+  | term_nat n => term_nat n
+  | term_bvar i => if k == i then u else (term_bvar i)
+  | term_fvar x => term_fvar x
+  | term_abs t1 => term_abs (open_rec (S k) u t1)
+  | term_app t1 t2 => term_app (open_rec k u t1) (open_rec k u t2)
+  | term_merge t1 t2 => term_merge (open_rec k u t1) (open_rec k u t2)
+  | term_anno t1 A => term_anno (open_rec k u t1) A
+  end.
+
+Definition open t u := open_rec 0 u t.
+
+Inductive typing : ctx -> arg -> mode -> term -> type -> Prop :=
+| typing_int : forall (T: ctx) (n : nat),
+    uniq T ->
+    (typing T nil infer_mode (term_nat n) type_int)
+| typing_var : forall (T : ctx) (x : var) (A : type),
+    uniq T ->
+    binds x A T ->
+    typing T nil infer_mode (term_fvar x) A
+| typing_abs1 : forall (L : vars) (T : ctx) (e : term) (A B : type),
+    (forall x, x \notin L ->
+          (typing ((x ~ A) ++ T)) nil check_mode (open e (term_fvar x)) B) ->
+    typing T nil check_mode (term_abs e) (type_arrow A B)
+| typing_abs2 : forall (L: vars) (T : ctx) (S : arg) (A B : type) (e : term),
+    (forall x, x \notin L ->
+          (typing ((x ~ A) ++ T)) S infer_mode (open e (term_fvar x)) B) ->
+    typing T (cons A S) infer_mode (term_abs e) (type_arrow A B)
+| typing_anno : forall (T : ctx) (S : arg) (A B : type) (e : term),
+    appsub S A B ->
+    typing T nil check_mode e A ->
+    typing T S infer_mode (term_anno e A) B
+| typing_app1 : forall (T : ctx) (S : arg) (A B : type) (e1 e2 : term),
+    typing T nil infer_mode e2 A ->
+    typing T nil check_mode e1 (type_arrow A B) ->
+    typing T S infer_mode (term_app e1 e2) B
+| typing_app2 : forall (T : ctx) (A B : type) (e1 e2 : term),
+    typing T nil infer_mode e2 A ->
+    typing T nil check_mode e1 (type_arrow A B) ->
+    typing T nil check_mode (term_app e1 e2) B
+| typing_sub : forall (T : ctx) (A B : type) (e : term),
+    typing T nil infer_mode e B ->
+    (sub B A) ->
+    typing T nil check_mode e A
+| typing_merge : forall (T : ctx) (A B : type) (e1 e2 : term),
+    typing T nil infer_mode e1 A ->
+    typing T nil infer_mode e2 B ->
+    typing T nil infer_mode (term_merge e1 e2) (type_and A B).
 
 
+Lemma typing_regularity :
+  forall (T : ctx) (e : term) (A : type),
+    typing T nil infer_mode e A -> typep A /\ ctxp T.
+Proof.
+Admitted.
 
-
-
-
+Lemma typing_weaken :
+  forall (T1 T2 : ctx) (e : term) (A : type) (x : var),
+    typing (T1 ++ T2) nil infer_mode e A ->
+    typing (T1 ++ (x ~ A) ++ T2) nil infer_mode e A.
+Proof.
+Admitted.
