@@ -4,57 +4,67 @@ Require Import Coq.Program.Equality.
 Definition tvar : Set := var. (*r term variable *)
 Definition Tvar : Set := var. (*r type variable *)
 
-Inductive type : Set :=  (*r type *)
-| type_int(*r int *)
-| type_top(*r top *)
-| type_arrow (A:type) (B:type) (*r function *)
-| type_and (A:type) (B:type). (*r intersection type *)
+Inductive typ : Set :=  (*r typ *)
+| typ_int(*r int *)
+| typ_top(*r top *)
+| typ_arrow (A:typ) (B:typ) (*r function *)
+| typ_and (A:typ) (B:typ). (*r intersection typ *)
 
-Inductive typep : type -> Prop :=
-| typep_int : typep type_int
-| typep_top : typep type_top
-| typep_arrow : forall (A B : type),
-    typep A -> typep B -> typep (type_arrow A B)
-| typep_and : forall (A B : type),
-    typep A -> typep B -> typep (type_and A B).
+(* type is locally closed *)
 
-Inductive term : Set :=
-| term_nat : nat -> term
-| term_bvar : nat -> term
-| term_fvar : var -> term
-| term_abs : term -> term
-| term_app : term -> term -> term
-| term_merge : term -> term -> term
-| term_anno : term -> type -> term.
+Inductive type : typ -> Prop :=
+| type_int : type typ_int
+| type_top : type typ_top
+| type_arrow : forall (A B : typ),
+    type A -> type B -> type (typ_arrow A B)
+| type_and : forall (A B : typ),
+    type A -> type B -> type (typ_and A B).
 
-Inductive termp : term -> Prop :=
-| termp_nat : forall (n : nat), termp (term_nat n)
-| termp_bvar : forall (n : nat), termp (term_bvar n)
-| termp_fvar : forall (x : var), termp (term_fvar x)
-| termp_abs : forall (e : term), termp (term_abs e)
-| termp_app : forall (e1 e2 : term), termp (term_app e1 e2)
-| termp_merge : forall (e1 e2 : term), termp (term_merge e1 e2)
-| termp_anno : forall (e : term) (A : type), termp (term_anno e A).
+Hint Constructors typ : core.
+Hint Constructors type : core.
 
-Inductive sub : type -> type -> Prop :=    (* defn sub *)
+Inductive trm : Set :=
+| trm_nat : nat -> trm
+| trm_bvar : nat -> trm
+| trm_fvar : var -> trm
+| trm_abs : trm -> trm
+| trm_app : trm -> trm -> trm
+| trm_merge : trm -> trm -> trm
+| trm_anno : trm -> typ -> trm.
+
+(* term is locally closed *)
+
+Inductive term : trm -> Prop :=
+| term_nat : forall (n : nat), term (trm_nat n)
+| term_bvar : forall (n : nat), term (trm_bvar n)
+| term_fvar : forall (x : var), term (trm_fvar x)
+| term_abs : forall (e : trm), term (trm_abs e)
+| term_app : forall (e1 e2 : trm), term (trm_app e1 e2)
+| term_merge : forall (e1 e2 : trm), term (trm_merge e1 e2)
+| term_anno : forall (e : trm) (A : typ), term (trm_anno e A).
+
+Hint Constructors trm : core.
+Hint Constructors term : core.
+
+Inductive sub : typ -> typ -> Prop :=    (* defn sub *)
 | sub_Int :
-    sub type_int type_int
-| sub_Top : forall (A:type),
-    sub A type_top
-| sub_Arrow : forall (A B C D:type),
+    sub typ_int typ_int
+| sub_Top : forall (A:typ),
+    sub A typ_top
+| sub_Arrow : forall (A B C D:typ),
     sub C A ->
     sub B D ->
-    sub (type_arrow A B) (type_arrow C D)
-| sub_And : forall (A B C:type),
+    sub (typ_arrow A B) (typ_arrow C D)
+| sub_And : forall (A B C:typ),
     sub A B ->
     sub A C ->
-    sub A (type_and B C)
-| sub_AndL : forall (A B C:type),
+    sub A (typ_and B C)
+| sub_AndL : forall (A B C:typ),
     sub A C ->
-    sub (type_and A B) C
-| sub_AndR : forall (A B C:type),
+    sub (typ_and A B) C
+| sub_AndR : forall (A B C:typ),
     sub B C ->
-    sub (type_and A B) C.
+    sub (typ_and A B) C.
 
 Hint Constructors sub : core.
 
@@ -73,7 +83,7 @@ Proof.
 Qed.
 
 Lemma lemma_sub_and:
-  forall t1 t2 t3, sub t1 (type_and t2 t3) -> sub t1 t2 /\ sub t1 t3.
+  forall t1 t2 t3, sub t1 (typ_and t2 t3) -> sub t1 t2 /\ sub t1 t3.
 Proof.
   intros t1 t2 t3 H.
   dependent induction H; eauto.
@@ -113,45 +123,45 @@ Qed.
 (*   Applicative Subtyping *)
 (* ----------------------------- *)
 
-Definition arg := list type.
+Definition arg := list typ.
 
 (* S |- A <: B *)
-Inductive appsub : arg -> type -> type -> Prop :=
-| as_Refl : forall (A : type), appsub nil A A
-| as_Fun : forall (C A B D : type) (S : arg),
+Inductive appsub : arg -> typ -> typ -> Prop :=
+| as_Refl : forall (A : typ), appsub nil A A
+| as_Fun : forall (C A B D : typ) (S : arg),
     sub C A ->
     appsub S B D ->
-    appsub (cons C S) (type_arrow A B) (type_arrow C D)
-| as_AndL : forall (A B D : type) (S : arg),
+    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
+| as_AndL : forall (A B D : typ) (S : arg),
     appsub S A D ->
-    appsub S (type_and A B) D
-| as_AndR : forall (A B D : type) (S : arg),
+    appsub S (typ_and A B) D
+| as_AndR : forall (A B D : typ) (S : arg),
     appsub S B D ->
-    appsub S (type_and A B) D.
+    appsub S (typ_and A B) D.
 
-Fixpoint type_stack (S : arg) (A : type) : type :=
+Fixpoint typ_stack (S : arg) (A : typ) : typ :=
   match S with
   | nil => A
-  | cons A' S' => type_arrow A' (type_stack S' A)
+  | cons A' S' => typ_arrow A' (typ_stack S' A)
   end.
 
-Compute (type_stack (cons type_int (cons type_int nil)) type_top).
+(* Compute (typ_stack (cons type_int (cons type_int nil)) type_top). *)
 
 Lemma appsub_coincides_with_sub :
-  forall (S : arg) (A B : type),
+  forall (S : arg) (A B : typ),
     appsub S A B ->
-    exists (B' : type), B = (type_stack S B').
+    exists (B' : typ), B = (typ_stack S B').
 Proof.
   intros.
   induction H; eauto.
-  - exists A. unfold type_stack. auto.
+  - exists A. unfold typ_stack. auto.
   - destruct IHappsub. rewrite H1.
     simpl. exists x. reflexivity.
 Qed.
 
 Lemma appsub_reflexivity :
-  forall (S : arg) (A : type),
-    appsub S (type_stack S A) (type_stack S A).
+  forall (S : arg) (A : typ),
+    appsub S (typ_stack S A) (typ_stack S A).
 Proof.
   induction S; intros.
   - constructor.
@@ -161,10 +171,10 @@ Proof.
 Qed.
 
 Lemma appsub_transitivity :
-  forall (S1 S2 : arg) (A B C: type),
-    appsub S1 A (type_stack S1 B) ->
+  forall (S1 S2 : arg) (A B C: typ),
+    appsub S1 A (typ_stack S1 B) ->
     appsub S2 B C ->
-    appsub (S1 ++ S2) A (type_stack S1 C).
+    appsub (S1 ++ S2) A (typ_stack S1 C).
 Proof.
   intros S1 S2 A B C H1 H2.
   dependent induction H1; subst.
@@ -185,7 +195,7 @@ Proof.
 Qed.
 
 Lemma appsub_to_sub :
-  forall (S : arg) (A B : type),
+  forall (S : arg) (A B : typ),
   appsub S A B ->
   sub A B.
 Proof.
@@ -195,15 +205,15 @@ Proof.
 Qed.
 
 Lemma sub_to_appsub :
-  forall (S : arg) (A B1 : type),
-    sub A (type_stack S B1) ->
-    exists B2 : type,
-      appsub S A (type_stack S B2) /\ (sub B2 B1).
+  forall (S : arg) (A B1 : typ),
+    sub A (typ_stack S B1) ->
+    exists B2 : typ,
+      appsub S A (typ_stack S B2) /\ (sub B2 B1).
 Proof.
   intros S A B1 H.
   dependent induction H.
   - destruct S.
-    simpl. exists type_int. split.
+    simpl. exists typ_int. split.
     constructor. simpl in x. rewrite <- x.
     constructor.
     inversion x.
@@ -211,12 +221,12 @@ Proof.
     exists A. split. constructor. constructor.
     inversion x.
   - destruct S; simpl in *; subst.
-    exists (type_arrow A B). split.
+    exists (typ_arrow A B). split.
     constructor.
     constructor. assumption. assumption.
     inversion x; subst.
     pose proof (IHsub2 S B1) as IHsub2'.
-    assert (IHsub2_help: type_stack S B1 = type_stack S B1).
+    assert (IHsub2_help: typ_stack S B1 = typ_stack S B1).
     reflexivity.
     apply IHsub2' in IHsub2_help.
     destruct IHsub2_help.
@@ -230,9 +240,9 @@ Proof.
     exists A. split. constructor. constructor. assumption. assumption.
     inversion x.
   - destruct S; simpl in *; subst.
-    exists (type_and A B). split. constructor. apply sub_AndL. assumption.
+    exists (typ_and A B). split. constructor. apply sub_AndL. assumption.
     pose proof (IHsub (cons t S) B1) as IHsub'.
-    assert(IHsub_help: type_arrow t (type_stack S B1) = type_stack (t :: S) B1).
+    assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1).
     simpl. reflexivity.
     apply IHsub' in IHsub_help.
     destruct IHsub_help.
@@ -240,9 +250,9 @@ Proof.
     exists x. split. apply as_AndL.
     simpl in H01. assumption. assumption.
   - destruct S; simpl in *; subst.
-    exists (type_and A B). split. constructor. apply sub_AndR. assumption.
+    exists (typ_and A B). split. constructor. apply sub_AndR. assumption.
     pose proof (IHsub (cons t S) B1) as IHsub'.
-    assert(IHsub_help: type_arrow t (type_stack S B1) = type_stack (t :: S) B1).
+    assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1).
     simpl. reflexivity.
     apply IHsub' in IHsub_help.
     destruct  IHsub_help.
@@ -255,75 +265,113 @@ Qed.
 (*   Typing Relation *)
 (* ----------------------------- *)
 
-Definition ctx : Set := list (atom * type).
-
-Inductive ctxp : ctx -> Prop :=
-| ctxp_empty : ctxp nil
-| ctxp_cons : forall (T : ctx) (x : var) (A : type),
-    ctxp T -> typep A -> ctxp ((x ~ A) ++ T).
+Definition ctx : Set := list (var * typ).
 
 Inductive mode := check_mode | infer_mode.
 
-Fixpoint open_rec (k : nat) (u : term) (t : term) {struct t} : term :=
+Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
   match t with
-  | term_nat n => term_nat n
-  | term_bvar i => if k == i then u else (term_bvar i)
-  | term_fvar x => term_fvar x
-  | term_abs t1 => term_abs (open_rec (S k) u t1)
-  | term_app t1 t2 => term_app (open_rec k u t1) (open_rec k u t2)
-  | term_merge t1 t2 => term_merge (open_rec k u t1) (open_rec k u t2)
-  | term_anno t1 A => term_anno (open_rec k u t1) A
+  | trm_nat n => trm_nat n
+  | trm_bvar i => if k == i then u else (trm_bvar i)
+  | trm_fvar x => trm_fvar x
+  | trm_abs t1 => trm_abs (open_rec (S k) u t1)
+  | trm_app t1 t2 => trm_app (open_rec k u t1) (open_rec k u t2)
+  | trm_merge t1 t2 => trm_merge (open_rec k u t1) (open_rec k u t2)
+  | trm_anno t1 A => trm_anno (open_rec k u t1) A
   end.
 
 Definition open t u := open_rec 0 u t.
 
-Inductive typing : ctx -> arg -> mode -> term -> type -> Prop :=
+(* Definition test_open1 := (term_abs (term_app (term_bvar 0) (term_bvar 0))). *)
+
+(* Definition X : atom := fresh nil. *)
+(* Definition Y : atom := fresh (X :: nil). *)
+(* Definition Z : atom := fresh (X :: Y :: nil). *)
+
+(* Compute (open (term_app (term_abs (term_app (term_bvar 1) (term_bvar 0))) *)
+(*                         (term_bvar 0)) *)
+(*               (term_fvar Y)). *)
+
+
+Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T ->
-    (typing T nil infer_mode (term_nat n) type_int)
-| typing_var : forall (T : ctx) (x : var) (A : type),
-    uniq T ->
+    (typing T nil infer_mode (trm_nat n) typ_int)
+| typing_var : forall (T : ctx) (x : var) (A : typ),
+    uniq T -> type A ->
     binds x A T ->
-    typing T nil infer_mode (term_fvar x) A
-| typing_abs1 : forall (L : vars) (T : ctx) (e : term) (A B : type),
+    typing T nil infer_mode (trm_fvar x) A
+| typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
+    type A ->
     (forall x, x \notin L ->
-          (typing ((x ~ A) ++ T)) nil check_mode (open e (term_fvar x)) B) ->
-    typing T nil check_mode (term_abs e) (type_arrow A B)
-| typing_abs2 : forall (L: vars) (T : ctx) (S : arg) (A B : type) (e : term),
+          (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) B) ->
+    typing T nil check_mode (trm_abs e) (typ_arrow A B)
+| typing_abs2 : forall (L: vars) (T : ctx) (S : arg) (A B : typ) (e : trm),
+    type A ->
     (forall x, x \notin L ->
-          (typing ((x ~ A) ++ T)) S infer_mode (open e (term_fvar x)) B) ->
-    typing T (cons A S) infer_mode (term_abs e) (type_arrow A B)
-| typing_anno : forall (T : ctx) (S : arg) (A B : type) (e : term),
+          (typing ((x ~ A) ++ T)) S infer_mode (open e (trm_fvar x)) B) ->
+    typing T (cons A S) infer_mode (trm_abs e) (typ_arrow A B)
+| typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
+    type A -> type B ->
     appsub S A B ->
     typing T nil check_mode e A ->
-    typing T S infer_mode (term_anno e A) B
-| typing_app1 : forall (T : ctx) (S : arg) (A B : type) (e1 e2 : term),
+    typing T S infer_mode (trm_anno e A) B
+| typing_app1 : forall (T : ctx) (S : arg) (A B : typ) (e1 e2 : trm),
     typing T nil infer_mode e2 A ->
-    typing T nil check_mode e1 (type_arrow A B) ->
-    typing T S infer_mode (term_app e1 e2) B
-| typing_app2 : forall (T : ctx) (A B : type) (e1 e2 : term),
+    typing T nil check_mode e1 (typ_arrow A B) ->
+    typing T S infer_mode (trm_app e1 e2) B
+| typing_app2 : forall (T : ctx) (A B : typ) (e1 e2 : trm),
     typing T nil infer_mode e2 A ->
-    typing T nil check_mode e1 (type_arrow A B) ->
-    typing T nil check_mode (term_app e1 e2) B
-| typing_sub : forall (T : ctx) (A B : type) (e : term),
+    typing T nil check_mode e1 (typ_arrow A B) ->
+    typing T nil check_mode (trm_app e1 e2) B
+| typing_sub : forall (T : ctx) (A B : typ) (e : trm),
     typing T nil infer_mode e B ->
-    (sub B A) ->
+    type B -> type A -> (sub B A) ->
     typing T nil check_mode e A
-| typing_merge : forall (T : ctx) (A B : type) (e1 e2 : term),
+| typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
     typing T nil infer_mode e1 A ->
     typing T nil infer_mode e2 B ->
-    typing T nil infer_mode (term_merge e1 e2) (type_and A B).
+    typing T nil infer_mode (trm_merge e1 e2) (typ_and A B).
 
+Hint Constructors typing : core.
 
-Lemma typing_regularity :
-  forall (T : ctx) (e : term) (A : type),
-    typing T nil infer_mode e A -> typep A /\ ctxp T.
+Search uniq.
+
+Lemma typing_regular :
+  forall (T : ctx) (e : trm) (A : typ),
+    typing T nil infer_mode e A -> type A /\ uniq T.
 Proof.
-Admitted.
+  split; induction H; eauto.
+  - pick fresh y. pose proof (H1 y) as H1b. apply H1b in Fr.
+    constructor. assumption. assumption.
+  - pick fresh y. pose proof (H1 y) as H1b. apply H1b in Fr.
+    constructor. assumption. assumption.
+  - inversion IHtyping2; subst. assumption.
+  - inversion IHtyping2. subst. assumption.
+  - pick fresh y. pose proof (H1 y) as H1b. apply H1b in Fr.
+    simpl in Fr. apply uniq_cons_1 in Fr. assumption.
+  - pick fresh y. pose proof (H1 y) as H1b. apply H1b in Fr.
+    simpl in Fr. apply uniq_cons_1 in Fr. assumption.
+Qed.
 
 Lemma typing_weaken :
-  forall (T1 T2 : ctx) (e : term) (A : type) (x : var),
+  forall (T1 T2 T3: ctx) (e : trm) (A : typ),
     typing (T1 ++ T2) nil infer_mode e A ->
-    typing (T1 ++ (x ~ A) ++ T2) nil infer_mode e A.
+    uniq (T1 ++ T3 ++ T2) ->
+    typing (T1 ++ T3 ++ T2) nil infer_mode e A.
 Proof.
-Admitted.
+  intros.
+  remember (T1 ++ T2) as T12.
+  generalize dependent T1.
+  induction H; intros; subst; eauto.
+  - apply typing_abs1 with (L := dom (T1 ++ T3 ++ T2) \u L).
+    assumption. intros x Frx.
+    rewrite_env (([(x, A)] ++ T1) ++ T3 ++ T2).
+    apply H1. auto. simpl_env. reflexivity.
+    simpl_env. apply uniq_push. assumption. auto.
+  - apply typing_abs2 with (L := dom (T1 ++ T3 ++ T2) \u L).
+    assumption. intros x Frx.
+    rewrite_env (([(x, A)] ++ T1) ++ T3 ++ T2).
+    apply H1. auto. simpl_env. reflexivity.
+    simpl_env. apply uniq_push. assumption. auto.
+Qed.
