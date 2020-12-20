@@ -14,9 +14,11 @@ Syntax
 ======
 
 A, B ::= Int | Top | A -> B | A & B
-e ::= n | x | \x . e | e1 e2 | e1,,e2 | (e : A)
+e ::= T | n | x | \x . e | e1 e2 | e1,,e2 | (e : A)
+v ::= T | n | \x . e | e1,,e2
 T ::= . | T, x : A
 S ::= . | S, A
+
 
 We assume a well-formedness relation for contexts (|- T),
 which is defined in the standard way.
@@ -300,3 +302,89 @@ Weakening of typing: If T1,T2 |- e : A then T1,x:A,T2 |- e : A
 These lemmas should be in Ningning's previous formalization. They
 probably have a slightly different form due to bi-directional type-checking.
 Better ask Ningning for more details on those.
+
+================
+Typed Reduction
+================
+e -->A e'
+
+Rules:
+
+
+------------------ Tred-Int
+n -->Int n
+
+
+A Ordinary
+TopLike A
+------------------- Tred-Top
+e -->A T
+
+
+not (TopLike C)
+C <: A
+B <: D
+-------------------------------------------- Tred-Arrow-Annotated
+(\x . e) : A -> B   -->(C -> D)     (\x . e) : A -> D
+
+
+e1 -->A e1'
+A Ordinary
+---------------------------- Tred-Merge-L
+e1,,e2 -->A e1'
+
+
+e2 -->A e2'
+A Ordinary
+---------------------------- Tred-Merge-L
+e1,,e2 -->A e2'
+
+
+e1 -->A e2
+e1 -->A e3
+---------------------- Tred-And
+e1 -->A e2,,e3
+
+====================
+Reduction
+====================
+e --> e'
+
+
+Rules:
+
+e --> e'
+-------------------- Step-Anno
+e : A --> e' : A
+
+
+e1 --> e1'
+------------------ Step-App-L
+e1 e2 --> e1' e2
+
+
+Value e1
+e2 --> e2'
+------------------ Step-App-L
+e1 e2 --> e1 e2'
+
+
+e1 --> e1'
+------------------- Step-Merge-L
+e1,,e2 --> e1',,e2
+
+
+e2 --> e2'
+------------------- Step-Merge-R
+e1,,e2 --> e1,,e2'
+
+
+Value e1
+e2 -->A e2'
+------------------------------------------------ Step-Beta
+((\x . e1) : A -> B) e2  --> (e1 [x |-> e2']) : B
+
+
+e -->A e'
+------------------- Step-Anno-Typed
+e : A --> e'

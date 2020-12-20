@@ -24,6 +24,7 @@ Hint Constructors typ : core.
 Hint Constructors type : core.
 
 Inductive trm : Set :=
+| trm_top : trm
 | trm_nat : nat -> trm
 | trm_bvar : nat -> trm
 | trm_fvar : var -> trm
@@ -34,17 +35,62 @@ Inductive trm : Set :=
 
 (* term is locally closed *)
 
+Definition ctx : Set := list (var * typ).
+
+Inductive mode := check_mode | infer_mode.
+
+Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
+  match t with
+  | trm_top => trm_top
+  | trm_nat n => trm_nat n
+  | trm_bvar i => if k == i then u else (trm_bvar i)
+  | trm_fvar x => trm_fvar x
+  | trm_abs t1 => trm_abs (open_rec (S k) u t1)
+  | trm_app t1 t2 => trm_app (open_rec k u t1) (open_rec k u t2)
+  | trm_merge t1 t2 => trm_merge (open_rec k u t1) (open_rec k u t2)
+  | trm_anno t1 A => trm_anno (open_rec k u t1) A
+  end.
+
+Definition open t u := open_rec 0 u t.
+
 Inductive term : trm -> Prop :=
+| term_top : term trm_top
 | term_nat : forall (n : nat), term (trm_nat n)
 | term_bvar : forall (n : nat), term (trm_bvar n)
 | term_fvar : forall (x : var), term (trm_fvar x)
-| term_abs : forall (e : trm), term (trm_abs e)
+| term_abs : forall (e : trm) (L : vars),
+    (forall x, x \notin L -> term (open e (trm_fvar x))) ->
+    term (trm_abs e)
 | term_app : forall (e1 e2 : trm), term (trm_app e1 e2)
 | term_merge : forall (e1 e2 : trm), term (trm_merge e1 e2)
 | term_anno : forall (e : trm) (A : typ), term (trm_anno e A).
 
 Hint Constructors trm : core.
 Hint Constructors term : core.
+
+(* value *)
+Inductive value : trm -> Prop :=
+| value_top : value trm_top
+| value_nat : forall (n : nat), value (trm_nat n)
+| value_abs : forall (e : trm),
+    term (trm_abs e) -> value (trm_abs e)
+| value_merge : forall (e1 e2 : trm),
+    value e1 -> value e2 -> value (trm_merge e1 e2).
+
+Inductive toplike : typ -> Prop :=
+| tl_top : toplike typ_top
+| tl_and : forall (A B : typ), toplike A -> toplike B -> toplike (typ_and A B)
+| tl_arrow : forall (A B : typ), toplike B -> toplike (typ_arrow A B).
+
+(* ordinary types are those types aren't intersection *)
+Inductive ordinary : typ -> Prop :=
+| ord_top : ordinary typ_top
+| ord_int : ordinary typ_int
+| ord_arrow : forall (A B : typ), ordinary (typ_arrow A B).
+
+(* ----------------------------- *)
+(* Subtyping *)
+(* ----------------------------- *)
 
 Inductive sub : typ -> typ -> Prop :=    (* defn sub *)
 | sub_Int :
@@ -265,22 +311,6 @@ Qed.
 (*   Typing Relation *)
 (* ----------------------------- *)
 
-Definition ctx : Set := list (var * typ).
-
-Inductive mode := check_mode | infer_mode.
-
-Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
-  match t with
-  | trm_nat n => trm_nat n
-  | trm_bvar i => if k == i then u else (trm_bvar i)
-  | trm_fvar x => trm_fvar x
-  | trm_abs t1 => trm_abs (open_rec (S k) u t1)
-  | trm_app t1 t2 => trm_app (open_rec k u t1) (open_rec k u t2)
-  | trm_merge t1 t2 => trm_merge (open_rec k u t1) (open_rec k u t2)
-  | trm_anno t1 A => trm_anno (open_rec k u t1) A
-  end.
-
-Definition open t u := open_rec 0 u t.
 
 (* Definition test_open1 := (term_abs (term_app (term_bvar 0) (term_bvar 0))). *)
 
@@ -375,3 +405,60 @@ Proof.
     apply H1. auto. simpl_env. reflexivity.
     simpl_env. apply uniq_push. assumption. auto.
 Qed.
+
+(* Typed Reduce *)
+Inductive typedred : trm -> typ -> trm -> Prop :=
+| tred_int : forall (n : nat),
+    typedred (trm_nat n) typ_int (trm_nat n)
+| tred_top : forall (A : typ) (e : trm),
+    term e ->
+    toplike A -> ordinary A ->
+    typedred e A trm_top
+| tred_arrow_anno : forall (A B C D : typ) (e : trm), (* A -> B <: C -> D *)
+    term (trm_abs e) ->
+    not (toplike C) ->
+    sub C A -> sub B D ->
+    typedred (trm_anno (trm_abs e) (typ_arrow A B))
+             (typ_arrow C D)
+             (trm_anno (trm_abs e) (typ_arrow A D))
+| tred_merge_l : forall (e1 e1' e2 : trm) (A : typ),
+    typedred e1 A e1' ->
+    ordinary A ->
+    typedred (trm_merge e1 e2) A e1'
+| tred_merge_r : forall (e1 e2 e2' : trm) (A : typ),
+    typedred e2 A e2' ->
+    ordinary A ->
+    typedred (trm_merge e1 e2) A e2'
+| tred_and : forall (e1 e2 e3 : trm) (A : typ),
+    typedred e1 A e2 ->
+    typedred e1 A e3 ->
+    typedred e1 A (trm_merge e2 e3).
+
+Inductive step : trm -> trm -> Prop :=
+| step_anno : forall (e e' : trm) (A : typ),
+    step e e' ->
+    step (trm_anno e A) (trm_anno e' A)
+| step_app_l : forall (e1 e2 e1' : trm),
+    term e2 ->
+    step e1 e1' ->
+    step (trm_app e1 e2) (trm_app e1' e2)
+| step_app_r : forall (e1 e2 e2' : trm),
+    value e1 ->
+    step e2 e2' ->
+    step (trm_app e1 e2) (trm_app e1 e2')
+| step_merge_l : forall (e1 e2 e1' : trm),
+    term e2 ->
+    step e1 e1' ->
+    step (trm_merge e1 e2) (trm_app e1' e2)
+| step_merge_r : forall (e1 e2 e2' : trm),
+    value e2 ->
+    step e2 e2' ->
+    step (trm_app e1 e2) (trm_app e1 e2')
+(* | step_beta : forall (e1 e2 e2' : trm) (A B : typ), *)
+(*     term (trm_abs e1) -> *)
+(*     value e2 -> *)
+(*     typedred e2 A e2' -> *)
+(*     step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B *)
+| step_anno_typed : forall (e e' : trm) (A : typ),
+    typedred e A e' ->
+    step (trm_anno e A) e'.
