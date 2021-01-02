@@ -1,16 +1,11 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 
-Definition tvar : Set := var. (*r term variable *)
-Definition Tvar : Set := var. (*r type variable *)
-
 Inductive typ : Set :=  (*r typ *)
 | typ_int(*r int *)
 | typ_top(*r top *)
 | typ_arrow (A:typ) (B:typ) (*r function *)
 | typ_and (A:typ) (B:typ). (*r intersection typ *)
-
-(* type is locally closed *)
 
 Inductive type : typ -> Prop :=
 | type_int : type typ_int
@@ -322,7 +317,6 @@ Qed.
 (*                         (term_bvar 0)) *)
 (*               (term_fvar Y)). *)
 
-
 Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T ->
@@ -411,28 +405,60 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_int : forall (n : nat),
     typedred (trm_nat n) typ_int (trm_nat n)
 | tred_top : forall (A : typ) (e : trm),
-    term e ->
-    toplike A -> ordinary A ->
-    typedred e A trm_top
+    term e -> toplike A -> ordinary A -> typedred e A trm_top
 | tred_arrow_anno : forall (A B C D : typ) (e : trm), (* A -> B <: C -> D *)
-    term (trm_abs e) ->
-    not (toplike C) ->
-    sub C A -> sub B D ->
+    term (trm_abs e) -> not (toplike D) -> sub C A -> sub B D ->
     typedred (trm_anno (trm_abs e) (typ_arrow A B))
              (typ_arrow C D)
              (trm_anno (trm_abs e) (typ_arrow A D))
 | tred_merge_l : forall (e1 e1' e2 : trm) (A : typ),
-    typedred e1 A e1' ->
-    ordinary A ->
-    typedred (trm_merge e1 e2) A e1'
+    typedred e1 A e1' -> ordinary A -> typedred (trm_merge e1 e2) A e1'
 | tred_merge_r : forall (e1 e2 e2' : trm) (A : typ),
-    typedred e2 A e2' ->
-    ordinary A ->
-    typedred (trm_merge e1 e2) A e2'
-| tred_and : forall (e1 e2 e3 : trm) (A : typ),
-    typedred e1 A e2 ->
-    typedred e1 A e3 ->
-    typedred e1 A (trm_merge e2 e3).
+    typedred e2 A e2' -> ordinary A -> typedred (trm_merge e1 e2) A e2'
+| tred_and : forall (e1 e2 e3 : trm) (A B: typ),
+    typedred e1 A e2 -> typedred e1 B e3 -> typedred e1 (typ_and A B) (trm_merge e2 e3).
+
+
+(* auxiliary lemma *)
+Lemma tred_ord_toplike_normal : forall (e e' : trm) (A : typ),
+    ordinary A -> toplike A -> typedred e A e' -> e' = trm_top.
+Proof.
+  intros e e' A H_ord H_top H_tred.
+  dependent induction H_tred; subst; eauto.
+  - inversion H_top.
+  - destruct H0. inversion H_top; subst.
+    assumption.
+  - inversion H_ord.
+Qed.
+
+Lemma tred_toplike :
+  forall (A : typ),
+    toplike A -> forall e1 e2 e1' e2' : trm, typedred e1 A e1' -> typedred e2 A e2' -> e1' = e2'.
+Proof.
+  intros A Htop.
+  dependent induction Htop; intros e1 e2 e1' e2' H_tred1 H_tred2.
+  - apply tred_ord_toplike_normal with (A:=typ_top) in H_tred1; auto; subst.
+    apply tred_ord_toplike_normal with (A:=typ_top) in H_tred2; auto; subst.
+    constructor. constructor. constructor. constructor.
+  - inversion H_tred1; subst; eauto.
+    + inversion H1.
+    + inversion H_tred2; subst; eauto; inversion H0. (* ordinary (typ_and A B) is wrong*)
+    + inversion H0.
+    + inversion H_tred2; subst; eauto; try (inversion H0); try (inversion H1).
+      assert (Heq1: e3 = e5).
+      pose proof (IHHtop1 e1 e2 e3 e5) as IHHtop1'.
+      apply IHHtop1'. assumption. assumption.
+      assert (Heq2: e4 = e6).
+      pose proof (IHHtop2 e1 e2 e4 e6) as IHHtop2'.
+      apply IHHtop2'. assumption. assumption.
+      rewrite Heq1. rewrite Heq2. reflexivity.
+  - assert (HAB: toplike (typ_arrow A B)).
+    constructor. assumption.
+    apply tred_ord_toplike_normal with (A:=(typ_arrow A B)) in H_tred2.
+    apply tred_ord_toplike_normal with (A:=(typ_arrow A B)) in H_tred1.
+    rewrite H_tred1. rewrite H_tred2. reflexivity.
+    constructor. assumption. constructor. assumption.
+Qed.
 
 Inductive step : trm -> trm -> Prop :=
 | step_anno : forall (e e' : trm) (A : typ),
