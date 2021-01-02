@@ -306,17 +306,6 @@ Qed.
 (*   Typing Relation *)
 (* ----------------------------- *)
 
-
-(* Definition test_open1 := (term_abs (term_app (term_bvar 0) (term_bvar 0))). *)
-
-(* Definition X : atom := fresh nil. *)
-(* Definition Y : atom := fresh (X :: nil). *)
-(* Definition Z : atom := fresh (X :: Y :: nil). *)
-
-(* Compute (open (term_app (term_abs (term_app (term_bvar 1) (term_bvar 0))) *)
-(*                         (term_bvar 0)) *)
-(*               (term_fvar Y)). *)
-
 Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T ->
@@ -400,7 +389,9 @@ Proof.
     simpl_env. apply uniq_push. assumption. auto.
 Qed.
 
-(* Typed Reduce *)
+(* ----------------------------- *)
+(*   Typed Reduction *)
+(* ----------------------------- *)
 Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_int : forall (n : nat),
     typedred (trm_nat n) typ_int (trm_nat n)
@@ -460,31 +451,27 @@ Proof.
     constructor. assumption. constructor. assumption.
 Qed.
 
+Lemma tred_to_sub: forall (e e' : trm) (A B : typ),
+    value e -> typedred e A e' -> typing nil nil infer_mode e B -> sub B A.
+Proof.
+  intros.
+  induction H0; eauto.
+  - inversion H1. constructor.
+Admitted.
+
 Inductive step : trm -> trm -> Prop :=
 | step_anno : forall (e e' : trm) (A : typ),
-    step e e' ->
-    step (trm_anno e A) (trm_anno e' A)
+    step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
-    term e2 ->
-    step e1 e1' ->
-    step (trm_app e1 e2) (trm_app e1' e2)
+    term e2 -> step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (e1 e2 e2' : trm),
-    value e1 ->
-    step e2 e2' ->
-    step (trm_app e1 e2) (trm_app e1 e2')
+    value e1 -> step e2 e2' -> step (trm_app e1 e2) (trm_app e1 e2')
 | step_merge_l : forall (e1 e2 e1' : trm),
-    term e2 ->
-    step e1 e1' ->
-    step (trm_merge e1 e2) (trm_app e1' e2)
+    term e2 -> step e1 e1' -> step (trm_merge e1 e2) (trm_app e1' e2)
 | step_merge_r : forall (e1 e2 e2' : trm),
-    value e2 ->
-    step e2 e2' ->
-    step (trm_app e1 e2) (trm_app e1 e2')
-(* | step_beta : forall (e1 e2 e2' : trm) (A B : typ), *)
-(*     term (trm_abs e1) -> *)
-(*     value e2 -> *)
-(*     typedred e2 A e2' -> *)
-(*     step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B *)
+    value e2 -> step e2 e2' -> step (trm_app e1 e2) (trm_app e1 e2')
+| step_beta : forall (e1 e2 e2' : trm) (A B : typ),
+    term (trm_abs e1) -> value e2 -> typedred e2 A e2' ->
+    step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B)
 | step_anno_typed : forall (e e' : trm) (A : typ),
-    typedred e A e' ->
-    step (trm_anno e A) e'.
+    typedred e A e' -> step (trm_anno e A) e'.

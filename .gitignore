@@ -1,4 +1,8 @@
 .DS_Store
 *.vio
 *.vos
+*.glob
+*.vo
+*.vok
+*.aux
 out.*
