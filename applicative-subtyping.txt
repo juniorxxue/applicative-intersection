@@ -36,6 +36,10 @@ Int <: Int         S-Int
 
 A <: Top           S-Top
 
+Top <: D
+----------------   S-TopArr
+A <: C -> D
+
 C <: A    B <: D
 ----------------   S-Arrow
 A -> B <: C -> D
@@ -61,7 +65,7 @@ S |- A <: B
 -----------
 
 The meaning of the judgement is:
-Under arguments S a "function" of type A has the output type B 
+Under arguments S a "function" of type A has the output type B
 
 . |- A <: A    AS-Refl
 
@@ -83,7 +87,7 @@ succ : Int -> Int
 not : Bool -> Bool
 The type of (succ ,, not) is (Int -> Int) & (Bool -> Bool)
 
-1) (succ ,, not) 3 
+1) (succ ,, not) 3
 
 Here we want to automatically pick succ and apply it to 3.
 I think this would lead to the following application subtyping statement:
@@ -101,8 +105,8 @@ Int |- (Int -> Int) <: Int
 Int |- (Int -> Int) & (Bool -> Bool) <: Int
 
 However, how about the following program:
-          
-(succ ,, f : Int -> Bool) 3 
+
+(succ ,, f : Int -> Bool) 3
 
 The type of (succ ,, f : Int -> Bool) is (Int -> Int)&(Int -> Bool)
 In this program the merge is disjoint, but there is ambiguity
@@ -115,9 +119,9 @@ See the discussion on ambiguity below.
 
 Here we should pick succ from the merge. I think that,
 for this case, we would like the following to hold for
-    our application subtyping judgement: 
+    our application subtyping judgement:
 
-(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int 
+(Int -> Int) & (Bool -> Bool) |- (Int -> Int) -> Int <: Int
 
 As Ningning pointed out the rules above seem to be sufficient to
 deal with this case too.
@@ -194,7 +198,7 @@ In the program above, when doing reduction, we should be able to
 extract (\x : Int . x + 1) from the first component of the merge,
 and use it to replace f in the body. But without the output
 type, we can't do this.
-Snow's ECOOP 2020 describes this issue. 
+Snow's ECOOP 2020 describes this issue.
 Thus, we use (\x . e : A -> B) to have the whole information
 about the type of the function.
 There are two typing judgements:
@@ -211,7 +215,7 @@ when S is empty, we abreviate the judgement to T |- e => A.
 In other words, we have the following syntactic sugar:
 T |- e => A   ==   T; . |- e => A
 
-The rules for the typing judgement are: 
+The rules for the typing judgement are:
 
 |- T
 ------------ TInt
@@ -285,7 +289,7 @@ contains lambdas. e.g.
 ((\x. \y. y) 1) : Bool -> Bool
 
 This example can be fixed by type inference, but the type anontation
-can be more complicated, e.g., one that cannot be inferred 
+can be more complicated, e.g., one that cannot be inferred
 
 ((\x. \f. (f 1, f 'a') 1) : (\/a. a -> a) -> (Int, Char)
 
@@ -295,9 +299,9 @@ bi-directional type-checking.
 
 Lemmas to be proved next:
 
-Regularity of typing: If T |- e : A then T |- A and |- T    
+Regularity of typing: If T |- e : A then T |- A and |- T
 
-Weakening of typing: If T1,T2 |- e : A then T1,x:A,T2 |- e : A 
+Weakening of typing: If T1,T2 |- e : A then T1,x:A,T2 |- e : A
 
 These lemmas should be in Ningning's previous formalization. They
 probably have a slightly different form due to bi-directional type-checking.

@@ -72,16 +72,22 @@ Inductive value : trm -> Prop :=
 | value_merge : forall (e1 e2 : trm),
     value e1 -> value e2 -> value (trm_merge e1 e2).
 
+Hint Constructors value : core.
+
 Inductive toplike : typ -> Prop :=
 | tl_top : toplike typ_top
 | tl_and : forall (A B : typ), toplike A -> toplike B -> toplike (typ_and A B)
 | tl_arrow : forall (A B : typ), toplike B -> toplike (typ_arrow A B).
+
+Hint Constructors toplike : core.
 
 (* ordinary types are those types aren't intersection *)
 Inductive ordinary : typ -> Prop :=
 | ord_top : ordinary typ_top
 | ord_int : ordinary typ_int
 | ord_arrow : forall (A B : typ), ordinary (typ_arrow A B).
+
+Hint Constructors ordinary : core.
 
 (* ----------------------------- *)
 (* Subtyping *)
@@ -92,6 +98,8 @@ Inductive sub : typ -> typ -> Prop :=    (* defn sub *)
     sub typ_int typ_int
 | sub_Top : forall (A:typ),
     sub A typ_top
+| sub_TopArr : forall (A B1 B2 : typ),
+    sub typ_top B2 -> sub A (typ_arrow B1 B2)
 | sub_Arrow : forall (A B C D:typ),
     sub C A ->
     sub B D ->
@@ -145,16 +153,16 @@ Proof.
   - induction t3; eauto.
     + induction t1; eauto.
       inversion H0.
-    + inversion H0.
+    + inversion H0; subst. constructor. assumption.
     + inversion H0.
       constructor.
       apply IHt3_1.
       assumption.
       apply IHt3_2.
       assumption.
-  - dependent induction H; eauto.
+  - dependent induction H0; eauto.
     clear IHsub1 IHsub2.
-    dependent induction H1; eauto.
+    dependent induction H; eauto.
   - apply lemma_sub_and in H.
     destruct H.
     dependent induction H0; eauto.
@@ -169,16 +177,13 @@ Definition arg := list typ.
 (* S |- A <: B *)
 Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_Refl : forall (A : typ), appsub nil A A
+| as_Top : forall (A : typ), appsub nil A typ_top
 | as_Fun : forall (C A B D : typ) (S : arg),
-    sub C A ->
-    appsub S B D ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
+    sub C A -> appsub S B D -> appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
 | as_AndL : forall (A B D : typ) (S : arg),
-    appsub S A D ->
-    appsub S (typ_and A B) D
-| as_AndR : forall (A B D : typ) (S : arg),
-    appsub S B D ->
-    appsub S (typ_and A B) D.
+    appsub S A D  -> appsub S (typ_and A B) D
+| as_AndR : forall (A B D: typ) (S : arg),
+    appsub S B D -> appsub S (typ_and A B) D.
 
 Fixpoint typ_stack (S : arg) (A : typ) : typ :=
   match S with
@@ -196,6 +201,7 @@ Proof.
   intros.
   induction H; eauto.
   - exists A. unfold typ_stack. auto.
+  - exists typ_top. auto.
   - destruct IHappsub. rewrite H1.
     simpl. exists x. reflexivity.
 Qed.
@@ -221,6 +227,9 @@ Proof.
   dependent induction H1; subst.
   - simpl in *.
     assumption.
+  - simpl in *; subst.
+    inversion H2; subst.
+    constructor. constructor.
   - simpl in *.
     constructor. assumption.
     apply IHappsub with B.
@@ -262,45 +271,56 @@ Proof.
     exists A. split. constructor. constructor.
     inversion x.
   - destruct S; simpl in *; subst.
-    exists (typ_arrow A B). split.
-    constructor.
-    constructor. assumption. assumption.
+    exists typ_top. split.
+    constructor. constructor. assumption.
     inversion x; subst.
-    pose proof (IHsub2 S B1) as IHsub2'.
-    assert (IHsub2_help: typ_stack S B1 = typ_stack S B1).
+    pose proof (IHsub S B1) as IHsub'.
+    assert (IHsub_help: typ_stack S B1 = typ_stack S B1).
     reflexivity.
-    apply IHsub2' in IHsub2_help.
-    destruct IHsub2_help.
+    apply IHsub' in IHsub_help.
+    destruct IHsub_help. destruct H0.
     exists x0. split.
-    constructor. assumption.
-    destruct H1 as [H11 H12].
-    assumption.
-    destruct H1 as [H11 H12].
-    assumption.
-  - destruct S; simpl in *; subst.
-    exists A. split. constructor. constructor. assumption. assumption.
-    inversion x.
-  - destruct S; simpl in *; subst.
-    exists (typ_and A B). split. constructor. apply sub_AndL. assumption.
-    pose proof (IHsub (cons t S) B1) as IHsub'.
-    assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1).
-    simpl. reflexivity.
-    apply IHsub' in IHsub_help.
-    destruct IHsub_help.
-    destruct H0 as [H01 H02].
-    exists x. split. apply as_AndL.
-    simpl in H01. assumption. assumption.
-  - destruct S; simpl in *; subst.
-    exists (typ_and A B). split. constructor. apply sub_AndR. assumption.
-    pose proof (IHsub (cons t S) B1) as IHsub'.
-    assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1).
-    simpl. reflexivity.
-    apply IHsub' in IHsub_help.
-    destruct  IHsub_help.
-    destruct  H0 as [H01 H02].
-    exists x. split. apply as_AndR.
-    simpl in H01. assumption. assumption.
-Qed.
+    Admitted.
+(*   - destruct S; simpl in *; subst. *)
+(*     exists (typ_arrow A B). split. *)
+(*     constructor. *)
+(*     constructor. assumption. assumption. *)
+(*     inversion x; subst. *)
+(*     pose proof (IHsub2 S B1) as IHsub2'. *)
+(*     assert (IHsub2_help: typ_stack S B1 = typ_stack S B1). *)
+(*     reflexivity. *)
+(*     apply IHsub2' in IHsub2_help. *)
+(*     destruct IHsub2_help. *)
+(*     exists x0. split. *)
+(*     constructor. assumption. *)
+(*     destruct H1 as [H11 H12]. *)
+(*     assumption. *)
+(*     destruct H1 as [H11 H12]. *)
+(*     assumption. *)
+(*   - destruct S; simpl in *; subst. *)
+(*     exists A. split. constructor. constructor. assumption. assumption. *)
+(*     inversion x. *)
+(*   - destruct S; simpl in *; subst. *)
+(*     exists (typ_and A B). split. constructor. apply sub_AndL. assumption. *)
+(*     pose proof (IHsub (cons t S) B1) as IHsub'. *)
+(*     assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1). *)
+(*     simpl. reflexivity. *)
+(*     apply IHsub' in IHsub_help. *)
+(*     destruct IHsub_help. *)
+(*     destruct H0 as [H01 H02]. *)
+(*     exists x. split. apply as_AndL. *)
+(*     simpl in H01. assumption. assumption. *)
+(*   - destruct S; simpl in *; subst. *)
+(*     exists (typ_and A B). split. constructor. apply sub_AndR. assumption. *)
+(*     pose proof (IHsub (cons t S) B1) as IHsub'. *)
+(*     assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1). *)
+(*     simpl. reflexivity. *)
+(*     apply IHsub' in IHsub_help. *)
+(*     destruct  IHsub_help. *)
+(*     destruct  H0 as [H01 H02]. *)
+(*     exists x. split. apply as_AndR. *)
+(*     simpl in H01. assumption. assumption. *)
+(* Qed. *)
 
 (* ----------------------------- *)
 (*   Typing Relation *)
@@ -430,7 +450,6 @@ Proof.
   dependent induction Htop; intros e1 e2 e1' e2' H_tred1 H_tred2.
   - apply tred_ord_toplike_normal with (A:=typ_top) in H_tred1; auto; subst.
     apply tred_ord_toplike_normal with (A:=typ_top) in H_tred2; auto; subst.
-    constructor. constructor. constructor. constructor.
   - inversion H_tred1; subst; eauto.
     + inversion H1.
     + inversion H_tred2; subst; eauto; inversion H0. (* ordinary (typ_and A B) is wrong*)
@@ -451,12 +470,63 @@ Proof.
     constructor. assumption. constructor. assumption.
 Qed.
 
+Lemma toplike_sub_top : forall (A : typ),
+    toplike A <-> sub typ_top A.
+Proof.
+  intro A. split.
+  - intro H. induction H.
+    + constructor.
+    + constructor. assumption. assumption.
+    + constructor. assumption.
+  - intro H. induction A; eauto.
+    + inversion H; subst; eauto.
+    + inversion H; subst. constructor.
+      apply IHA2. assumption.
+    + constructor; inversion H; subst.
+      apply IHA1. assumption.
+      apply IHA2. assumption.
+Qed.
+
 Lemma tred_to_sub: forall (e e' : trm) (A B : typ),
     value e -> typedred e A e' -> typing nil nil infer_mode e B -> sub B A.
 Proof.
   intros.
   induction H0; eauto.
   - inversion H1. constructor.
+  - apply toplike_sub_top in H2.
+    pose proof (sub_transitivity typ_top B A) as sub_trans'.
+    assert (H_sub1: sub B typ_top).
+    constructor. apply sub_trans' in H_sub1. assumption. assumption.
+  - inversion H.
+  - inversion H; subst; clear H.
+    apply IHtypedred in H5. assumption.
+Admitted.
+
+Lemma tred_transitivity : forall (e1 e2 e3: trm) (A B : typ),
+    value e1 -> typedred e1 A e2 -> typedred e2 B e3 -> typedred e1 B e3.
+Proof.
+  intros e1 e2 e3 A B Hval Hred1 Hred2.
+  dependent induction Hred1; eauto.
+  - dependent induction Hred2; eauto.
+    + constructor. assumption. assumption. assumption.
+    + assert (Htop : trm_top = trm_top).
+      reflexivity. constructor.
+      * apply IHHred2_1 in Htop. assumption.
+      * apply IHHred2_2 in Htop. assumption.
+  - dependent induction Hred2; eauto.
+    + constructor. constructor. assumption. assumption.
+    + constructor. assumption. assumption. assumption.
+      pose proof (sub_transitivity D B0 D0) as Hsub.
+      apply Hsub in H2. assumption. assumption.
+    + constructor.
+      * pose proof (IHHred2_1 D) as IHHred2_1'.
+        apply IHHred2_1'. assumption. assumption. assumption. assumption. assumption.
+        reflexivity.
+      * pose proof (IHHred2_2 D) as IHHred2_2'.
+        apply IHHred2_2'. assumption. assumption. assumption. assumption. assumption.
+        reflexivity.
+  - inversion Hval; subst; clear Hval. constructor. apply IHHred1. assumption. assumption.
+    dependent induction Hred2; eauto.
 Admitted.
 
 Inductive step : trm -> trm -> Prop :=
