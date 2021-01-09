@@ -429,6 +429,22 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_and : forall (e1 e2 e3 : trm) (A B: typ),
     typedred e1 A e2 -> typedred e1 B e3 -> typedred e1 (typ_and A B) (trm_merge e2 e3).
 
+Definition consistency_spec e1 e2 :=
+  forall (A : typ) (e1' e2' : trm), typedred e1 A e1' -> typedred e2 A e2' -> e1' = e2'.
+
+Inductive disjoint : typ -> typ -> Prop :=
+| dj_top_l : forall (A : typ), disjoint typ_top A
+| dj_top_r : forall (A : typ), disjoint A typ_top
+| dj_and_l : forall (A1 A2 B : typ), disjoint A1 B -> disjoint A2 B -> disjoint (typ_and A1 A2) B
+| dj_and_r : forall (A B1 B2 : typ), disjoint A B1 -> disjoint A B2 -> disjoint A (typ_and B1 B2)
+| dj_int_arr : forall (A1 A2 : typ), disjoint typ_int (typ_arrow A1 A2)
+| dj_arr_int : forall (A1 A2 : typ), disjoint (typ_arrow A1 A2) typ_int
+| dj_arr_arr : forall (A1 A2 B1 B2 : typ), disjoint B1 B2 -> disjoint (typ_arrow A1 B1) (typ_arrow A2 B2).
+
+(* int -> bool, int -> int is disjoint *)
+
+Definition disjoint_spec A B :=
+  forall (C : typ), sub A C -> sub B C -> toplike C.
 
 (* auxiliary lemma *)
 Lemma tred_ord_toplike_normal : forall (e e' : trm) (A : typ),
