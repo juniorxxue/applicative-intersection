@@ -174,3 +174,30 @@ Proof.
   apply tred_toplike with (A:=A0) (e1:=e1) (e2:=e2).
   assumption. assumption. assumption.
 Qed.
+
+Lemma tred_determinism : forall (e1 e2 e3 : trm) (A : typ),
+    value e1 -> (exists (B : typ), typing nil nil infer_mode e1 B) -> typedred e1 A e2 -> typedred e1 A e3 -> e2 = e3.
+Proof.
+  intros e1 e2 e3 A Hval Htyp Hred1 Hred2.
+  generalize dependent e3.
+  induction Hred1.
+  - intros e3 Hred2.
+    inversion Hred2; subst; clear Hred2.
+    + reflexivity.
+    + inversion H0.
+  - intros e3 Hred2.
+    symmetry. apply tred_ord_toplike_normal with (e:=e) (e':=e3) (A:=A).
+    assumption. assumption. assumption.
+  - intros e3 Hred2.
+    inversion Hred2; subst; clear Hred2.
+    + inversion H4; subst; clear H4. congruence.
+    + reflexivity.
+  - intros e3 Hred2.
+    destruct Htyp as [B Hyp].
+    inversion Hval; subst; clear Hval.
+    inversion Hred2; subst; clear Hred2.
+    + apply tred_ord_toplike_normal with (e:=e1) (e':=e1') (A:=A).
+      assumption. assumption. assumption.
+    + inversion Hyp; subst; clear Hyp.
+      (* oops we need to add disjoint into typing relation *)
+Admitted.
