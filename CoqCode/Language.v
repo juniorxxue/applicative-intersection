@@ -54,11 +54,10 @@ Inductive term : trm -> Prop :=
 | term_bvar : forall (n : nat), term (trm_bvar n)
 | term_fvar : forall (x : var), term (trm_fvar x)
 | term_abs : forall (e : trm) (L : vars),
-    (forall x, x \notin L -> term (open e (trm_fvar x))) ->
-    term (trm_abs e)
-| term_app : forall (e1 e2 : trm), term (trm_app e1 e2)
-| term_merge : forall (e1 e2 : trm), term (trm_merge e1 e2)
-| term_anno : forall (e : trm) (A : typ), term (trm_anno e A).
+    (forall x, x \notin L -> term (open e (trm_fvar x))) -> term (trm_abs e)
+| term_app : forall (e1 e2 : trm), term e1 -> term e2 -> term (trm_app e1 e2)
+| term_merge : forall (e1 e2 : trm), term e1 -> term e2 -> term (trm_merge e1 e2)
+| term_anno : forall (e : trm) (A : typ), term e -> term (trm_anno e A).
 
 Hint Constructors trm : core.
 Hint Constructors term : core.
@@ -187,9 +186,9 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
              (typ_arrow C D)
              (trm_anno (trm_abs e) (typ_arrow A D))
 | tred_merge_l : forall (e1 e1' e2 : trm) (A : typ),
-    typedred e1 A e1' -> ordinary A -> typedred (trm_merge e1 e2) A e1'
+    term e2 -> typedred e1 A e1' -> ordinary A -> typedred (trm_merge e1 e2) A e1'
 | tred_merge_r : forall (e1 e2 e2' : trm) (A : typ),
-    typedred e2 A e2' -> ordinary A -> typedred (trm_merge e1 e2) A e2'
+    term e1 -> typedred e2 A e2' -> ordinary A -> typedred (trm_merge e1 e2) A e2'
 | tred_and : forall (e1 e2 e3 : trm) (A B: typ),
     typedred e1 A e2 -> typedred e1 B e3 -> typedred e1 (typ_and A B) (trm_merge e2 e3).
 

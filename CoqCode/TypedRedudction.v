@@ -1,6 +1,6 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language Subtyping.
+Require Import Language Subtyping Auxiliaries.
 
 Lemma tred_ord_toplike_normal : forall (e e' : trm) (A : typ),
     ordinary A -> toplike A -> typedred e A e' -> e' = trm_top.
@@ -23,8 +23,8 @@ Proof.
     apply tred_ord_toplike_normal with (A:=typ_top) in H_tred2; auto; subst.
   - inversion H_tred1; subst; eauto.
     + inversion H1.
-    + inversion H_tred2; subst; eauto; inversion H0. (* ordinary (typ_and A B) is wrong*)
-    + inversion H0.
+    + inversion H1.
+    + inversion H1.
     + inversion H_tred2; subst; eauto; try (inversion H0); try (inversion H1).
       assert (Heq1: e3 = e5).
       pose proof (IHHtop1 e1 e2 e3 e5) as IHHtop1'.
@@ -70,7 +70,6 @@ Proof.
     constructor. apply sub_trans' in H_sub1. assumption. assumption.
   - inversion H.
   - inversion H; subst; clear H.
-    apply IHtypedred in H5. assumption.
 Admitted.
 
 Lemma tred_transitivity : forall (e1 e2 e3: trm) (A B : typ),
@@ -85,7 +84,7 @@ Proof.
       * apply IHHred2_1 in Htop. assumption.
       * apply IHHred2_2 in Htop. assumption.
   - dependent induction Hred2; eauto.
-    + constructor. constructor. assumption. assumption.
+    + constructor. constructor. assumption. assumption. assumption.
     + constructor. assumption. assumption. assumption.
       pose proof (sub_transitivity D B0 D0) as Hsub.
       apply Hsub in H2. assumption. assumption.
@@ -96,6 +95,82 @@ Proof.
       * pose proof (IHHred2_2 D) as IHHred2_2'.
         apply IHHred2_2'. assumption. assumption. assumption. assumption. assumption.
         reflexivity.
-  - inversion Hval; subst; clear Hval. constructor. apply IHHred1. assumption. assumption.
-    dependent induction Hred2; eauto.
+  - inversion Hval; subst; clear Hval.
+    induction Hred2; eauto.
+    + apply tred_merge_l. assumption. apply IHHred1. assumption. apply tred_int. apply ord_int.
+    + apply tred_merge_l. assumption. apply IHHred1. assumption. apply tred_top. assumption. assumption. assumption. assumption.
+    + apply tred_merge_l. assumption. apply IHHred1. assumption. apply tred_arrow_anno. assumption. assumption. assumption. assumption.
+      apply ord_arrow.
+    + apply tred_merge_l. assumption. apply IHHred1. assumption. apply tred_merge_l. assumption. assumption. assumption. assumption.
+    + apply tred_merge_l. assumption. apply IHHred1. assumption. apply tred_merge_r. assumption. assumption. assumption. assumption.
+    + apply tred_and.
+      * apply IHHred2_1. assumption. intros; subst. clear IHHred2_1 IHHred2_2 Hval Hred2.
+        assert (Hred1': typedred e1 (typ_and A0 B) (trm_merge e3 e4)).
+        apply IHHred1. assumption. apply tred_and. assumption. assumption.
+        inversion Hred1'; subst; eauto.
+        inversion H5. inversion H5.
+      * apply IHHred2_2. assumption. intros; subst. clear IHHred2_1 IHHred2_2 Hval Hred2.
+        assert (Hred2' : typedred e1 (typ_and A0 B) (trm_merge e3 e4)).
+        apply IHHred1. assumption. apply tred_and. assumption. assumption.
+        inversion Hred2'; subst; eauto.
+        inversion H5. inversion H5.
+  - inversion Hval; subst; clear Hval.
+    induction Hred2; eauto.
+    + apply tred_merge_r. assumption. apply IHHred1. assumption. apply tred_int. apply ord_int.
+    + apply tred_merge_r. assumption. apply IHHred1. assumption. apply tred_top. assumption. assumption. assumption. assumption.
+    + apply tred_merge_r. assumption. apply IHHred1. assumption. apply tred_arrow_anno. assumption. assumption. assumption. assumption.
+      apply ord_arrow.
+    + apply tred_merge_r. assumption. apply IHHred1. assumption. apply tred_merge_l. assumption. assumption. assumption. assumption.
+    + apply tred_merge_r. assumption. apply IHHred1. assumption. apply tred_merge_r. assumption. assumption. assumption. assumption.
+    + apply tred_and.
+      * apply IHHred2_1. assumption. intros; subst. clear IHHred2_1 IHHred2_2 Hval Hred2.
+        assert (Hred1': typedred e2 (typ_and A0 B) (trm_merge e3 e4)).
+        apply IHHred1. assumption. apply tred_and. assumption. assumption.
+        inversion Hred1'; subst; eauto.
+        inversion H5. inversion H5.
+      * apply IHHred2_2. assumption. intros; subst. clear IHHred2_1 IHHred2_2 Hval Hred2.
+        assert (Hred2' : typedred e2 (typ_and A0 B) (trm_merge e3 e4)).
+        apply IHHred1. assumption. apply tred_and. assumption. assumption.
+        inversion Hred2'; subst; eauto.
+        inversion H5. inversion H5.
+  - generalize dependent e3. dependent induction B0; intros e3 H1 H2 Hred2.
+    + inversion Hred2; subst; clear Hred2.
+      constructor. apply value_to_term in Hval. assumption. assumption. assumption.
+      apply H1. assumption. assumption.
+      apply H2. assumption. assumption.
+
+  (* - dependent induction B. *)
+  (*   + inversion Hred2; subst; clear Hred2. constructor. apply value_to_term in Hval. *)
+  (*     assumption. assumption. assumption. *)
+  (*     apply IHHred1_1. assumption. assumption. *)
+  (*     apply IHHred1_2. assumption. assumption. *)
+  (*   + inversion Hred2; subst; clear Hred2. constructor. apply value_to_term in Hval. *)
+  (*     assumption. assumption. assumption. *)
+  (*     apply IHHred1_1. assumption. assumption. *)
+  (*     apply IHHred1_2. assumption. assumption. *)
+  (*   + inversion Hred2; subst; clear Hred2. constructor. apply value_to_term in Hval. *)
+  (*     assumption. assumption. assumption. *)
+  (*     apply IHHred1_1. assumption. assumption. *)
+  (*     apply IHHred1_2. assumption. assumption. *)
+  (*   + inversion Hred2; subst; clear Hred2. *)
+  (*     * constructor. apply value_to_term in Hval. *)
+  (*       assumption. assumption. assumption. *)
+  (*     * apply IHHred1_1. assumption. assumption. *)
+  (*     * apply IHHred1_2. assumption. assumption. *)
 Admitted.
+
+Lemma disjoint_value_consistent : forall (A B : typ) (e1 e2 : trm),
+    disjoint_spec A B -> value e1 -> value e2 -> typing nil nil infer_mode e1 A -> typing nil nil infer_mode e2 B ->
+    consistency_spec e1 e2.
+Proof.
+  intros A B e1 e2 Hdisj Hval1 Hval2 Htyp1 Htyp2.
+  unfold consistency_spec.
+  intros A0 e1' e2' Hred1 Hred2.
+  assert (Htop : toplike A0). unfold disjoint_spec in Hdisj. apply Hdisj.
+  pose proof (tred_to_sub e1 e1' A0 A) as Hsub1.
+  apply Hsub1. assumption. assumption. assumption.
+  pose proof (tred_to_sub e2 e2' A0 B) as Hsub2.
+  apply Hsub2. assumption. assumption. assumption.
+  apply tred_toplike with (A:=A0) (e1:=e1) (e2:=e2).
+  assumption. assumption. assumption.
+Qed.
