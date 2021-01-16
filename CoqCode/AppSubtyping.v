@@ -11,7 +11,7 @@ Proof.
   induction H; eauto.
   - exists A. unfold typ_stack. auto.
   - exists typ_top. auto.
-  - destruct IHappsub. rewrite H1.
+  - destruct IHappsub. rewrite H0.
     simpl. exists x. reflexivity.
 Qed.
 
@@ -21,10 +21,30 @@ Lemma appsub_reflexivity :
 Proof.
   induction S; intros.
   - constructor.
-  - simpl. apply as_Fun.
-    apply sub_reflexivity.
+  - simpl. apply as_fun.
     apply IHS.
 Qed.
+
+(*
+S1 |- A <: S1 -> B
+S2 |- B <: C
+S1, S2 |- A <: S1 -> C
+*)
+
+Lemma appsub_transitivity_simpl :
+  forall (S1 S2 : arg) (A B C : typ),
+    appsub S1 A B ->
+    appsub S2 B C ->
+    appsub (S1 ++ S2) A C.
+Proof.
+  intros S1 S2 A B C H1 H2.
+  dependent induction H1; subst.
+  - simpl in *. assumption.
+  - simpl in *. inversion H2; subst; clear H2.
+    + constructor.
+    + constructor.
+  - simpl in *.
+    Admitted.
 
 Lemma appsub_transitivity :
   forall (S1 S2 : arg) (A B C: typ),
@@ -40,28 +60,30 @@ Proof.
     inversion H2; subst.
     constructor. constructor.
   - simpl in *.
-    constructor. assumption.
+    constructor.
     apply IHappsub with B.
     reflexivity. assumption.
-  - apply as_AndL.
-    apply IHappsub with B.
-    reflexivity.
-    assumption.
-  - apply as_AndR.
-    apply IHappsub with B.
-    reflexivity.
-    assumption.
-Qed.
+  - apply as_and_l.
+    + apply IHappsub with B.
+      reflexivity. assumption.
+Admitted.
+(*     + *)
+(*   - apply as_and_r. *)
+(*     apply IHappsub with B. *)
+(*     reflexivity. *)
+(*     assumption. *)
+(* Qed. *)
 
 Lemma appsub_to_sub :
   forall (S : arg) (A B : typ),
-  appsub S A B ->
-  sub A B.
+  appsub S A B -> sub A B.
 Proof.
   intros S A B H.
   induction H; eauto; subst.
-  apply sub_reflexivity.
-Qed.
+  - apply sub_reflexivity.
+  - apply sub_top_arr.
+Admitted.
+
 
 Lemma sub_to_appsub :
   forall (S : arg) (A B1 : typ),

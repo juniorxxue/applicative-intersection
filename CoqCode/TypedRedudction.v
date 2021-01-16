@@ -201,3 +201,19 @@ Proof.
   eapply tred_determinism. apply Hval.
   exists C. apply Htyp. apply Hred11. apply Hred21.
 Qed.
+
+Lemma tred_preservation :
+  forall (e e' : trm) (A : typ),
+    value e -> typedred e A e' -> typing nil nil check_mode e A ->
+    exists (B : typ), typing nil nil infer_mode e' B.
+Proof with auto.
+  intros e e' A Hval Hred Htyp.
+  induction Hred; eauto.
+Admitted.
+
+Lemma tred_progress :
+  forall (e : trm) (A : typ),
+    value e -> typing nil nil check_mode e A -> exists (e' : trm), typedred e A e'.
+Proof.
+  intros e A Hval Htyp.
+Admitted.

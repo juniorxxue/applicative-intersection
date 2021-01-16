@@ -166,6 +166,8 @@ Definition disjoint_spec A B :=
 Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T -> (typing T nil infer_mode (trm_nat n) typ_int)
+| typing_top : forall (T : ctx),
+    typing T nil infer_mode trm_top typ_top
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
 | typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
