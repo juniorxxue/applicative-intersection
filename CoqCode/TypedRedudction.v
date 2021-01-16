@@ -183,3 +183,21 @@ Proof.
       rewrite Heq1. rewrite Heq2.
       reflexivity.
 Qed.
+
+Lemma consistent_after_tred :
+  forall (e e1 e2 : trm) (A B C : typ),
+    value e -> typing nil nil infer_mode e C ->
+    typedred e A e1 -> typedred e B e2 -> consistency_spec e1 e2.
+Proof.
+  intros e e1 e2 A B C Hval Htyp Hred1 Hred2.
+  unfold consistency_spec.
+  intros D e1' e2' Hred1' Hred2'.
+  assert (Hred11: typedred e D e1').
+  eapply tred_transitivity. assumption.
+  apply Hred1. apply Hred1'.
+  assert (Hred21: typedred e D e2').
+  eapply tred_transitivity. assumption.
+  apply Hred2. apply Hred2'.
+  eapply tred_determinism. apply Hval.
+  exists C. apply Htyp. apply Hred11. apply Hred21.
+Qed.
