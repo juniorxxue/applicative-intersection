@@ -123,6 +123,8 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
 (* | as_and_r : forall (A B D: typ) (S : arg), *)
 (*     appsub S B D -> appsub S (typ_and A B) D. *)
 
+Hint Constructors appsub : core.
+
 Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_int : forall (n : nat),
     typedred (trm_nat n) typ_int (trm_nat n)
@@ -140,6 +142,8 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_and : forall (e1 e2 e3 : trm) (A B: typ),
     typedred e1 A e2 -> typedred e1 B e3 -> typedred e1 (typ_and A B) (trm_merge e2 e3).
 
+Hint Constructors typedred : core.
+
 Definition consistency_spec e1 e2 :=
   forall (A : typ) (e1' e2' : trm), typedred e1 A e1' -> typedred e2 A e2' -> e1' = e2'.
 
@@ -151,6 +155,8 @@ Inductive disjoint : typ -> typ -> Prop :=
 | dj_int_arr : forall (A1 A2 : typ), disjoint typ_int (typ_arrow A1 A2)
 | dj_arr_int : forall (A1 A2 : typ), disjoint (typ_arrow A1 A2) typ_int
 | dj_arr_arr : forall (A1 A2 B1 B2 : typ), disjoint B1 B2 -> disjoint (typ_arrow A1 B1) (typ_arrow A2 B2).
+
+Hint Constructors disjoint : core.
 
 (* int -> bool, int -> int is disjoint *)
 
