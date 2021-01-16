@@ -1,6 +1,6 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language.
+Require Import Language Notations.
 
 Theorem sub_reflexivity :
   forall t, sub t t.

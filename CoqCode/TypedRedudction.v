@@ -1,6 +1,6 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language Subtyping Auxiliaries.
+Require Import Language Subtyping Auxiliaries Notations.
 
 Lemma tred_ord_toplike_normal : forall (e e' : trm) (A : typ),
     ordinary A -> toplike A -> typedred e A e' -> e' = trm_top.

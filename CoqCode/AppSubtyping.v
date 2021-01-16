@@ -1,6 +1,6 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language Subtyping.
+Require Import Language Subtyping Notations.
 
 Lemma appsub_coincides_with_sub :
   forall (S : arg) (A B : typ),
