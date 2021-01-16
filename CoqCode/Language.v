@@ -1,22 +1,13 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 
-Inductive typ : Set :=  (*r typ *)
-| typ_int(*r int *)
-| typ_top(*r top *)
-| typ_arrow (A:typ) (B:typ) (*r function *)
-| typ_and (A:typ) (B:typ). (*r intersection typ *)
-
-Inductive type : typ -> Prop :=
-| type_int : type typ_int
-| type_top : type typ_top
-| type_arrow : forall (A B : typ),
-    type A -> type B -> type (typ_arrow A B)
-| type_and : forall (A B : typ),
-    type A -> type B -> type (typ_and A B).
+Inductive typ : Set :=
+| typ_int
+| typ_top
+| typ_arrow (A:typ) (B:typ)
+| typ_and (A:typ) (B:typ).
 
 Hint Constructors typ : core.
-Hint Constructors type : core.
 
 Inductive trm : Set :=
 | trm_top : trm
@@ -62,7 +53,6 @@ Inductive term : trm -> Prop :=
 Hint Constructors trm : core.
 Hint Constructors term : core.
 
-(* value *)
 Inductive value : trm -> Prop :=
 | value_top : value trm_top
 | value_nat : forall (n : nat), value (trm_nat n)
@@ -88,38 +78,25 @@ Inductive ordinary : typ -> Prop :=
 
 Hint Constructors ordinary : core.
 
-Inductive sub : typ -> typ -> Prop :=    (* defn sub *)
-| sub_Int :
+Inductive sub : typ -> typ -> Prop :=
+| sub_int :
     sub typ_int typ_int
-| sub_Top : forall (A:typ),
-    type A -> sub A typ_top
-| sub_TopArr : forall (A B1 B2 : typ),
-    type A -> type B1 -> type B2 -> sub typ_top B2 -> sub A (typ_arrow B1 B2)
-| sub_Arrow : forall (A B C D:typ),
+| sub_top : forall (A:typ),
+    sub A typ_top
+| sub_top_arr : forall (A B1 B2 : typ),
+    sub typ_top B2 -> sub A (typ_arrow B1 B2)
+| sub_arrow : forall (A B C D:typ),
     sub C A -> sub B D -> sub (typ_arrow A B) (typ_arrow C D)
-| sub_And : forall (A B C:typ),
+| sub_and : forall (A B C:typ),
     sub A B -> sub A C -> sub A (typ_and B C)
-| sub_AndL : forall (A B C:typ),
+| sub_and_l : forall (A B C:typ),
     sub A C -> sub (typ_and A B) C
-| sub_AndR : forall (A B C:typ),
+| sub_and_r : forall (A B C:typ),
     sub B C -> sub (typ_and A B) C.
 
 Hint Constructors sub : core.
 
 Definition arg := list typ.
-
-(* S |- A <: B *)
-Inductive appsub : arg -> typ -> typ -> Prop :=
-| as_Refl : forall (A : typ),
-    type A -> appsub nil A A
-| as_Top : forall (A : typ),
-    type A -> appsub nil A typ_top
-| as_Fun : forall (C A B D : typ) (S : arg),
-    sub C A -> appsub S B D -> appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
-| as_AndL : forall (A B D : typ) (S : arg),
-    type B -> appsub S A D  -> appsub S (typ_and A B) D
-| as_AndR : forall (A B D: typ) (S : arg),
-    type A -> appsub S B D -> appsub S (typ_and A B) D.
 
 Fixpoint typ_stack (S : arg) (A : typ) : typ :=
   match S with
@@ -128,6 +105,23 @@ Fixpoint typ_stack (S : arg) (A : typ) : typ :=
   end.
 
 (* Compute (typ_stack (cons type_int (cons type_int nil)) type_top). *)
+
+(* S |- A <: B *)
+Inductive appsub : arg -> typ -> typ -> Prop :=
+| as_refl : forall (A : typ),
+    appsub nil A A
+| as_top : forall (A : typ),
+    appsub nil A typ_top
+| as_fun : forall (C A B D : typ) (S : arg),
+    appsub S B D -> appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
+| as_and_l : forall (A B D : typ) (S : arg),
+    appsub S A D -> not (sub B (typ_stack S D)) -> appsub S (typ_and A B) D
+| as_and_r : forall (A B D : typ) (S : arg),
+    appsub S B D -> not (sub A (typ_stack S D)) -> appsub S (typ_and A B) D.
+(* | as_and_l : forall (A B D : typ) (S : arg), *)
+(*     appsub S A D  -> appsub S (typ_and A B) D *)
+(* | as_and_r : forall (A B D: typ) (S : arg), *)
+(*     appsub S B D -> appsub S (typ_and A B) D. *)
 
 Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_int : forall (n : nat),
@@ -167,16 +161,15 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T -> (typing T nil infer_mode (trm_nat n) typ_int)
 | typing_var : forall (T : ctx) (x : var) (A : typ),
-    uniq T -> type A -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
+    uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
 | typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
-    type A -> (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) B) ->
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) B) ->
     typing T nil check_mode (trm_abs e) (typ_arrow A B)
 | typing_abs2 : forall (L: vars) (T : ctx) (S : arg) (A B : typ) (e : trm),
-    type A ->
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) S infer_mode (open e (trm_fvar x)) B) ->
     typing T (cons A S) infer_mode (trm_abs e) (typ_arrow A B)
 | typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
-    type A -> type B -> appsub S A B -> typing T nil check_mode e A ->
+    appsub S A B -> typing T nil check_mode e A ->
     typing T S infer_mode (trm_anno e A) B
 | typing_app1 : forall (T : ctx) (S : arg) (A B : typ) (e1 e2 : trm),
     typing T nil infer_mode e2 A ->
@@ -188,7 +181,7 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil check_mode (trm_app e1 e2) B
 | typing_sub : forall (T : ctx) (A B : typ) (e : trm),
     typing T nil infer_mode e B ->
-    type B -> type A -> (sub B A) ->
+    (sub B A) ->
     typing T nil check_mode e A
 | typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
     disjoint_spec A B ->

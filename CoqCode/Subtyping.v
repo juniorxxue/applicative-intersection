@@ -6,25 +6,25 @@ Theorem sub_reflexivity :
   forall t, sub t t.
 Proof.
   induction t.
-  - apply sub_Int.
-  - apply sub_Top.
-  - apply sub_Arrow.
+  - apply sub_int.
+  - apply sub_top.
+  - apply sub_arrow.
     + apply IHt1.
     + apply IHt2.
-  - apply sub_And.
-    + apply sub_AndL. apply IHt1.
-    + apply sub_AndR. apply IHt2.
+  - apply sub_and.
+    + apply sub_and_l. apply IHt1.
+    + apply sub_and_r. apply IHt2.
 Qed.
 
-Lemma lemma_sub_and:
+Lemma inversion_sub_and:
   forall t1 t2 t3, sub t1 (typ_and t2 t3) -> sub t1 t2 /\ sub t1 t3.
 Proof.
   intros t1 t2 t3 H.
   dependent induction H; eauto.
   destruct (IHsub t2 t3); split; constructor; eauto.
   destruct (IHsub t2 t3); split.
-  apply sub_AndR. assumption.
-  apply sub_AndR. assumption.
+  apply sub_and_r. assumption.
+  apply sub_and_r. assumption.
 Qed.
 
 Theorem sub_transitivity :
@@ -48,7 +48,7 @@ Proof.
   - dependent induction H0; eauto.
     clear IHsub1 IHsub2.
     dependent induction H; eauto.
-  - apply lemma_sub_and in H.
+  - apply inversion_sub_and in H.
     destruct H.
     dependent induction H0; eauto.
 Qed.
