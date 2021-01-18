@@ -2,6 +2,8 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language Subtyping Notations.
 
+Set Printing Parentheses.
+
 Lemma appsub_coincides_with_sub :
   forall (S : arg) (A B : typ),
     appsub S A B ->
@@ -25,26 +27,11 @@ Proof.
     apply IHS.
 Qed.
 
-(*
-S1 |- A <: S1 -> B
-S2 |- B <: C
-S1, S2 |- A <: S1 -> C
-*)
+(***
+succ ,, not 3
 
-Lemma appsub_transitivity_simpl :
-  forall (S1 S2 : arg) (A B C : typ),
-    appsub S1 A B ->
-    appsub S2 B C ->
-    appsub (S1 ++ S2) A C.
-Proof.
-  intros S1 S2 A B C H1 H2.
-  dependent induction H1; subst.
-  - simpl in *. assumption.
-  - simpl in *. inversion H2; subst; clear H2.
-    + constructor.
-    + constructor.
-  - simpl in *.
-    Admitted.
+Int |- (Int -> Int) & (Bool -> Bool) <: Int -> Int
+***)
 
 Lemma appsub_transitivity :
   forall (S1 S2 : arg) (A B C: typ),
@@ -63,9 +50,10 @@ Proof.
     constructor.
     apply IHappsub with B.
     reflexivity. assumption.
-  - apply as_and_l.
+  - apply as_and_l with (E:=E).
     + apply IHappsub with B.
       reflexivity. assumption.
+    +
 Admitted.
 (*     + *)
 (*   - apply as_and_r. *)
@@ -76,40 +64,38 @@ Admitted.
 
 Lemma appsub_to_sub :
   forall (S : arg) (A B : typ),
-  appsub S A B -> sub A B.
+  appsub S A B /\ B = typ_top -> sub A B.
 Proof.
-  intros S A B H.
-  induction H; eauto; subst.
+  intros S A B [H1 H2].
+  induction H1; eauto; subst.
   - apply sub_reflexivity.
-  - apply sub_top_arr.
-Admitted.
-
+  - rewrite H2. constructor.
+Qed.
 
 Lemma sub_to_appsub :
   forall (S : arg) (A B1 : typ),
     sub A (typ_stack S B1) ->
-    exists B2 : typ,
-      appsub S A (typ_stack S B2) /\ (sub B2 B1).
+    exists B2 : typ, (appsub S A (typ_stack S B2) /\ (sub B2 B1)) \/ B2 = typ_top.
 Proof.
   intros S A B1 H.
-  dependent induction H.
-  - destruct S.
-    simpl. exists typ_int. split.
-    constructor. simpl in x. rewrite <- x.
-    constructor.
-    inversion x.
-  - destruct S; simpl in *; subst.
-    exists A. split. constructor. constructor.
-    inversion x.
-  - destruct S; simpl in *; subst.
-    exists typ_top. split.
-    constructor. constructor. assumption.
-    inversion x; subst.
-    pose proof (IHsub S B1) as IHsub'.
-    assert (IHsub_help: typ_stack S B1 = typ_stack S B1).
-    reflexivity.
-Admitted.
-    (* (inversion x; subst. *) *) *)
+  dependent induction H; eauto.
+Qed.
+  (* - destruct S. *)
+  (*   simpl. exists typ_int. split. *)
+  (*   constructor. simpl in x. rewrite <- x. *)
+  (*   constructor. *)
+  (*   inversion x. *)
+  (* - destruct S; simpl in *; subst. *)
+  (*   exists A. split. constructor. constructor. *)
+  (*   inversion x. *)
+  (* - destruct S; simpl in *; subst. *)
+  (*   exists typ_top. split. *)
+  (*   constructor. constructor. assumption. *)
+  (*   inversion x; subst. *)
+  (*   pose proof (IHsub S B1) as IHsub'. *)
+  (*   assert (IHsub_help: typ_stack S B1 = typ_stack S B1). *)
+  (*   reflexivity. *)
+    (* (* (inversion x; subst. *) *) *) *)
 (*     pose proof (IHsub2 S B1) as IHsub2'. *)
 (*     assert (IHsub2_help: typ_stack S B1 = typ_stack S B1). *)
 (*     reflexivity. *)
