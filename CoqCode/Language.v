@@ -113,15 +113,17 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_top : forall (A : typ),
     appsub nil A typ_top
 | as_fun : forall (C A B D : typ) (S : arg),
-    appsub S B D -> appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
+    sub C A ->
+    appsub S B D ->
+    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
 | as_and_l : forall (A B D: typ) (S : arg),
-    appsub S A D -> forall (E : typ), not (sub B (typ_stack S E)) -> appsub S (typ_and A B) D
+    appsub S A D ->
+    not (sub B (typ_stack S typ_top)) ->
+    appsub S (typ_and A B) D
 | as_and_r : forall (A B D: typ) (S : arg),
-    appsub S B D -> forall (E : typ), not (sub A (typ_stack S E)) -> appsub S (typ_and A B) D.
-(* | as_and_l : forall (A B D : typ) (S : arg), *)
-(*     appsub S A D  -> appsub S (typ_and A B) D *)
-(* | as_and_r : forall (A B D: typ) (S : arg), *)
-(*     appsub S B D -> appsub S (typ_and A B) D. *)
+    appsub S B D ->
+    not (sub A (typ_stack S typ_top)) ->
+    appsub S (typ_and A B) D.
 
 Hint Constructors appsub : core.
 
