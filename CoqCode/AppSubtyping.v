@@ -28,6 +28,28 @@ Proof.
     + apply IHS.
 Qed.
 
+Lemma stack_commutativity :
+  forall (S1 S2 : arg) (A : typ),
+    (typ_stack (S1 ++ S2) A) = (typ_stack S1 (typ_stack S2 A)).
+Proof.
+  intros S1 S2 A.
+  induction S1.
+  - simpl. reflexivity.
+  - simpl. rewrite IHS1. reflexivity.
+Qed.
+
+Lemma stack_sub_top :
+  forall (S : arg) (A : typ),
+    sub (typ_stack S A) (typ_stack S typ_top).
+Proof.
+  intros S A.
+  induction S.
+  - simpl. apply sub_top.
+  - simpl. apply sub_arrow.
+    + apply sub_reflexivity.
+    + apply IHS.
+Qed.
+
 Lemma appsub_transitivity :
   forall (S1 S2 : arg) (A B C: typ),
     appsub S1 A (typ_stack S1 B) ->
@@ -49,7 +71,24 @@ Proof.
   - apply as_and_l.
     + apply IHappsub with B.
       reflexivity. assumption.
-Admitted.
+    + unfold not. intros.
+      rewrite stack_commutativity in H0.
+      assert (Hsub: sub B0 (typ_stack S typ_top)).
+      eapply sub_transitivity. apply H0.
+      eapply stack_sub_top.
+      unfold not in H.
+      apply H in Hsub. assumption.
+  - apply as_and_r.
+    + apply IHappsub with B.
+      reflexivity. assumption.
+    + unfold not. intros.
+      rewrite stack_commutativity in H0.
+      assert (Hsub: sub A (typ_stack S typ_top)).
+      eapply sub_transitivity. apply H0.
+      eapply stack_sub_top.
+      unfold not in H.
+      apply H in Hsub. assumption.
+Qed.
 
 Lemma appsub_to_sub :
   forall (S : arg) (A B : typ),
@@ -59,7 +98,6 @@ Proof.
   induction H; eauto.
   apply sub_reflexivity.
 Qed.
-
 
 Lemma sub_to_appsub :
   forall (S : arg) (A B1 : typ),
