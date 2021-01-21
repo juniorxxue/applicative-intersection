@@ -99,6 +99,59 @@ Proof.
   apply sub_reflexivity.
 Qed.
 
+(*aux lemma for sub_to_app *)
+Lemma toplike_sub_top :
+  forall (A : typ),
+    sub typ_top A -> toplike A.
+Proof.
+  intros A Hsub.
+  induction A.
+  - inversion Hsub.
+  - constructor.
+  - inversion Hsub; subst.
+    constructor. apply IHA2. assumption.
+  - inversion Hsub; subst.
+    constructor.
+    + apply IHA1. assumption.
+    + apply IHA2. assumption.
+Qed.
+
+(*aux lemma for sub_to_app *)
+Lemma stack_is_top :
+  forall (S : arg) (A : typ),
+    typ_stack S A = typ_top -> S = nil /\ A = typ_top.
+Proof.
+  induction S.
+  - simpl. split.
+    + reflexivity.
+    + assumption.
+  - simpl. intros. split.
+    + inversion H.
+    + inversion H.
+Qed.
+
+(* aux lemma for stack_toplike *)
+Lemma typ_arrow_toplike :
+  forall (A B : typ),
+    toplike (typ_arrow A B) -> toplike B.
+Proof.
+  intros A B Htl.
+  inversion Htl.
+  assumption.
+Qed.
+
+(* aux lemma for sub_to_appsub *)
+Lemma stack_toplike :
+  forall (S : arg) (A : typ),
+    toplike (typ_stack S A) -> toplike A.
+Proof.
+  intros S A Htl.
+  induction S.
+  - simpl in *. assumption.
+  - simpl in *. apply IHS.
+    apply typ_arrow_toplike in Htl. assumption.
+Qed.
+
 Lemma sub_to_appsub :
   forall (S : arg) (A B1 : typ),
     sub A (typ_stack S B1) -> not (toplike B1) ->
@@ -107,11 +160,57 @@ Proof.
   intros S A B1 H1 H2.
   dependent induction H1.
   - destruct S.
-    simpl. exists typ_int. split.
-    constructor. simpl in x. rewrite <- x.
-    constructor.
+    + simpl. exists typ_int. split.
+      * constructor.
+      * simpl in x. rewrite <- x. constructor.
+    + inversion x.
+  - destruct S; simpl in *; subst.
+    + exists A. split.
+      * constructor.
+      * constructor.
+    + inversion x.
+  - destruct S; simpl in *; subst.
+    + exists A. split.
+      * constructor.
+      * assert (H2': toplike (typ_arrow B0 B2)).
+        constructor.
+        apply toplike_sub_top. assumption.
+        contradiction.
+    + inversion x; subst; simpl in *.
+      assert (H2': toplike (typ_stack S B1)).
+      apply toplike_sub_top. assumption.
+      apply stack_toplike in H2'.
+      contradiction.
+  - destruct S; simpl in *; subst.
+    + exists (typ_arrow A B). split.
+      * constructor.
+      * apply sub_arrow. assumption. assumption.
+    + inversion x; subst.
+      pose proof (IHsub2 S B1) as IHsub2'.
+      assert (IHsub2_help: typ_stack S B1 = typ_stack S B1).
+      reflexivity.
+      apply IHsub2' in IHsub2_help.
+      destruct IHsub2_help.
+      exists x0. split.
+      * constructor. assumption.
+        destruct H as [H11 H12].
+        assumption.
+      * destruct H as [H11 H12].
+        assumption.
+      * assumption.
+  - destruct S; simpl in *; subst.
+    exists A. split. constructor. constructor. assumption. assumption.
     inversion x.
   - destruct S; simpl in *; subst.
-    exists A. split. constructor. constructor.
-    inversion x.
+    + exists (typ_and A B). split.
+      * constructor.
+      * apply sub_and_l. assumption.
+    + pose proof (IHsub (cons t S) B1) as IHsub'.
+      assert(IHsub_help: typ_arrow t (typ_stack S B1) = typ_stack (t :: S) B1).
+      simpl. reflexivity.
+      apply IHsub' in IHsub_help.
+      destruct IHsub_help.
+      destruct H as [H01 H02].
+      exists x. split.
+      * apply as_and_l. assumption.
 Admitted.
