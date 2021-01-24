@@ -202,18 +202,22 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 Hint Constructors typing : core.
 
 Inductive step : trm -> trm -> Prop :=
-| step_anno : forall (e e' : trm) (A : typ),
-    step e e' -> step (trm_anno e A) (trm_anno e' A)
+| step_top : forall (e : trm),
+    value e -> step (trm_app trm_top e) trm_top
+| step_beta : forall (e1 e2 e2' : trm) (A B : typ),
+    term (trm_abs e1) -> value e2 -> typedred e2 A e2' ->
+    step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B)
+| step_anno_typed : forall (e e' : trm) (A : typ),
+    value e -> typedred e A e' -> step (trm_anno e A) e'
 | step_app_l : forall (e1 e2 e1' : trm),
     term e2 -> step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (e1 e2 e2' : trm),
     value e1 -> step e2 e2' -> step (trm_app e1 e2) (trm_app e1 e2')
 | step_merge_l : forall (e1 e2 e1' : trm),
-    term e2 -> step e1 e1' -> step (trm_merge e1 e2) (trm_app e1' e2)
+    term e2 -> step e1 e1' -> step (trm_merge e1 e2) (trm_merge e1' e2)
 | step_merge_r : forall (e1 e2 e2' : trm),
-    value e2 -> step e2 e2' -> step (trm_app e1 e2) (trm_app e1 e2')
-| step_beta : forall (e1 e2 e2' : trm) (A B : typ),
-    term (trm_abs e1) -> value e2 -> typedred e2 A e2' ->
-    step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B)
-| step_anno_typed : forall (e e' : trm) (A : typ),
-    typedred e A e' -> step (trm_anno e A) e'.
+    value e2 -> step e2 e2' -> step (trm_merge e1 e2) (trm_merge e1 e2')
+| step_anno : forall (e e' : trm) (A : typ),
+    step e e' -> step (trm_anno e A) (trm_anno e' A).
+
+Hint Constructors step : core.

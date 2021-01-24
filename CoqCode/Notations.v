@@ -14,3 +14,5 @@ Notation "e ~-> A e'" := (typedred e A e') (at level 68).
 
 Notation "T S ⊢ e ⇒ A" := (typing T S infer_mode e A) (at level 50).
 Notation "T S ⊢ e ⇐ A" := (typing T S check_mode e A) (at level 50).
+
+Notation "e ~-> e'" := (step e e') (at level 68).
