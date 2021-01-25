@@ -201,12 +201,15 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 
 Hint Constructors typing : core.
 
+Parameter Y : atom.
+Compute (open (trm_abs (trm_bvar 0)) (trm_fvar Y)).
+
 Inductive step : trm -> trm -> Prop :=
 | step_top : forall (e : trm),
     value e -> step (trm_app trm_top e) trm_top
 | step_beta : forall (e1 e2 e2' : trm) (A B : typ),
-    term (trm_abs e1) -> value e2 -> typedred e2 A e2' ->
-    step (trm_app (trm_abs e1) e2) (trm_anno (open e1 e2') B)
+    term (trm_abs e1) -> value e2 -> typered e2 A e2' ->
+    step (trm_app (trm_abs e1) e2) (open e1 e2')
 | step_anno_typed : forall (e e' : trm) (A : typ),
     value e -> typedred e A e' -> step (trm_anno e A) e'
 | step_app_l : forall (e1 e2 e1' : trm),
