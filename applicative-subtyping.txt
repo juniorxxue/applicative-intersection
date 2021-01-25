@@ -357,6 +357,10 @@ e --> e'
 
 Rules:
 
+Value e
+----------------- Step-Top
+Top e -> Top
+
 e --> e'
 -------------------- Step-Anno
 e : A --> e' : A
