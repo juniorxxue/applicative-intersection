@@ -1,13 +1,10 @@
 Require Import Metalib.Metatheory.
 Require Import Language.
 
-Lemma value_to_term : forall (e : trm),
-    value e -> term e.
+Lemma anno_equal_split :
+  forall (e1 e2 : trm) (A B : typ),
+    (trm_anno e1 A) = (trm_anno e2 B) -> (e1 = e2) /\ (A = B).
 Proof.
-  intros e Hval.
-  induction Hval.
-  - constructor.
-  - constructor.
-  - inversion H; subst. assumption.
-  - constructor. assumption. assumption.
+  intros.
+  induction e1; inversion H; eauto.
 Qed.
