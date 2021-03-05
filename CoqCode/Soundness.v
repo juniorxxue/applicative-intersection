@@ -14,17 +14,6 @@ Inductive runsub : typ -> typ -> Prop :=
 | rsub_top : forall (A : typ),
     toplike A -> runsub typ_top A.
 
-Lemma typing_sub_check :
-  forall (e : trm) (A B : typ),
-    typing nil nil check_mode e A ->
-    sub A B ->
-    typing nil nil check_mode e B.
-Proof.
-  intros e A B Htyp Hsub.
-  dependent induction Hsub; eauto.
-  - inversion Htyp; subst.
-    inversion Htyp; subst.
-Admitted.
 
 Theorem tred_preservation :
   forall (v v' : trm) (A: typ),

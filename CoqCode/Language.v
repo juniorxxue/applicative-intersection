@@ -61,7 +61,7 @@ Hint Constructors term : core.
 Inductive pvalue : trm -> Prop :=
 | pvalue_top : pvalue trm_top
 | pvalue_nat : forall (n : nat), pvalue (trm_nat n)
-| pvalue_abs : forall (e : trm), term (trm_abs e) -> pvalue (trm_abs e)
+| pvalue_abs : forall (e : trm), pvalue (trm_abs e)
 | pvalue_merge : forall (p1 p2 : trm), pvalue p1 -> pvalue p2 -> pvalue (trm_merge p1 p2).
 
 Inductive value : trm -> Prop :=
@@ -224,11 +224,11 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil infer_mode e B ->
     (sub B A) ->
     typing T nil check_mode e A
-| typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
-    disjoint_spec A B ->
-    typing T nil infer_mode e1 A ->
-    typing T nil infer_mode e2 B ->
-    typing T nil infer_mode (trm_merge e1 e2) (typ_and A B)
+(* | typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm), *)
+(*     disjoint_spec A B -> *)
+(*     typing T nil infer_mode e1 A -> *)
+(*     typing T nil infer_mode e2 B -> *)
+(*     typing T nil infer_mode (trm_merge e1 e2) (typ_and A B) *)
 | typing_merge_chk : forall (A B : typ) (e1 e2 : trm),
     disjoint_spec A B ->
     not (hastype (trm_merge e1 e2)) ->
