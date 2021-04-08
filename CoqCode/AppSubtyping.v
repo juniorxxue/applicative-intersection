@@ -99,22 +99,6 @@ Proof.
   apply sub_reflexivity.
 Qed.
 
-(*aux lemma for sub_to_app *)
-Lemma toplike_sub_top :
-  forall (A : typ),
-    sub typ_top A -> toplike A.
-Proof.
-  intros A Hsub.
-  induction A.
-  - inversion Hsub.
-  - constructor.
-  - inversion Hsub; subst.
-    constructor. apply IHA2. assumption.
-  - inversion Hsub; subst.
-    constructor.
-    + apply IHA1. assumption.
-    + apply IHA2. assumption.
-Qed.
 
 (*aux lemma for sub_to_app *)
 Lemma stack_is_top :

@@ -3,7 +3,6 @@ Require Import Coq.Program.Equality.
 Require Import Language Subtyping Auxiliaries Notations.
 
 
-
 (* Lemma tred_to_sub: forall (e e' : trm) (A B : typ), *)
 (*     value e -> typedred e A e' -> typing nil nil infer_mode e B -> sub B A. *)
 (* Proof. *)
@@ -13,7 +12,6 @@ Require Import Language Subtyping Auxiliaries Notations.
 (*   - intros B Htyp. *)
 (*     inversion Htyp; subst. inversion H3; subst. *)
 (*     + constructor. *)
-(*     + inversion Htyp; subst. *)
 (*   - intros B Htyp. *)
 (*     apply toplike_sub_top in H0. *)
 (*     pose proof (sub_transitivity typ_top B A) as sub_trans'. *)

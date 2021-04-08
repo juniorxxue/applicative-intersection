@@ -61,14 +61,21 @@ Hint Constructors term : core.
 Inductive pvalue : trm -> Prop :=
 | pvalue_top : pvalue trm_top
 | pvalue_nat : forall (n : nat), pvalue (trm_nat n)
-| pvalue_abs : forall (e : trm), pvalue (trm_abs e)
-| pvalue_merge : forall (p1 p2 : trm), pvalue p1 -> pvalue p2 -> pvalue (trm_merge p1 p2).
+| pvalue_abs : forall (e : trm), pvalue (trm_abs e).
 
 Inductive value : trm -> Prop :=
 | value_anno : forall (A : typ) (e : trm),
     pvalue e -> value (trm_anno e A)
 | value_abs : forall (e : trm),
-    term (trm_abs e) -> value (trm_abs e).
+    term (trm_abs e) -> value (trm_abs e)
+| value_merge : forall (v1 v2 : trm),
+    value v1 -> value v2 -> value (trm_merge v1 v2).
+
+Inductive rvalue : trm -> Prop :=
+| rvalue_v : forall (v : trm),
+    value v -> rvalue v
+| rvalue_abs : forall (e : trm),
+    rvalue (trm_abs e).
 
 Hint Constructors pvalue : core.
 Hint Constructors value : core.
@@ -148,7 +155,6 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_int : forall (n : nat),
     typedred (trm_anno (trm_nat n) typ_int) typ_int (trm_anno (trm_nat n) typ_int)
 | tred_top : forall (A : typ) (v : trm),
-    value v ->
     toplike A -> ordinary A ->
     typedred v A (trm_anno trm_top typ_top)
 | tred_arrow_anno : forall (A B C D : typ) (e : trm),
@@ -156,19 +162,16 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     typedred (trm_anno (trm_abs e) (typ_arrow A B))
              (typ_arrow C D)
              (trm_anno (trm_abs e) (typ_arrow A D))
-| tred_merge_l : forall (p1 p2 p: trm) (A B C D : typ),
-    pvalue p1 -> pvalue p2 -> pvalue p ->
-    typedred (trm_anno p1 A) C (trm_anno p D) -> ordinary C ->
-    typedred (trm_anno (trm_merge p1 p2) (typ_and A B)) C (trm_anno p D)
-| tred_merge_r : forall (p1 p2 p : trm) (A B C D : typ),
-    pvalue p1 -> pvalue p2 -> pvalue p ->
-    typedred (trm_anno p2 B) C (trm_anno p D) -> ordinary C ->
-    typedred (trm_anno (trm_merge p1 p2) (typ_and A B)) C (trm_anno p D)
-| tred_and : forall (p1 p2 p : trm) (A B C D E : typ),
-    pvalue p1 -> pvalue p2 -> pvalue p ->
-    typedred (trm_anno p C) A (trm_anno p1 D) ->
-    typedred (trm_anno p C) B (trm_anno p2 E) ->
-    typedred (trm_anno p C) (typ_and A B) (trm_anno (trm_merge p1 p2) (typ_and D E)).
+| tred_merge_l : forall (v1 v2 v1': trm) (A : typ),
+    typedred v1 A v1' -> ordinary A ->
+    typedred (trm_merge v1 v2) A v1'
+| tred_merge_r : forall (v1 v2 v2': trm) (A : typ),
+    typedred v2 A v2' -> ordinary A ->
+    typedred (trm_merge v1 v2) A v2'
+| tred_and : forall (v1 v2 v : trm) (A B : typ),
+    typedred v A v1 ->
+    typedred v B v2 ->
+    typedred v (typ_and A B) (trm_merge v1 v2).
 
 Hint Constructors typedred : core.
 
@@ -203,6 +206,13 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil infer_mode trm_top typ_top
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
+(* | typing_lam_top : forall (L : vars) (T : ctx) (e : trm) (A : typ), *)
+(*     toplike A -> *)
+(*     (forall x, x \notin L -> (typing ((x ~ typ_top) ++ T)) nil check_mode (open e (trm_fvar x)) typ_top) -> *)
+(*     typing T nil check_mode (trm_abs e) A *)
+| typing_top_value : forall (T : ctx) (v : trm) (A : typ),
+    toplike A ->
+    typing T nil check_mode v A
 | typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) B) ->
     typing T nil check_mode (trm_abs e) (typ_arrow A B)
@@ -224,38 +234,59 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil infer_mode e B ->
     (sub B A) ->
     typing T nil check_mode e A
-(* | typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm), *)
-(*     disjoint_spec A B -> *)
-(*     typing T nil infer_mode e1 A -> *)
-(*     typing T nil infer_mode e2 B -> *)
-(*     typing T nil infer_mode (trm_merge e1 e2) (typ_and A B) *)
-| typing_merge_chk : forall (A B : typ) (e1 e2 : trm),
+| typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
     disjoint_spec A B ->
-    not (hastype (trm_merge e1 e2)) ->
-    typing nil nil check_mode e1 A ->
-    typing nil nil check_mode e2 B ->
-    typing nil nil check_mode (trm_merge e1 e2) (typ_and A B).
-
+    typing T nil infer_mode e1 A ->
+    typing T nil infer_mode e2 B ->
+    typing T nil infer_mode (trm_merge e1 e2) (typ_and A B)
+| typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm),
+    value v1 -> value v2 ->
+    typing nil nil infer_mode v1 A ->
+    typing nil nil infer_mode v2 B ->
+    consistency_spec v1 v2 ->
+    typing T nil infer_mode (trm_merge v1 v2) (typ_and A B)
+| typing_merge_pick : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
+    typing T S infer_mode (trm_merge e1 e2) B ->
+    appsub (cons A S) B C ->
+    typing T (cons A S) infer_mode (trm_merge e1 e2) C.
+(* | typing_merge_chk : forall (A B : typ) (e1 e2 : trm), *)
+(*     disjoint_spec A B -> *)
+(*     not (hastype (trm_merge e1 e2)) -> *)
+(*     typing nil nil check_mode e1 A -> *)
+(*     typing nil nil check_mode e2 B -> *)
+(*     typing nil nil check_mode (trm_merge e1 e2) (typ_and A B). *)
 
 Hint Constructors typing : core.
 
 Parameter Y : atom.
 
+Inductive ptype : trm -> typ -> Prop :=
+| ptype_int : forall (n : nat),
+    ptype (trm_nat n) typ_int
+| ptype_top :
+    ptype trm_top typ_top
+| ptype_anno : forall (e : trm) (A : typ),
+    ptype (trm_anno e A) A
+| ptype_merge : forall (e1 e2 : trm) (A B : typ),
+    ptype e1 A ->
+    ptype e2 B ->
+    ptype (trm_merge e1 e2) (typ_and A B).
+
 Inductive papp : trm -> trm -> trm -> Prop :=
 | papp_top : forall (v : trm),
-    papp trm_top v trm_top
+    papp (trm_anno trm_top typ_top) v (trm_anno trm_top typ_top)
 | papp_abs : forall (e v : trm),
     papp (trm_abs e) v (open e v)
 | papp_abs_anno : forall (A B : typ) (e v v' : trm),
     typedred v A v' ->
     papp (trm_anno (trm_abs e) (typ_arrow A B)) v
          (trm_anno (open e v') B)
-| papp_merge : forall (A B C D : typ) (p1 p2 p e v : trm),
-    appsub (cons C nil) (typ_and A B) D ->
-    typedred (trm_anno (trm_merge p1 p2) (typ_and A B)) D v ->
-    papp v (trm_anno p C) e ->
-    papp (trm_anno (trm_merge p1 p2) (typ_and A B))
-         (trm_anno p C) e.
+| papp_merge : forall (A B C : typ) (v1 v2 v vl e : trm),
+    ptype vl B -> ptype (trm_merge v1 v2) C ->
+    appsub (cons B nil) C A ->
+    typedred (trm_merge v1 v2) A v ->
+    papp v vl e ->
+    papp (trm_merge v1 v2) vl e.
 
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
@@ -273,16 +304,11 @@ Inductive step : trm -> trm -> Prop :=
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (v e2 e2' : trm),
     value v -> step e2 e2' -> step (trm_app v e2) (trm_app v e2')
-| step_merge_anno : forall (e1 e2 : trm) (A B : typ),
-    step (trm_merge (trm_anno e1 A) (trm_anno e2 B))
-         (trm_anno (trm_merge e1 e2) (typ_and A B))
-| step_merge_l : forall (e1 e2 e : trm) (A B C : typ),
-    step (trm_anno e1 A) (trm_anno e C) ->
-    step (trm_anno (trm_merge e1 e2) (typ_and A B))
-         (trm_anno (trm_merge e e2) (typ_and C B))
-| step_merge_r : forall (p1 e2 e: trm) (A B C : typ),
-    pvalue p1 -> step (trm_anno e2 B) (trm_anno e C) ->
-    step (trm_anno (trm_merge p1 e2) (typ_and A B))
-         (trm_anno (trm_merge p1 e) (typ_and A C)).
+| step_merge_l : forall (e1 e2 e1' : trm),
+    step e1 e1' ->
+    step (trm_merge e1 e2) (trm_merge e1' e2)
+| step_merge_r : forall (v e2 e2' : trm),
+    value v -> step e2 e2' ->
+    step (trm_merge v e2) (trm_merge v e2').
 
 Hint Constructors step : core.
