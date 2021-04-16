@@ -14,7 +14,6 @@ Inductive runsub : typ -> typ -> Prop :=
 | rsub_top : forall (A : typ),
     toplike A -> runsub typ_top A.
 
-
 Theorem tred_preservation :
   forall (v v' : trm) (A: typ),
     value v -> typing nil nil check_mode v A ->

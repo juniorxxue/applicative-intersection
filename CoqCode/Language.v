@@ -66,8 +66,8 @@ Inductive pvalue : trm -> Prop :=
 Inductive value : trm -> Prop :=
 | value_anno : forall (A : typ) (e : trm),
     pvalue e -> value (trm_anno e A)
-| value_abs : forall (e : trm),
-    term (trm_abs e) -> value (trm_abs e)
+(* | value_abs : forall (e : trm), *)
+(*     term (trm_abs e) -> value (trm_abs e) *)
 | value_merge : forall (v1 v2 : trm),
     value v1 -> value v2 -> value (trm_merge v1 v2).
 
@@ -212,6 +212,7 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 (*     typing T nil check_mode (trm_abs e) A *)
 | typing_top_value : forall (T : ctx) (v : trm) (A : typ),
     toplike A ->
+    value v ->
     typing T nil check_mode v A
 | typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) B) ->
@@ -281,19 +282,24 @@ Inductive papp : trm -> trm -> trm -> Prop :=
     typedred v A v' ->
     papp (trm_anno (trm_abs e) (typ_arrow A B)) v
          (trm_anno (open e v') B)
-| papp_merge : forall (A B C : typ) (v1 v2 v vl e : trm),
-    ptype vl B -> ptype (trm_merge v1 v2) C ->
+| papp_merge_l : forall (A B C : typ) (v1 v2 v vl e : trm),
+    ptype v1 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
     appsub (cons B nil) C A ->
-    typedred (trm_merge v1 v2) A v ->
-    papp v vl e ->
+    papp v1 vl e ->
+    papp (trm_merge v1 v2) vl e
+| papp_merge_r : forall (A B C : typ) (v1 v2 v vl e : trm),
+    ptype v2 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
+    appsub (cons B nil) C A ->
+    papp v2 vl e ->
     papp (trm_merge v1 v2) vl e.
 
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
     step (trm_nat n) (trm_anno (trm_nat n) typ_int)
-| step_papp : forall (v1 v2 e : trm),
-    value v1 -> value v2 -> papp v1 v2 e ->
-    step (trm_app v1 v2) e
+| step_papp : forall (r vl e : trm),
+    rvalue r -> value vl ->
+    papp r vl e ->
+    step (trm_app r vl) e
 | step_anno_value : forall (v v' : trm) (A : typ),
     value v -> typedred v A v' ->
     step (trm_anno v A) v'
@@ -302,8 +308,8 @@ Inductive step : trm -> trm -> Prop :=
     step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
-| step_app_r : forall (v e2 e2' : trm),
-    value v -> step e2 e2' -> step (trm_app v e2) (trm_app v e2')
+| step_app_r : forall (r e2 e2' : trm),
+    rvalue r -> step e2 e2' -> step (trm_app r e2) (trm_app r e2')
 | step_merge_l : forall (e1 e2 e1' : trm),
     step e1 e1' ->
     step (trm_merge e1 e2) (trm_merge e1' e2)

@@ -1,5 +1,5 @@
 Require Import Metalib.Metatheory.
-Require Import Language Notations.
+Require Import Subtyping Language Notations.
 Require Import Coq.Program.Equality.
 
 Lemma anno_equal_split :
@@ -51,18 +51,21 @@ Proof.
   - inversion Htop; subst. apply IHHsub. assumption.
 Qed.
 
-(* Lemma lambda_sub_check : *)
-(*   forall (e : trm) (A B D : typ), *)
-(*     typing nil nil check_mode (trm_abs e) (typ_arrow A B) -> *)
-(*     sub (typ_arrow A B) (typ_arrow A D) -> *)
-(*     typing nil nil check_mode (trm_abs e) (typ_arrow A D). *)
-(* Proof. *)
-(*   intros e A B D Htyp Hsub. *)
-(*   inversion Htyp; subst. *)
-(*   - assert (Htl: toplike (typ_arrow A D)). *)
-(*     eapply toplike_sub_toplike; eauto 3. *)
-(*     apply typing_top_value; eauto 3. *)
-(*   - eapply typing_abs1. *)
+Lemma lambda_sub_check :
+  forall (e : trm) (A B D : typ),
+    typing nil nil check_mode (trm_abs e) (typ_arrow A B) ->
+    not (toplike D) ->
+    sub (typ_arrow A B) (typ_arrow A D) ->
+    typing nil nil check_mode (trm_abs e) (typ_arrow A D).
+Proof.
+  intros e A B D Htyp Htl Hsub.
+  inversion Htyp; subst.
+  Focus 3.
+  - eapply typing_sub. eapply H.
+    eapply sub_transitivity. eapply H0. eapply Hsub.
+  - inversion H0.
+  (* typing_abs1 rule really annoys *)
+Admitted.
 
 
 (* Version: all value can be checked by toplike *)
@@ -74,13 +77,19 @@ Lemma typing_sub_check :
     typing T nil check_mode v B.
 Proof.
   intros T e A B Htyp Hsub.
-  dependent induction Htyp.
+  dependent destruction Htyp.
   - eapply typing_top_value.
     eapply toplike_sub_toplike; eauto 3.
-  - inversion Hsub; subst.
-    + eapply typing_top_value; eauto 3.
-    + eapply typing_top_value.
-      eapply tl_arrow. apply toplike_sub_top. assumption.
-    + apply typing_abs1 with (L:=L). intros x Hvar.
-      pose proof (H x) as Hx. apply Hx in Hvar.
+    assumption.
+  - dependent destruction Hsub.
+    + eapply typing_sub.
 Admitted.
+  (* dependent induction Htyp. *)
+  (* - eapply typing_top_value. *)
+  (*   eapply toplike_sub_toplike; eauto 3. *)
+  (* - dependent destruction Hsub. *)
+  (*   + eapply typing_top_value; eauto 3. *)
+  (*   + eapply typing_top_value. *)
+  (*     eapply tl_arrow. apply toplike_sub_top. assumption. *)
+  (*   + apply typing_abs1 with (L:=L). intros x Hvar. *)
+  (*     pose proof (H x) as Hx. apply Hx in Hvar. *)
