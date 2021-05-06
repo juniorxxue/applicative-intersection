@@ -12,7 +12,6 @@ Proof.
   intros.
   induction H; eauto.
   - exists A. unfold typ_stack. auto.
-  - exists typ_top. auto.
   - destruct IHappsub. rewrite H1.
     simpl. exists x. reflexivity.
 Qed.
@@ -62,7 +61,7 @@ Proof.
     assumption.
   - simpl in *; subst.
     inversion H2; subst.
-    constructor. constructor.
+    constructor. assumption.
   - simpl in *.
     constructor.
     + assumption.
@@ -98,7 +97,6 @@ Proof.
   induction H; eauto.
   apply sub_reflexivity.
 Qed.
-
 
 (*aux lemma for sub_to_app *)
 Lemma stack_is_top :
