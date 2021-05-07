@@ -1,5 +1,5 @@
 Require Import Metalib.Metatheory.
-Require Import Language Notations.
+Require Import Subtyping Language Notations.
 Require Import Coq.Program.Equality.
 
 Lemma anno_equal_split :
@@ -19,7 +19,6 @@ Proof.
   rewrite H0.
   rewrite H. reflexivity.
 Qed.
-
 
 (*aux lemma for sub_to_app *)
 Lemma toplike_sub_top :
@@ -51,36 +50,50 @@ Proof.
   - inversion Htop; subst. apply IHHsub. assumption.
 Qed.
 
-(* Lemma lambda_sub_check : *)
-(*   forall (e : trm) (A B D : typ), *)
-(*     typing nil nil check_mode (trm_abs e) (typ_arrow A B) -> *)
-(*     sub (typ_arrow A B) (typ_arrow A D) -> *)
-(*     typing nil nil check_mode (trm_abs e) (typ_arrow A D). *)
-(* Proof. *)
-(*   intros e A B D Htyp Hsub. *)
-(*   inversion Htyp; subst. *)
-(*   - assert (Htl: toplike (typ_arrow A D)). *)
-(*     eapply toplike_sub_toplike; eauto 3. *)
-(*     apply typing_top_value; eauto 3. *)
-(*   - eapply typing_abs1. *)
-
-
 (* Version: all value can be checked by toplike *)
 Lemma typing_sub_check :
-  forall (T : ctx) (v : trm) (A B : typ),
+  forall (T : ctx) (v : trm) (A : typ),
     (* value v -> *)
-    typing T nil check_mode v A ->
+    typing T nil check_mode v A -> forall B,
     sub A B ->
     typing T nil check_mode v B.
 Proof.
-  intros T e A B Htyp Hsub.
-  dependent induction Htyp.
-  - eapply typing_top_value.
-    eapply toplike_sub_toplike; eauto 3.
-  - inversion Hsub; subst.
-    + eapply typing_top_value; eauto 3.
-    + eapply typing_top_value.
-      eapply tl_arrow. apply toplike_sub_top. assumption.
-    + apply typing_abs1 with (L:=L). intros x Hvar.
-      pose proof (H x) as Hx. apply Hx in Hvar.
+  intros T e A Htyp.
+  dependent induction Htyp; intros.
+  - eapply typing_top_abs. eapply toplike_sub_toplike; eauto.
+  - eapply typing_app2; eauto.
+    eapply IHHtyp2; eauto.
+    eapply sub_arrow; eauto.
+    eapply sub_reflexivity.
+  - eapply typing_sub. apply Htyp.
+    eapply sub_transitivity; eauto.
+Qed.
+
+Lemma toplike_sub :
+  forall (A : typ),
+    toplike A <-> sub typ_top A.
+Proof.
+  intro A. split.
+  - intro H. induction H.
+    + constructor.
+    + constructor. assumption. assumption.
+    + constructor. assumption.
+  - intro H. induction A; eauto.
+    + inversion H; subst; eauto.
+    + inversion H; subst. constructor.
+      apply IHA2. assumption.
+    + constructor; inversion H; subst.
+      apply IHA1. assumption.
+      apply IHA2. assumption.
+Qed.
+
+(* try snow's typing_check_to_infer *)
+Lemma typing_check_to_infer :
+  forall (T : ctx) (v : trm) (A : typ),
+    typing T nil check_mode v A ->
+    exists B, typing T nil infer_mode v B /\ sub B A.
+Proof.
+  intros T v A Hchk.
+  dependent induction Hchk.
+  - (* ops check aginst toplike but it can't infer something *)
 Admitted.
