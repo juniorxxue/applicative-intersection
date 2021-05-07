@@ -25,8 +25,7 @@ Proof.
   intros v v' A Hv Htyp Hred.
   dependent induction Hred.
   - eapply typing_anno; eauto.
-  - eapply typing_anno; eauto.
-    admit. (* appsub and toplike *)
+  - admit. (* appsub and toplike *)
   - apply typing_anno; eauto.
     dependent destruction Htyp.
     dependent destruction Htyp.
@@ -99,6 +98,7 @@ Proof.
   - dependent destruction Hred.
     eapply typing_anno; eauto.
   - dependent destruction Hred.
+    eapply typing_anno; eauto.
   - dependent destruction Hred.
   - dependent destruction Hred.
   - dependent destruction Hred.
@@ -130,9 +130,53 @@ Proof.
   - assert (Htyp2: typing nil S infer_mode e' B).
     eapply IHHtyp; eauto.
     dependent destruction Hred.
+    dependent destruction Hred.
     (*
       The problem is
       reduction of merge picking appears at papp
       typing of merge picking appears at merge
      *)
 Admitted.
+
+Lemma tred_progress :
+  forall (v : trm) (A : typ),
+    value v -> typing nil nil check_mode v A ->
+    exists v', typedred v A v'.
+Proof.
+  intros v A Hv Htyp.
+Admitted.
+
+Theorem progress :
+  forall (e : trm) (dir : mode) (A : typ) (S : arg),
+    typing nil S dir e A ->
+    value e \/ exists e', step e e'.
+Proof.
+  intros e dir A S Htyp.
+  dependent induction Htyp.
+  - right. exists (trm_anno (trm_nat n) typ_int).
+    apply step_int_anno.
+  - right. exists (trm_anno trm_top typ_top).
+    apply step_top_anno.
+  - inversion H0.
+  - right. admit. (* \x : A . e --> \x : A . e : A -> B ??? *)
+  - right. admit.
+  - right. admit.
+  - destruct IHHtyp; eauto.
+    + right. assert (Hv: value e); eauto.
+      eapply tred_progress in H0; eauto.
+      destruct H0. exists x. eapply step_anno_value; eauto.
+    + destruct H0. right.
+      exists (trm_anno x A). eapply step_anno.
+      * admit.
+      * assumption.
+  - right. destruct IHHtyp1; destruct IHHtyp2; eauto.
+    + admit. (* the diff from snow's is her system has a arrTyp relation ? *)
+    + admit.
+    + admit.
+    + admit.
+  - admit. (* same as previous one *)
+  - destruct IHHtyp; eauto.
+  - destruct IHHtyp1; destruct IHHtyp2; eauto.
+Admitted.
+(* the typing merge has some problems with reduction *)
+      

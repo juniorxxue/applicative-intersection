@@ -548,6 +548,9 @@ Proof.
     inversion Hred2; subst.
     reflexivity.
   - intros A Htyp e2 Hred2.
+    inversion Hred2; subst.
+    reflexivity.
+  - intros A Htyp e2 Hred2.
     inversion Hred2; subst. (* papp and 2 congruence rules *)
     + eapply app_check_inversion in Htyp; eauto. eapply papp_determinism; eauto.
     + eapply rvalue_cannot_step_further in H5. inversion H5. auto.

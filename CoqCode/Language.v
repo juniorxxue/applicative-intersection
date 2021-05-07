@@ -300,6 +300,8 @@ Inductive papp : trm -> trm -> trm -> Prop :=
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
     step (trm_nat n) (trm_anno (trm_nat n) typ_int)
+| step_top_anno :
+    step trm_top (trm_anno trm_top typ_top)
 | step_papp : forall (r vl e : trm),
     rvalue r -> value vl ->
     papp r vl e ->
