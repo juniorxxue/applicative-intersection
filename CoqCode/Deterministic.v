@@ -402,32 +402,6 @@ Proof.
     eapply H; eauto.
 Admitted.
 
-(* aux lemma for consistent_equal *)
-Lemma infer_to_tred :
-  forall (A : typ) (v : trm),
-    value v -> typing nil nil infer_mode v A ->
-    not (toplike A) ->
-    typedred v A v.
-Proof.
-  intros A v Hv Htyp Htl.
-  dependent induction Htyp; eauto.
-  - inversion Hv.
-  - inversion Hv.
-  - inversion Hv.
-  - admit.
-  - dependent destruction H.
-    dependent destruction Hv.
-    dependent induction H.
-    + dependent destruction Htyp.
-      dependent destruction Htyp.
-      assert (Hcontra: toplike A) by (
-      eapply toplike_sub_top; eauto). contradiction.
-    + dependent destruction Htyp.
-      dependent destruction Htyp.
-      dependent destruction H0.
-      (* counter example is 1 : Int & Int*)
-Admitted.
-
 Lemma value_cannot_step_further :
   forall (v : trm),
     value v -> forall (e : trm), not (step v e).
@@ -511,8 +485,7 @@ Proof.
   dependent destruction Htyp.
   dependent destruction Htyp.
   - inversion Hv.
-  - inversion Hv.
-  - exists B0. auto.
+  - exists B0; eauto.
 Qed.
 
 Lemma step_determinism :

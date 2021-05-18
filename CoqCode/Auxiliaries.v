@@ -60,7 +60,6 @@ Lemma typing_sub_check :
 Proof.
   intros T e A Htyp.
   dependent induction Htyp; intros.
-  - eapply typing_top_abs. eapply toplike_sub_toplike; eauto.
   - eapply typing_app2; eauto.
     eapply IHHtyp2; eauto.
     eapply sub_arrow; eauto.
@@ -89,11 +88,10 @@ Qed.
 
 (* try snow's typing_check_to_infer *)
 Lemma typing_check_to_infer :
-  forall (T : ctx) (v : trm) (A : typ),
-    typing T nil check_mode v A ->
-    exists B, typing T nil infer_mode v B /\ sub B A.
+  forall (T : ctx) (v : trm) (A : typ) (S : arg),
+    typing T S check_mode v A ->
+    exists B, typing T S infer_mode v B /\ sub B A.
 Proof.
-  intros T v A Hchk.
+  intros T v A S Hchk.
   dependent induction Hchk.
-  - (* ops check aginst toplike but it can't infer something *)
 Admitted.

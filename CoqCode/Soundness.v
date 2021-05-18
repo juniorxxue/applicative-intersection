@@ -99,8 +99,7 @@ Proof.
     eapply typing_anno; eauto.
   - dependent destruction Hred.
   - dependent destruction Hred.
-  - dependent destruction Hred.
-  - dependent destruction Hred.
+    inversion H2. destruct H2; eauto.
   - dependent destruction Hred.
     + assert (Htyp2: typing nil nil infer_mode v' A).
       eapply tred_preservation; eauto.
@@ -192,9 +191,7 @@ Proof.
   - right. exists (trm_anno trm_top typ_top).
     apply step_top_anno.
   - inversion H0.
-  - right. admit. (* \x : A . e --> \x : A . e : A -> B ??? *)
-  - right. admit.
-  - right. admit.
+  - left. constructor; eauto.
   - destruct IHHtyp; eauto.
     + right. assert (Hv: value e); eauto.
       eapply tred_progress in H0; eauto.

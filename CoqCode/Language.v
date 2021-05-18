@@ -205,20 +205,10 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil infer_mode trm_top typ_top
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
-(* | typing_lam_top : forall (L : vars) (T : ctx) (e : trm) (A : typ), *)
-(*     toplike A -> *)
-(*     (forall x, x \notin L -> (typing ((x ~ typ_top) ++ T)) nil check_mode (open e (trm_fvar x)) typ_top) -> *)
-(*     typing T nil check_mode (trm_abs e) A *)
-| typing_top_abs : forall (T : ctx) (e : trm) (A B : typ),
-    toplike B ->
-    typing T nil check_mode (trm_abs A e) B
-| typing_abs1 : forall (L : vars) (T : ctx) (e : trm) (A B : typ),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil infer_mode (open e (trm_fvar x)) B) ->
-    typing T nil infer_mode (trm_abs A e) (typ_arrow A B)
-| typing_abs2 : forall (L: vars) (T : ctx) (S : arg) (A B C : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) S infer_mode (open e (trm_fvar x)) B) ->
-    sub C A ->
-    typing T (cons C S) infer_mode (trm_abs A e) (typ_arrow A B)
+| typing_abs : forall (L : vars) (T : ctx) (S : arg) (A B C D : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) S check_mode (open e (trm_fvar x)) B) ->
+    sub (typ_arrow A B) D ->
+    typing T (cons C S) check_mode (trm_anno (trm_abs A e) (typ_arrow A B)) D
 | typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
     appsub S A B -> typing T nil check_mode e A ->
     typing T S infer_mode (trm_anno e A) B
@@ -249,12 +239,6 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T S infer_mode (trm_merge e1 e2) B ->
     appsub (cons A S) B C ->
     typing T (cons A S) infer_mode (trm_merge e1 e2) C.
-(* | typing_merge_chk : forall (A B : typ) (e1 e2 : trm), *)
-(*     disjoint_spec A B -> *)
-(*     not (hastype (trm_merge e1 e2)) -> *)
-(*     typing nil nil check_mode e1 A -> *)
-(*     typing nil nil check_mode e2 B -> *)
-(*     typing nil nil check_mode (trm_merge e1 e2) (typ_and A B). *)
 
 Hint Constructors typing : core.
 
