@@ -302,7 +302,6 @@ Proof.
     rewrite H. rewrite H0. reflexivity.
 Qed.
 
-
 Lemma appsub_determinism :
   forall (A : typ) (B1 B2 : typ) (S : arg),
     appsub S A B1 ->
@@ -319,7 +318,7 @@ Proof.
     rewrite Heq; eauto.
   - dependent destruction Has2.
     + eapply IHHas1; eauto.
-    + admit.
+    + destruct H0. admit.
   - dependent destruction Has2.
     + admit.
     + eapply IHHas1; eauto.
@@ -330,6 +329,8 @@ Lemma ptype_merge_same :
     value v1 -> value v2 -> ptype (trm_merge v1 v2) (typ_and A A) ->
     v1 = v2.
 Proof.
+  intros v1 v2 A Hv1 Hv2 Hp.
+  dependent destruction Hp.
 Admitted.
 
 (* some inversion lemmas may help since premises are a lot *)
@@ -386,6 +387,7 @@ Proof.
       * apply Hp2.
 Qed.
 
+(* aux lemma for ptype_merge_same *)
 Lemma consistent_equal :
   forall (A : typ) (v1 v2 : trm),
     value v1 -> value v2 ->
@@ -400,6 +402,7 @@ Proof.
     eapply H; eauto.
 Admitted.
 
+(* aux lemma for consistent_equal *)
 Lemma infer_to_tred :
   forall (A : typ) (v : trm),
     value v -> typing nil nil infer_mode v A ->
@@ -424,29 +427,6 @@ Proof.
       dependent destruction H0.
       (* counter example is 1 : Int & Int*)
 Admitted.
-
-
-Lemma appsub_coincides_with_sub :
-  forall (S : arg) (A B : typ),
-    appsub S A B ->
-    exists (B' : typ), B = (typ_stack S B').
-Proof.
-Admitted.
-
-
-Lemma sub_to_appsub :
-  forall (S : arg) (A B1 : typ),
-    sub A (typ_stack S B1) ->
-    exists B2 : typ, (appsub S A (typ_stack S B2) /\ (sub B2 B1)).
-Proof.
-Admitted.
-
-Lemma appsub_to_sub :
-  forall (S : arg) (A B : typ),
-  appsub S A B -> sub A B.
-Proof.
-Admitted.
-
 
 Lemma value_cannot_step_further :
   forall (v : trm),
@@ -575,7 +555,9 @@ Proof.
     + assert (Heq: e1' = e1'0).
       dependent destruction Htyp.
       * eapply IHHred1; eauto.
-      * dependent destruction Htyp. (* the previous hypo cannot be used because of S *)
+      * eapply IHHred1; eauto.
+        dependent destruction Htyp.
+        (* the previous hypo cannot be used because of S *)
         (* dependent destruction Htyp2. *)
         admit.
         (* 1 *)

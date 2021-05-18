@@ -2,19 +2,6 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language Subtyping Auxiliaries Notations Deterministic.
 
-Lemma sub_ord_disjoint :
-  forall (A B C : typ),
-    ordinary C -> disjoint_spec A B -> sub (typ_and A B) C ->
-    sub A C /\ sub B C.
-Proof.
-  intros A B C Hord Hdisj Hsub.
-  dependent destruction Hsub; try solve [inversion Hord].
-  - split; eauto.
-  - assert (Htl: toplike (typ_arrow B1 B2)).
-    constructor. eapply toplike_sub_top; eauto.
-    split; eauto.
-Admitted.
-
 Theorem tred_preservation :
   forall (v v' : trm) (A: typ),
     value v ->
@@ -35,7 +22,7 @@ Proof.
     dependent destruction Htyp.
     + apply IHHred; eauto.
       eapply typing_sub.
-      apply Htyp1. (* Tred-Merge-L *)
+      eapply Htyp1.
       admit.
     + apply IHHred; eauto.
       eapply typing_sub.
@@ -76,6 +63,17 @@ Proof.
   dependent induction Hp; intros.
 Admitted.
 
+Lemma papp_preservation_dir :
+  forall (r v e : trm) (A B : typ) (S : arg) (dir : mode),
+    rvalue r -> value v ->
+    papp r v e ->
+    typing nil nil infer_mode v A ->
+    typing nil (cons A S) dir r (typ_arrow A B) ->
+    typing nil S dir e B.
+Proof.
+  intros. 
+Admitted.
+  
 Lemma papp_preservation_check :
   forall (r v e : trm) (A B : typ),
     rvalue r -> value v ->
@@ -106,7 +104,7 @@ Proof.
   - dependent destruction Hred.
     + assert (Htyp2: typing nil nil infer_mode v' A).
       eapply tred_preservation; eauto.
-      admit.
+      admit. (* Htyp2, H *)
     + eapply typing_anno. assumption.
       eapply IHHtyp; eauto.
   - dependent destruction Hred.
@@ -130,7 +128,8 @@ Proof.
   - assert (Htyp2: typing nil S infer_mode e' B).
     eapply IHHtyp; eauto.
     dependent destruction Hred.
-    dependent destruction Hred.
+    + admit.
+    + 
     (*
       The problem is
       reduction of merge picking appears at papp
@@ -138,13 +137,48 @@ Proof.
      *)
 Admitted.
 
-Lemma tred_progress :
+Theorem tred_progress :
   forall (v : trm) (A : typ),
     value v -> typing nil nil check_mode v A ->
     exists v', typedred v A v'.
 Proof.
   intros v A Hv Htyp.
 Admitted.
+
+Lemma pvalue_cannot_be_value :
+  forall (e : trm),
+    pvalue e -> value e -> False.
+Proof.
+  intros e Hp Hv.
+  dependent destruction Hp; try solve [inversion Hv].
+Qed.
+
+Lemma pvalue_or_not_pvalue :
+  forall (e : trm),
+    pvalue e \/ not (pvalue e).
+Proof.
+  intros e.
+  dependent induction e; eauto; try solve [right; intro H; inversion H].
+Qed.
+
+(* this lemma really does make sense to me *)
+Lemma value_or_not_value :
+  forall (e : trm),
+    value e \/ not (value e).
+Proof.
+  intros e.
+  dependent induction e; eauto; try solve [right; unfold not; intros; inversion H].
+  - destruct IHe1; destruct IHe2; eauto;
+      try solve [right; unfold not; intros; dependent destruction H1; contradiction].
+  - destruct IHe.
+    + right. unfold not. intros. dependent destruction H0.
+      eapply pvalue_cannot_be_value; eauto.
+    + assert (Hp: pvalue e \/ not (pvalue e)).
+      eapply pvalue_or_not_pvalue.
+      destruct Hp.
+      * left. constructor. assumption.
+      * right. unfold not. intros. dependent destruction H1. contradiction.
+Qed.
 
 Theorem progress :
   forall (e : trm) (dir : mode) (A : typ) (S : arg),
@@ -165,10 +199,12 @@ Proof.
     + right. assert (Hv: value e); eauto.
       eapply tred_progress in H0; eauto.
       destruct H0. exists x. eapply step_anno_value; eauto.
-    + destruct H0. right.
-      exists (trm_anno x A). eapply step_anno.
-      * admit.
-      * assumption.
+    + destruct H0.
+      assert (Hval : value (trm_anno e A) \/ not (value (trm_anno e A))).
+      eapply value_or_not_value.
+      destruct Hval.
+      * left. assumption.
+      * right. exists (trm_anno x A). eapply step_anno. assumption. assumption.
   - right. destruct IHHtyp1; destruct IHHtyp2; eauto.
     + admit. (* the diff from snow's is her system has a arrTyp relation ? *)
     + admit.
@@ -179,4 +215,3 @@ Proof.
   - destruct IHHtyp1; destruct IHHtyp2; eauto.
 Admitted.
 (* the typing merge has some problems with reduction *)
-      

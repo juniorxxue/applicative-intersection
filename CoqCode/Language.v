@@ -142,8 +142,7 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub (cons C S) A D ->
     (* not (In C (next_inputs B)) -> *)
     (* forall (E : typ), not (sub B (typ_stack S E)) -> *)
-    (* not (exists E, B = (typ_stack (cons C S) E)) -> *)
-    (* not (sub B D) -> *)
+    not (sub B D) ->
     (* not (appsub (cons C S) B D) -> *)
     (* appsub (cons C S) B D -> *)
     appsub (cons C S) (typ_and A B) D
@@ -151,8 +150,7 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub (cons C S) B D ->
     (* not (In C (next_inputs A)) -> *)
     (* not (exists E, A = (typ_stack (cons C S) E)) -> *)
-    (* not (sub A D) -> *)
-    (* appsub (cons C S) A D -> *)
+    not (sub A D) ->
     appsub (cons C S) (typ_and A B) D.
 
 Hint Constructors appsub : core.
