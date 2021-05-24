@@ -69,12 +69,6 @@ Inductive value : trm -> Prop :=
 | value_merge : forall (v1 v2 : trm),
     value v1 -> value v2 -> value (trm_merge v1 v2).
 
-Inductive rvalue : trm -> Prop :=
-| rvalue_v : forall (v : trm),
-    value v -> rvalue v
-| rvalue_abs : forall (e : trm) (A : typ),
-    rvalue (trm_abs A e).
-
 Hint Constructors pvalue : core.
 Hint Constructors value : core.
 
@@ -160,7 +154,7 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     typedred (trm_anno (trm_nat n) typ_int) typ_int (trm_anno (trm_nat n) typ_int)
 | tred_top : forall (A : typ) (v : trm),
     toplike A -> ordinary A ->
-    typedred v A (trm_anno trm_top typ_top)
+    typedred v A (trm_anno trm_top A)
 | tred_arrow_anno : forall (A B C D E : typ) (e : trm),
     not (toplike D) -> sub C A -> sub B D ->
     typedred (trm_anno (trm_abs E e) (typ_arrow A B))
@@ -261,8 +255,6 @@ Inductive papp : trm -> trm -> trm -> Prop :=
     toplike A ->
     pvalue p ->
     papp (trm_anno p A) vl (trm_anno trm_top typ_top)
-| papp_abs : forall (e v : trm) (A : typ),
-    papp (trm_abs A e) v (open e v)
 | papp_abs_anno : forall (A B C : typ) (e v v' : trm),
     typedred v A v' ->
     not (toplike B) ->
@@ -284,10 +276,10 @@ Inductive step : trm -> trm -> Prop :=
     step (trm_nat n) (trm_anno (trm_nat n) typ_int)
 | step_top_anno :
     step trm_top (trm_anno trm_top typ_top)
-| step_papp : forall (r vl e : trm),
-    rvalue r -> value vl ->
-    papp r vl e ->
-    step (trm_app r vl) e
+| step_papp : forall (v vl e : trm),
+    value v -> value vl ->
+    papp v vl e ->
+    step (trm_app v vl) e
 | step_anno_value : forall (v v' : trm) (A : typ),
     value v -> typedred v A v' ->
     step (trm_anno v A) v'
@@ -296,8 +288,8 @@ Inductive step : trm -> trm -> Prop :=
     step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
-| step_app_r : forall (r e2 e2' : trm),
-    rvalue r -> step e2 e2' -> step (trm_app r e2) (trm_app r e2')
+| step_app_v : forall (v e2 e2' : trm),
+    value v -> step e2 e2' -> step (trm_app v e2) (trm_app v e2')
 | step_merge_l : forall (e1 e2 e1' : trm),
     step e1 e1' ->
     step (trm_merge e1 e2) (trm_merge e1' e2)

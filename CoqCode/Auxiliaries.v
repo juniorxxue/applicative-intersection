@@ -23,18 +23,15 @@ Qed.
 (*aux lemma for sub_to_app *)
 Lemma toplike_sub_top :
   forall (A : typ),
-    sub typ_top A -> toplike A.
+    sub typ_top A <-> toplike A.
 Proof.
-  intros A Hsub.
-  induction A.
-  - inversion Hsub.
-  - constructor.
-  - inversion Hsub; subst.
-    constructor. apply IHA2. assumption.
-  - inversion Hsub; subst.
-    constructor.
-    + apply IHA1. assumption.
-    + apply IHA2. assumption.
+  intros A. split.
+  - induction A; eauto.
+    + intros. inversion H.
+    + intros. dependent destruction H. constructor. auto.
+    + intros. dependent destruction H. constructor.
+      eapply IHA1; eauto. eapply IHA2; eauto.
+  - intros. induction H; eauto.
 Qed.
 
 Lemma toplike_sub_toplike :
@@ -89,9 +86,10 @@ Qed.
 (* try snow's typing_check_to_infer *)
 Lemma typing_check_to_infer :
   forall (T : ctx) (v : trm) (A : typ) (S : arg),
+    value v ->
     typing T S check_mode v A ->
     exists B, typing T S infer_mode v B /\ sub B A.
 Proof.
-  intros T v A S Hchk.
-  dependent induction Hchk.
+  intros T v A S Hval Hchk.
+  dependent induction Hchk; try solve [inversion Hval].
 Admitted.
