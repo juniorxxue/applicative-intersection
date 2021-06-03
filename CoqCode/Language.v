@@ -193,12 +193,13 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     uniq T -> (typing T nil infer_mode (trm_nat n) typ_int)
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
-| typing_abs : forall (L : vars) (T : ctx) (S : arg) (A B C D : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) S check_mode (open e (trm_fvar x)) B) ->
-    sub (typ_arrow A B) D ->
-    typing T (cons C S) check_mode (trm_anno (trm_abs A e) (typ_arrow A B)) D
+| typing_abs : forall (L : vars) (T : ctx) (A B C D : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) C) ->
+    sub A B ->
+    typing T nil check_mode (trm_abs A e) (typ_arrow B C)
 | typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
-    appsub S A B -> typing T nil check_mode e A ->
+    appsub S A B ->
+    typing T nil check_mode e A ->
     typing T S infer_mode (trm_anno e A) B
 | typing_app1 : forall (T : ctx) (S : arg) (A B : typ) (e1 e2 : trm),
     typing T nil infer_mode e2 A ->
