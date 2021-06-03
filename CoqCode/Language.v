@@ -15,7 +15,6 @@ Inductive typ : Set :=
 Hint Constructors typ : core.
 
 Inductive trm : Set :=
-| trm_top : trm
 | trm_nat : nat -> trm
 | trm_bvar : nat -> trm
 | trm_fvar : var -> trm
@@ -32,7 +31,6 @@ Inductive mode := check_mode | infer_mode.
 
 Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
   match t with
-  | trm_top => trm_top
   | trm_nat n => trm_nat n
   | trm_bvar i => if k == i then u else (trm_bvar i)
   | trm_fvar x => trm_fvar x
@@ -45,7 +43,6 @@ Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
 Definition open t u := open_rec 0 u t.
 
 Inductive term : trm -> Prop :=
-| term_top : term trm_top
 | term_nat : forall (n : nat), term (trm_nat n)
 | term_bvar : forall (n : nat), term (trm_bvar n)
 | term_fvar : forall (x : var), term (trm_fvar x)
@@ -59,7 +56,6 @@ Hint Constructors trm : core.
 Hint Constructors term : core.
 
 Inductive pvalue : trm -> Prop :=
-| pvalue_top : pvalue trm_top
 | pvalue_nat : forall (n : nat), pvalue (trm_nat n)
 | pvalue_abs : forall (e : trm) (A : typ), pvalue (trm_abs A e).
 
@@ -154,7 +150,7 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     typedred (trm_anno (trm_nat n) typ_int) typ_int (trm_anno (trm_nat n) typ_int)
 | tred_top : forall (A : typ) (v : trm),
     toplike A -> ordinary A ->
-    typedred v A (trm_anno trm_top A)
+    typedred v A (trm_anno (trm_nat 1) A)
 | tred_arrow_anno : forall (A B C D E : typ) (e : trm),
     not (toplike D) -> sub C A -> sub B D ->
     typedred (trm_anno (trm_abs E e) (typ_arrow A B))
@@ -195,8 +191,6 @@ Definition disjoint_spec A B :=
 Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_int : forall (T: ctx) (n : nat),
     uniq T -> (typing T nil infer_mode (trm_nat n) typ_int)
-| typing_top : forall (T : ctx),
-    typing T nil infer_mode trm_top typ_top
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
 | typing_abs : forall (L : vars) (T : ctx) (S : arg) (A B C D : typ) (e : trm),
@@ -241,8 +235,6 @@ Parameter Y : atom.
 Inductive ptype : trm -> typ -> Prop :=
 | ptype_int : forall (n : nat),
     ptype (trm_nat n) typ_int
-| ptype_top :
-    ptype trm_top typ_top
 | ptype_anno : forall (e : trm) (A : typ),
     ptype (trm_anno e A) A
 | ptype_merge : forall (e1 e2 : trm) (A B : typ),
@@ -251,10 +243,10 @@ Inductive ptype : trm -> typ -> Prop :=
     ptype (trm_merge e1 e2) (typ_and A B).
 
 Inductive papp : trm -> trm -> trm -> Prop :=
-| papp_top : forall (p vl : trm) (A : typ),
+| papp_top : forall (v vl : trm) (A : typ),
+    ptype v A ->
     toplike A ->
-    pvalue p ->
-    papp (trm_anno p A) vl (trm_anno trm_top typ_top)
+    papp v vl (trm_anno (trm_nat 1) A)
 | papp_abs_anno : forall (A B C : typ) (e v v' : trm),
     typedred v A v' ->
     not (toplike B) ->
@@ -274,8 +266,6 @@ Inductive papp : trm -> trm -> trm -> Prop :=
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
     step (trm_nat n) (trm_anno (trm_nat n) typ_int)
-| step_top_anno :
-    step trm_top (trm_anno trm_top typ_top)
 | step_papp : forall (v vl e : trm),
     value v -> value vl ->
     papp v vl e ->
