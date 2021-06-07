@@ -47,16 +47,31 @@ Proof.
   - inversion Htop; subst. apply IHHsub. assumption.
 Qed.
 
-(* Version: all value can be checked by toplike *)
+Lemma typing_sub_check_merge :
+  forall (e : trm) (A B C: typ) (T : ctx),
+    typing T nil check_mode e A ->
+    sub A B -> sub A C ->
+    typing T nil check_mode e (typ_and B C).
+Proof.
+Admitted.
+
 Lemma typing_sub_check :
   forall (T : ctx) (v : trm) (A : typ),
-    (* value v -> *)
     typing T nil check_mode v A -> forall B,
     sub A B ->
     typing T nil check_mode v B.
 Proof.
   intros T e A Htyp.
   dependent induction Htyp; intros.
+  - dependent destruction H2.
+    + eapply typing_abs_top; eauto.
+    + eapply typing_abs_top; eauto. constructor. eapply toplike_sub_top; eauto.
+    + eapply typing_abs; eauto.
+      eapply sub_transitivity; eauto.
+    + assert (Hchk: typing T nil check_mode (trm_abs A e) (typ_arrow B C)).
+      eapply typing_abs; eauto.
+      eapply typing_sub_check_merge; eauto.
+  - eapply typing_abs_top; eauto. eapply toplike_sub_toplike; eauto. 
   - eapply typing_app2; eauto.
     eapply IHHtyp2; eauto.
     eapply sub_arrow; eauto.
@@ -82,14 +97,3 @@ Proof.
       apply IHA1. assumption.
       apply IHA2. assumption.
 Qed.
-
-(* try snow's typing_check_to_infer *)
-Lemma typing_check_to_infer :
-  forall (T : ctx) (v : trm) (A : typ) (S : arg),
-    value v ->
-    typing T S check_mode v A ->
-    exists B, typing T S infer_mode v B /\ sub B A.
-Proof.
-  intros T v A S Hval Hchk.
-  dependent induction Hchk; try solve [inversion Hval].
-Admitted.

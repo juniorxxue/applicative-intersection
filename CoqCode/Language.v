@@ -195,8 +195,11 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
 | typing_abs : forall (L : vars) (T : ctx) (A B C D : typ) (e : trm),
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) C) ->
-    sub A B ->
+    sub B A ->
     typing T nil check_mode (trm_abs A e) (typ_arrow B C)
+| typing_abs_top : forall (T : ctx) (e : trm) (A B : typ),
+    toplike B ->
+    typing T nil check_mode (trm_abs A e) B
 | typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
     appsub S A B ->
     typing T nil check_mode e A ->
@@ -256,11 +259,13 @@ Inductive papp : trm -> trm -> trm -> Prop :=
 | papp_merge_l : forall (A B C : typ) (v1 v2 v vl e : trm),
     ptype v1 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
     appsub (cons B nil) C A ->
+    not (toplike C) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 v vl e : trm),
     ptype v2 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
     appsub (cons B nil) C A ->
+    not (toplike C) ->
     papp v2 vl e ->
     papp (trm_merge v1 v2) vl e.
 

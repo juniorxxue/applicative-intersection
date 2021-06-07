@@ -25,6 +25,12 @@ Proof.
   inversion H.
 Qed.
 
+Lemma typing_int_checked_by_toplike :
+  forall (n : nat) (A : typ),
+    toplike A ->
+    typing nil nil check_mode (trm_nat n) A.
+Admitted.
+
 Theorem tred_preservation :
   forall (v v' : trm) (A: typ),
     value v ->
@@ -36,6 +42,7 @@ Proof.
   dependent induction Hred.
   - eapply typing_anno; eauto.
   - eapply typing_anno; eauto.
+    eapply typing_int_checked_by_toplike; eauto.
   - apply typing_anno; eauto.
     dependent destruction Htyp.
     dependent destruction Htyp.
@@ -73,6 +80,7 @@ Proof.
       assumption.
     + dependent destruction Htyp.
       * inversion Hv.
+      * inversion Hv. 
       * eapply tred_consistency; eauto.
 Qed.
 
@@ -84,23 +92,10 @@ Lemma papp_preservation_infer:
     typing nil (cons A S) infer_mode v (typ_arrow A B) ->
     typing nil S infer_mode e B.
 Proof.
-  Admitted.
-
-(* this lemma may be generalized wrongly *)
-Lemma papp_preservation :
-  forall (v vl e : trm) (A B : typ) (S : arg) (dir : mode),
-    value v -> value vl ->
-    papp v vl e ->
-    typing nil nil infer_mode vl A ->
-    typing nil (cons A S) dir v (typ_arrow A B) ->
-    typing nil S dir e B.
-Proof.
-  intros v vl e A B S dir Hr Hv Hp Htyp1 Htyp2.
-  generalize dependent A.
-  dependent induction Hp; intros.
-  - dependent destruction Htyp2. 
+  intros.
+  dependent induction H1.
 Admitted.
-  
+
 Lemma papp_preservation_check :
   forall (v vl e : trm) (A B : typ),
     value v -> value vl ->
@@ -110,8 +105,9 @@ Lemma papp_preservation_check :
     typing nil nil check_mode e B.
 Proof.
   intros v vl e A B Hv Hvl Hp Htyp1 Htyp2.
-  dependent induction Htyp1.
-Admitted.
+  generalize dependent A. generalize dependent B.
+  dependent induction Hp; intros.
+Admitted.   
 
 Lemma appsub_typing :
   forall (e : trm) (A B : typ) (S : arg),
@@ -132,14 +128,9 @@ Theorem preservation :
 Proof.
   intros e e' A dir S Htyp Hred.
   generalize dependent e'.
-  dependent induction Htyp; intros.
+  dependent induction Htyp; intros; try solve [inversion Hred].
   - dependent destruction Hred.
     eapply typing_anno; eauto.
-  - dependent destruction Hred.
-    eapply typing_anno; eauto.
-  - dependent destruction Hred.
-  - dependent destruction Hred.
-    inversion H2. destruct H2; eauto.
   - dependent destruction Hred.
     + assert (Htyp2: typing nil nil infer_mode v' A).
       eapply tred_preservation; eauto.
@@ -179,7 +170,7 @@ Proof.
   intros v A Hv Htyp.
   dependent induction A.
   - dependent destruction Htyp; try solve [inversion Hv].
-Admitted.    
+Admitted.
 
 Lemma pvalue_cannot_be_value :
   forall (e : trm),
@@ -217,40 +208,6 @@ Proof.
 Qed.
 
 Theorem progress :
-  forall (e : trm) (A : typ) (S : arg) (dir : mode),
-    typing nil S dir e A ->
-    value e \/ exists e', step e e'.
-Proof.
-  intros e A S dir Htyp.
-  dependent induction Htyp.
-  - right. exists (trm_anno (trm_nat n) typ_int).
-    apply step_int_anno.
-  - right. exists (trm_anno trm_top typ_top).
-    apply step_top_anno.
-  - inversion H0.
-  - left. constructor. constructor.
-  - destruct IHHtyp; eauto.
-    + right. assert (Hv: value e); eauto.
-      eapply tred_progress in H0; eauto.
-      destruct H0. exists x. eapply step_anno_value; eauto.
-    + destruct H0.
-      assert (Hval : value (trm_anno e A) \/ not (value (trm_anno e A))).
-      eapply value_or_not_value.
-      destruct Hval.
-      * left. assumption.
-      * right. exists (trm_anno x A). eapply step_anno. assumption. assumption.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + right. admit.
-    + admit.
-    + admit.
-    + admit.
-  - admit. (* same as previous one *)
-  - destruct IHHtyp; eauto.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-Admitted.
-(* the typing merge has some problems with reduction *)
-
-Theorem progress_infer :
   forall (e : trm) (A : typ) (S : arg),
     typing nil S infer_mode e A ->
     value e \/ exists e', step e e'.
@@ -259,9 +216,5 @@ Proof.
   dependent induction Htyp.
   - right. exists (trm_anno (trm_nat n) typ_int).
     apply step_int_anno.
-  - right. exists (trm_anno trm_top typ_top).
-    apply step_top_anno.
   - inversion H0.
-  -
 Admitted.
-    

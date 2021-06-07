@@ -5,7 +5,7 @@ Require Import Strings.String.
 Set Printing Parentheses.
 
 Lemma tred_ord_toplike : forall (e e' : trm) (A : typ),
-    ordinary A -> toplike A -> typedred e A e' -> e' = (trm_anno trm_top A).
+    ordinary A -> toplike A -> typedred e A e' -> e' = (trm_anno (trm_nat 1) A).
 Proof.
   intros e e' A H_ord H_top H_tred.
   dependent induction H_tred; subst; eauto.
@@ -227,50 +227,6 @@ Proof.
   eapply tred_determinism; eauto 3.
 Qed.
 
-Lemma tred_typing :
-  forall (v v' : trm) (A : typ),
-    value v ->
-    (exists (B : typ), typing nil nil infer_mode v B) ->
-    typedred v A v' ->
-    (exists (C : typ), typing nil nil infer_mode v' C).
-Proof.
-  intros v v' A Hval Htyp Hred.
-  induction Hred.
-  - exists typ_int. constructor; eauto 3.
-  - exists A. eapply typing_anno; eauto.
-  - destruct Htyp.
-    inversion H2; subst.
-    inversion H7; subst.
-    + exists (typ_arrow C D).
-      eapply typing_anno; eauto 3.
-      assert (Hsub: sub (typ_arrow A B) (typ_arrow C D)).
-      apply sub_arrow. assumption. assumption.
-      eapply typing_sub_check. apply H8. apply Hsub.
-  - apply IHHred. inversion Hval; subst. assumption.
-    destruct Htyp. inversion H0; subst.
-    + exists A0. assumption.
-    + exists A0. assumption.
-  - apply IHHred. inversion Hval; subst. assumption.
-    destruct Htyp. inversion H0; subst.
-    + exists B. assumption.
-    + exists B. assumption.
-  - assert (Htypl: exists (D : typ), typing nil nil infer_mode v1 D).
-    apply IHHred1. assumption. assumption.
-    assert (Htypr: exists (E : typ), typing nil nil infer_mode v2 E).
-    apply IHHred2. assumption. assumption.
-    destruct Htypl. destruct Htypr.
-    assert(Hval1: value v1). eapply tred_value. apply Hval. apply Hred1.
-    assert(Hval2: value v2). eapply tred_value. apply Hval. apply Hred2.
-    exists (typ_and x x0). apply typing_merge_value; eauto 3.
-    (* well typed value *)
-    destruct Htyp.
-    eapply tred_consistency.
-    + apply Hval.
-    + apply H1.
-    + apply Hred1.
-    + apply Hred2.
-Qed.
-
 Lemma typing_merge_inversion:
   forall (v1 v2 : trm),
     (exists (A : typ), typing nil nil infer_mode (trm_merge v1 v2) A) ->
@@ -291,7 +247,6 @@ Proof.
   intros e A B Hp1 Hp2.
   generalize dependent B.
   dependent induction Hp1.
-  - intros. inversion Hp2. reflexivity.
   - intros. inversion Hp2. reflexivity.
   - intros. inversion Hp2. reflexivity.
   - intros. inversion Hp2; subst.
@@ -334,73 +289,58 @@ Proof.
   dependent destruction Hp.
 Admitted.
 
-(* some inversion lemmas may help since premises are a lot *)
 Lemma papp_determinism :
   forall (v vl e1 e2 : trm),
     value v -> value vl ->
     (exists (B : typ), typing nil nil infer_mode vl B) ->
     papp v vl e1 -> papp v vl e2 -> e1 = e2.
 Proof.
-  intros v vl e1 e2 Hrv Hv Htyp Hp1 Hp2.
+ intros v vl e1 e2 Hrv Hv Htyp Hp1 Hp2.
   generalize dependent e2.
   dependent induction Hp1.
   - intros. inversion Hp2; subst.
-    + reflexivity.
-    + dependent destruction H. contradiction.
+    + assert (A = A0). eapply ptype_determinsm; eauto.
+      rewrite H3. reflexivity.
+    + dependent destruction H. dependent destruction H0. contradiction.
+    + assert (Heq: A = C). eapply ptype_determinsm; eauto. subst.
+      contradiction.
+    + assert (Heq: A = C). eapply ptype_determinsm; eauto. subst.
+      contradiction.
   - intros. dependent destruction Hp2.
-    + dependent destruction H1. contradiction.
+    + dependent destruction H1. dependent destruction H2. contradiction.
     + assert (v' = v'0). eapply tred_determinism; eauto.
       rewrite H3; eauto.
   - intros. apply IHHp1; eauto.
     + dependent destruction Hrv. assumption.
-    + dependent destruction Hp2.
-      * apply Hp2.
-      * (* try to invert this case *)
-        inversion H1; subst.
-        inversion H5; subst.
-        assert (B = B0). eapply ptype_determinsm; eauto. subst.
-        assert (A1 = A2). eapply ptype_determinsm; eauto. subst.
-        assert (B1 = B2). eapply ptype_determinsm; eauto. subst.
+    + dependent destruction Hp2; eauto.
+      * assert (Heq: A0 = C). eapply ptype_determinsm; eauto. subst.
+        contradiction.
+      * assert (B = B0). eapply ptype_determinsm; eauto. subst.
+        assert (C = C0). eapply ptype_determinsm; eauto. subst.
         assert (A = A0). eapply appsub_determinism; eauto. subst.
-        assert (A0 = A2). eapply ptype_determinsm. apply H. apply H9.
-        assert (A0 = B2). eapply ptype_determinsm; eauto.
-        assert (A2 = B2). rewrite <- H7. rewrite <- H8. reflexivity. subst. rename B2 into C.
+        dependent destruction H6.
+        assert (A = B).
+        assert (A = A0). eapply ptype_determinsm; eauto. subst.
+        assert (B = A0). eapply ptype_determinsm; eauto. subst.
+        reflexivity. subst.
         dependent destruction Hrv.
         assert (v1 = v2). eapply ptype_merge_same; eauto. subst. eauto.
-        (* we need a lemma inversion of two brach of appsub *)
-        (* well, that's basically determinsm of appsub *)
-        (* try to find a contradiction: disjoint? in ptype? *)
   - intros. apply IHHp1; eauto.
     + dependent destruction Hrv. assumption.
-    + dependent destruction Hp2.
-      * inversion H1; subst.
-        inversion H5; subst.
-        assert (B = B0). eapply ptype_determinsm; eauto. subst.
-        assert (A1 = A2). eapply ptype_determinsm; eauto. subst.
-        assert (B1 = B2). eapply ptype_determinsm; eauto. subst.
+    + dependent destruction Hp2; eauto.
+      * assert (Heq: A0 = C). eapply ptype_determinsm; eauto. subst.
+        contradiction.
+      * assert (B = B0). eapply ptype_determinsm; eauto. subst.
+        assert (C = C0). eapply ptype_determinsm; eauto. subst.
         assert (A = A0). eapply appsub_determinism; eauto. subst.
-        assert (A0 = A2). eapply ptype_determinsm; eauto.
-        assert (A0 = B2). eapply ptype_determinsm. apply H. apply H11.
-        assert (A2 = B2). rewrite <- H7. rewrite <- H8. reflexivity. subst. rename B2 into C.
+        dependent destruction H6.
+        assert (A = B).
+        assert (A = A0). eapply ptype_determinsm; eauto. subst.
+        assert (B = A0). eapply ptype_determinsm; eauto. subst.
+        reflexivity. subst.
         dependent destruction Hrv.
         assert (v1 = v2). eapply ptype_merge_same; eauto. subst. eauto.
-      * apply Hp2.
 Qed.
-
-(* aux lemma for ptype_merge_same *)
-Lemma consistent_equal :
-  forall (A : typ) (v1 v2 : trm),
-    value v1 -> value v2 ->
-    not (toplike A) ->
-    typing nil nil infer_mode (trm_merge v1 v2) (typ_and A A) ->
-    v1 = v2.
-Proof.
-  intros A v1 v2 Htl Hv1 Hv2 Htyp.
-  dependent destruction Htyp.
-  - eapply disjoint_value_consistent with (v1:=v1) (v2:=v2) in H; eauto.
-    unfold consistency_spec in H.
-    eapply H; eauto.
-Admitted.
 
 Lemma value_cannot_step_further :
   forall (v : trm),
@@ -408,7 +348,6 @@ Lemma value_cannot_step_further :
 Proof.
   intros v Hval.
   induction v.
-  - inversion Hval.
   - inversion Hval.
   - inversion Hval.
   - inversion Hval.
@@ -427,10 +366,6 @@ Proof.
       * apply H2. constructor. constructor.
     + intros. unfold not. intros.
       inversion H; subst.
-      * inversion H2.
-      * apply H2. constructor. constructor.
-    + intros. unfold not. intros.
-      inversion H; subst; clear H.
       * inversion H2.
       * apply H2. constructor. constructor.
 Qed.
@@ -458,7 +393,6 @@ Proof.
   dependent induction H.
   - inversion Hv.
   - inversion Hv.
-  - inversion Hv.
 Qed.
 
 (* this case have conflict with typing rule: any value can be checked by lemma *)
@@ -473,8 +407,19 @@ Proof.
   dependent destruction Htyp.
   dependent destruction Htyp.
   - inversion Hv.
+  - inversion Hv.
+  - inversion Hv. 
   - exists B0; eauto.
 Qed.
+
+(* aux lemma for step_determinism *)
+Lemma lambda_typing1 :
+  forall (e : trm) (A B : typ),
+    typing nil (cons A nil) infer_mode e (typ_arrow A B) ->
+    typing nil nil check_mode e (typ_arrow A B).
+Proof.
+  intros e A B Htyp.
+Admitted.
 
 Lemma step_determinism :
   forall (e e1 e2 : trm) (A : typ),
@@ -489,11 +434,9 @@ Proof.
     inversion Hred2; subst.
     reflexivity.
   - intros A Htyp e2 Hred2.
-    inversion Hred2; subst.
-    reflexivity.
-  - intros A Htyp e2 Hred2.
     inversion Hred2; subst. (* papp and 2 congruence rules *)
-    + eapply app_check_inversion in Htyp; eauto. apply papp_determinism with (v:=v) (vl:=vl); eauto.
+    + eapply app_check_inversion in Htyp; eauto.
+      apply papp_determinism with (v:=v) (vl:=vl); eauto.
     + eapply value_cannot_step_further in H5. inversion H5. auto.
     + eapply value_cannot_step_further in H6. inversion H6. auto.
   - intros A0 Htyp e2 Hred2.
@@ -516,18 +459,9 @@ Proof.
     + assert (Heq: e1' = e1'0).
       dependent destruction Htyp.
       * eapply IHHred1; eauto.
-      * eapply IHHred1; eauto.
-        dependent destruction Htyp.
-        (* the previous hypo cannot be used because of S *)
-        (* dependent destruction Htyp2. *)
-        admit.
-        (* 1 *)
-        (* assert (Hv : rvalue (trm_abs A0 e)). eapply rvalue_abs. *)
-        (* eapply rvalue_cannot_step_further in Hred2. contradiction. *)
-        (* assumption. *)
-        (* (* 2 *) *)
-        (* dependent destruction Hred1. dependent destruction Hred2. *)
-        (* eapply tred_determinism; eauto. *)
+      * dependent destruction Htyp.
+        eapply IHHred1; eauto.
+        eapply lambda_typing1; eauto.
       * rewrite Heq; eauto.
     + eapply value_cannot_step_further in Hred1. contradiction. assumption.
   - intros A Htyp e0 Hred2.
@@ -559,4 +493,4 @@ Proof.
       * eapply IHHred1; eauto.
       * eapply IHHred1; eauto.
       * rewrite Heq. reflexivity.
-Admitted.
+Qed.
