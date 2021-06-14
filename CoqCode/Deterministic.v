@@ -377,6 +377,7 @@ Lemma app_check_inversion :
 Proof.
   intros r vl A Hrv Hv Hchk.
   dependent destruction Hchk.
+  - inversion H0.
   - exists A. auto.
   - dependent destruction Hchk.
     exists A0. eauto.
@@ -404,10 +405,11 @@ Lemma anno_check_to_infer :
 Proof.
   intros v A B Hv Htyp.
   dependent destruction Htyp.
+  inversion H0.
   dependent destruction Htyp.
   dependent destruction Htyp.
   - inversion Hv.
-  - inversion Hv.
+  - dependent destruction H1; try solve [inversion Hv].
   - inversion Hv. 
   - exists B0; eauto.
 Qed.
@@ -415,10 +417,42 @@ Qed.
 (* aux lemma for step_determinism *)
 Lemma lambda_typing1 :
   forall (e : trm) (A B : typ),
+    typing nil (cons A nil) infer_mode e B ->
+    (exists C, typing nil nil check_mode e C).
+Proof.
+  intros e A B Htyp.
+  dependent induction Htyp.
+  - dependent destruction H.
+    + dependent destruction H0.
+      exists (typ_arrow A0 A1). eapply typing_sub; eauto.
+      eapply sub_reflexivity.
+    + clear IHHtyp. exists (typ_and A0 B). eapply typing_sub; eauto.
+      eapply sub_reflexivity.
+    + clear IHHtyp. exists (typ_and A0 B). eapply typing_sub; eauto.
+      eapply sub_reflexivity.
+  - clear IHHtyp1. clear IHHtyp2.
+    exists B. eapply typing_app2.
+    + eapply Htyp1.
+    + admit.
+  - clear IHHtyp.
+    exists B. eapply typing_sub; eauto.
+    eapply sub_reflexivity.
+Admitted.
+
+Lemma lambda_typing2 :
+  forall (e : trm) (A B : typ),
     typing nil (cons A nil) infer_mode e (typ_arrow A B) ->
     typing nil nil check_mode e (typ_arrow A B).
 Proof.
   intros e A B Htyp.
+  dependent induction Htyp.
+  - clear IHHtyp. eapply typing_sub; eauto.
+    admit. (* trivial *)
+  - clear IHHtyp1. clear IHHtyp2.
+    eapply typing_app2; eauto 3.
+    admit.
+  - eapply typing_sub; eauto.
+    admit. (* trivial *)
 Admitted.
 
 Lemma step_determinism :
@@ -450,6 +484,7 @@ Proof.
       auto.
     + assert (Heq: e' = e'0).
       dependent destruction Htyp.
+      * inversion H1.
       * dependent destruction Htyp.
         eapply IHHred1; eauto.
       * rewrite Heq. reflexivity.
@@ -458,10 +493,13 @@ Proof.
     + eapply value_cannot_step_further in Hred1; eauto. contradiction.
     + assert (Heq: e1' = e1'0).
       dependent destruction Htyp.
-      * eapply IHHred1; eauto.
+      * inversion H0.
+      * eapply IHHred1; eauto 3.
       * dependent destruction Htyp.
-        eapply IHHred1; eauto.
-        eapply lambda_typing1; eauto.
+        assert (exists C, typing nil nil check_mode e1 C).
+        eapply lambda_typing1; eauto 3.
+        destruct H0.
+        eapply IHHred1; eauto 3.        
       * rewrite Heq; eauto.
     + eapply value_cannot_step_further in Hred1. contradiction. assumption.
   - intros A Htyp e0 Hred2.
@@ -470,14 +508,16 @@ Proof.
     + eapply value_cannot_step_further in Hred2. contradiction. assumption.
     + assert (Heq: e2' = e2'0).
       dependent destruction Htyp.
-      * eapply IHHred1; eauto.
+      * inversion H1.
+      * eapply IHHred1; eauto 3.
       * dependent destruction Htyp.
-        eapply IHHred1; eauto.
+        eapply IHHred1; eauto 3.
       * rewrite Heq. reflexivity.
   - intros A Htyp e0 Hred2.
     dependent destruction Hred2.
     + assert (Heq: e1' = e1'0).
       dependent destruction Htyp.
+      inversion H0.
       dependent destruction Htyp.
       * eapply IHHred1; eauto.
       * eapply IHHred1; eauto.
@@ -489,6 +529,7 @@ Proof.
       contradiction. assumption.
     + assert (Heq: e2' = e2'0).
       dependent destruction Htyp.
+      inversion H1.
       dependent destruction Htyp.
       * eapply IHHred1; eauto.
       * eapply IHHred1; eauto.

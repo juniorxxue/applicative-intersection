@@ -197,9 +197,10 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) C) ->
     sub B A ->
     typing T nil check_mode (trm_abs A e) (typ_arrow B C)
-| typing_abs_top : forall (T : ctx) (e : trm) (A B : typ),
+| typing_abs_top : forall (T : ctx) (p : trm) (A B : typ),
     toplike B ->
-    typing T nil check_mode (trm_abs A e) B
+    pvalue p ->
+    typing T nil check_mode p B
 | typing_anno : forall (T : ctx) (S : arg) (A B : typ) (e : trm),
     appsub S A B ->
     typing T nil check_mode e A ->

@@ -47,13 +47,13 @@ Proof.
   - inversion Htop; subst. apply IHHsub. assumption.
 Qed.
 
-Lemma typing_sub_check_merge :
-  forall (e : trm) (A B C: typ) (T : ctx),
-    typing T nil check_mode e A ->
-    sub A B -> sub A C ->
-    typing T nil check_mode e (typ_and B C).
+Lemma temp_rule_check_merge :
+  forall (A B C : typ) (e : trm) (T : ctx),
+    typing T nil check_mode (trm_abs A e) B ->
+    typing T nil check_mode (trm_abs A e) C ->
+    typing T nil check_mode (trm_abs A e) (typ_and B C).
 Proof.
-Admitted.
+  Admitted.
 
 Lemma typing_sub_check :
   forall (T : ctx) (v : trm) (A : typ),
@@ -66,11 +66,11 @@ Proof.
   - dependent destruction H2.
     + eapply typing_abs_top; eauto.
     + eapply typing_abs_top; eauto. constructor. eapply toplike_sub_top; eauto.
-    + eapply typing_abs; eauto.
+    + eapply typing_abs; eauto 3.
       eapply sub_transitivity; eauto.
     + assert (Hchk: typing T nil check_mode (trm_abs A e) (typ_arrow B C)).
-      eapply typing_abs; eauto.
-      eapply typing_sub_check_merge; eauto.
+      eapply typing_abs; eauto 3.
+      admit.
   - eapply typing_abs_top; eauto. eapply toplike_sub_toplike; eauto. 
   - eapply typing_app2; eauto.
     eapply IHHtyp2; eauto.
@@ -78,7 +78,7 @@ Proof.
     eapply sub_reflexivity.
   - eapply typing_sub. apply Htyp.
     eapply sub_transitivity; eauto.
-Qed.
+Admitted.
 
 Lemma toplike_sub :
   forall (A : typ),
@@ -96,4 +96,39 @@ Proof.
     + constructor; inversion H; subst.
       apply IHA1. assumption.
       apply IHA2. assumption.
+Qed.
+
+Lemma pvalue_cannot_be_value :
+  forall (e : trm),
+    pvalue e -> value e -> False.
+Proof.
+  intros e Hp Hv.
+  dependent destruction Hp; try solve [inversion Hv].
+Qed.
+
+Lemma pvalue_or_not_pvalue :
+  forall (e : trm),
+    pvalue e \/ not (pvalue e).
+Proof.
+  intros e.
+  dependent induction e; eauto; try solve [right; intro H; inversion H].
+Qed.
+
+(* this lemma really does make sense to me *)
+Lemma value_or_not_value :
+  forall (e : trm),
+    value e \/ not (value e).
+Proof.
+  intros e.
+  dependent induction e; eauto; try solve [right; unfold not; intros; inversion H].
+  - destruct IHe1; destruct IHe2; eauto;
+      try solve [right; unfold not; intros; dependent destruction H1; contradiction].
+  - destruct IHe.
+    + right. unfold not. intros. dependent destruction H0.
+      eapply pvalue_cannot_be_value; eauto.
+    + assert (Hp: pvalue e \/ not (pvalue e)).
+      eapply pvalue_or_not_pvalue.
+      destruct Hp.
+      * left. constructor. assumption.
+      * right. unfold not. intros. dependent destruction H1. contradiction.
 Qed.

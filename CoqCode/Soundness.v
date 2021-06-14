@@ -25,12 +25,6 @@ Proof.
   inversion H.
 Qed.
 
-Lemma typing_int_checked_by_toplike :
-  forall (n : nat) (A : typ),
-    toplike A ->
-    typing nil nil check_mode (trm_nat n) A.
-Admitted.
-
 Theorem tred_preservation :
   forall (v v' : trm) (A: typ),
     value v ->
@@ -42,30 +36,32 @@ Proof.
   dependent induction Hred.
   - eapply typing_anno; eauto.
   - eapply typing_anno; eauto.
-    eapply typing_int_checked_by_toplike; eauto.
-  - apply typing_anno; eauto.
+  - apply typing_anno; eauto 3.
     dependent destruction Htyp.
+    inversion H0.
     dependent destruction Htyp.
     eapply typing_sub_check; eauto.
   - dependent destruction Hv.
     dependent destruction Htyp.
+    inversion H0.
     dependent destruction Htyp.
-    + apply IHHred; eauto.
+    + apply IHHred; eauto 3.
       eapply typing_sub.
       eapply Htyp1.
       eapply tred_sub. apply Hv1. apply Hred. apply Htyp1.
-    + apply IHHred; eauto.
+    + apply IHHred; eauto 3.
       eapply typing_sub.
       eapply Htyp1.
       eapply tred_sub. apply Hv1. apply Hred. apply Htyp1.
   - dependent destruction Hv.
     dependent destruction Htyp.
+    inversion H0.
     dependent destruction Htyp.
-    + apply IHHred; eauto.
+    + apply IHHred; eauto 3.
       eapply typing_sub.
       apply Htyp2.
       eapply tred_sub. apply Hv2. apply Hred. apply Htyp2.
-    + apply IHHred; eauto.
+    + apply IHHred; eauto 3.
       eapply typing_sub.
       apply Htyp2.
       eapply tred_sub. apply Hv2. apply Hred. apply Htyp2.
@@ -79,7 +75,7 @@ Proof.
       eapply typing_check_merge_distro in Htyp. destruct Htyp.
       assumption.
     + dependent destruction Htyp.
-      * inversion Hv.
+      * dependent destruction H0; try solve [inversion Hv].
       * inversion Hv. 
       * eapply tred_consistency; eauto.
 Qed.
@@ -92,8 +88,20 @@ Lemma papp_preservation_infer:
     typing nil (cons A S) infer_mode v (typ_arrow A B) ->
     typing nil S infer_mode e B.
 Proof.
-  intros.
-  dependent induction H1.
+  intros v vl e A B S Hv Hvl Hp Htyp1 Htyp2.
+  dependent induction Htyp1.
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+    + clear IHHtyp1. clear IHHtyp2.
+      dependent destruction H.
+      admit.
+    + admit.
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+    + admit.
+    + admit.
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
 Admitted.
 
 Lemma papp_preservation_check :
@@ -105,9 +113,15 @@ Lemma papp_preservation_check :
     typing nil nil check_mode e B.
 Proof.
   intros v vl e A B Hv Hvl Hp Htyp1 Htyp2.
-  generalize dependent A. generalize dependent B.
-  dependent induction Hp; intros.
-Admitted.   
+  dependent induction Htyp1.
+  - inversion Hv.
+  - eapply pvalue_cannot_be_value in H0; eauto 3. inversion H0.
+  - inversion Hv.
+  - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+    + clear IHHtyp1. clear IHHtyp2.
+      dependent destruction H0.
+      dependent destruction Hp.
+Admitted. 
 
 Lemma appsub_typing :
   forall (e : trm) (A B : typ) (S : arg),
@@ -131,6 +145,10 @@ Proof.
   dependent induction Htyp; intros; try solve [inversion Hred].
   - dependent destruction Hred.
     eapply typing_anno; eauto.
+  - dependent destruction H0.
+    + dependent destruction Hred.
+      eapply typing_sub; eauto.
+    + dependent destruction Hred. 
   - dependent destruction Hred.
     + assert (Htyp2: typing nil nil infer_mode v' A).
       eapply tred_preservation; eauto.
@@ -172,40 +190,6 @@ Proof.
   - dependent destruction Htyp; try solve [inversion Hv].
 Admitted.
 
-Lemma pvalue_cannot_be_value :
-  forall (e : trm),
-    pvalue e -> value e -> False.
-Proof.
-  intros e Hp Hv.
-  dependent destruction Hp; try solve [inversion Hv].
-Qed.
-
-Lemma pvalue_or_not_pvalue :
-  forall (e : trm),
-    pvalue e \/ not (pvalue e).
-Proof.
-  intros e.
-  dependent induction e; eauto; try solve [right; intro H; inversion H].
-Qed.
-
-(* this lemma really does make sense to me *)
-Lemma value_or_not_value :
-  forall (e : trm),
-    value e \/ not (value e).
-Proof.
-  intros e.
-  dependent induction e; eauto; try solve [right; unfold not; intros; inversion H].
-  - destruct IHe1; destruct IHe2; eauto;
-      try solve [right; unfold not; intros; dependent destruction H1; contradiction].
-  - destruct IHe.
-    + right. unfold not. intros. dependent destruction H0.
-      eapply pvalue_cannot_be_value; eauto.
-    + assert (Hp: pvalue e \/ not (pvalue e)).
-      eapply pvalue_or_not_pvalue.
-      destruct Hp.
-      * left. constructor. assumption.
-      * right. unfold not. intros. dependent destruction H1. contradiction.
-Qed.
 
 Theorem progress :
   forall (e : trm) (A : typ) (S : arg),
