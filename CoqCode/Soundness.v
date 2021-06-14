@@ -124,14 +124,32 @@ Proof.
 Admitted. 
 
 Lemma appsub_typing :
-  forall (e : trm) (A B : typ) (S : arg),
-    typing nil nil infer_mode e A ->
+  forall (v : trm) (A B : typ) (S : arg),
+    value v ->
+    typing nil nil infer_mode v A ->
     appsub S A B ->
-    typing nil S infer_mode e B.
+    typing nil S infer_mode v B.
 Proof.
-  intros e A B S Htyp Has.
-  generalize dependent  e.
-  dependent induction Has; intros; eauto.
+  intros v A B S Hval Htyp Has.
+  dependent destruction Htyp; try solve [inversion Hval].
+  - dependent destruction H.
+    eapply typing_anno; eauto.
+  - dependent destruction Has.
+    + eapply typing_merge; eauto.
+    + eapply typing_merge_pick.
+      assert (Htyp: typing nil S infer_mode (trm_merge e1 e2) (typ_and A B0)).
+      admit. eapply Htyp. eapply as_and_l; eauto.
+    + eapply typing_merge_pick.
+      assert (Htyp: typing nil S infer_mode (trm_merge e1 e2) (typ_and A B0)).
+      admit. eapply Htyp. eapply as_and_r; eauto.
+  - dependent destruction Has.
+    + eapply typing_merge_value; eauto.
+    + eapply typing_merge_pick.
+      assert (Htyp: typing nil S infer_mode (trm_merge v1 v2) (typ_and A B0)).
+      admit. eapply Htyp. eapply as_and_l; eauto.
+    + eapply typing_merge_pick.
+      assert (Htyp: typing nil S infer_mode (trm_merge v1 v2) (typ_and A B0)).
+      admit. eapply Htyp. eapply as_and_r; eauto.
 Admitted.
 
 Theorem preservation :
@@ -153,6 +171,7 @@ Proof.
     + assert (Htyp2: typing nil nil infer_mode v' A).
       eapply tred_preservation; eauto.
       eapply appsub_typing; eauto.
+      eapply tred_value; eauto.
     + eapply typing_anno. assumption.
       eapply IHHtyp; eauto.
   - dependent destruction Hred.
