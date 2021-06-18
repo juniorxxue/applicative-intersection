@@ -137,10 +137,8 @@ Proof.
       * inversion Hval; subst; clear Hval.
         assert (Hcons: consistency_spec v1 v2).
         eapply disjoint_value_consistent; eauto 3.
-        unfold consistency_spec in Hcons.
         eapply Hcons; eauto 3.
-      * unfold consistency_spec in H10.
-        eapply H10; eauto 3.
+      * eapply H11; eauto 3.
     + inversion H.
   - intros v0 Hred2.
     inversion Hred2; subst; eauto.
@@ -153,7 +151,7 @@ Proof.
         unfold consistency_spec in Hcons.
         symmetry. eapply Hcons; eauto 3.
       * unfold consistency_spec in H10.
-        symmetry. eapply H10; eauto 3.
+        symmetry. eapply H11; eauto.
     + inversion Hval; subst; clear Hval.
       eapply IHHred1.
       * assumption.
@@ -430,13 +428,11 @@ Proof.
       eapply sub_reflexivity.
     + clear IHHtyp. exists (typ_and A0 B). eapply typing_sub; eauto.
       eapply sub_reflexivity.
-  - clear IHHtyp1. clear IHHtyp2.
-    exists B. eapply typing_app2.
+  - exists B. eapply typing_app2.
     + eapply Htyp1.
     + admit.
-  - clear IHHtyp.
+  - clear IHHtyp1 IHHtyp2.
     exists B. eapply typing_sub; eauto.
-    eapply sub_reflexivity.
 Admitted.
 
 Lemma lambda_typing2 :
@@ -448,8 +444,7 @@ Proof.
   dependent induction Htyp.
   - clear IHHtyp. eapply typing_sub; eauto.
     admit. (* trivial *)
-  - clear IHHtyp1. clear IHHtyp2.
-    eapply typing_app2; eauto 3.
+  - eapply typing_app2; eauto 3.
     admit.
   - eapply typing_sub; eauto.
     admit. (* trivial *)

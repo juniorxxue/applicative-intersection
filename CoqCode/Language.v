@@ -217,17 +217,17 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     typing T nil infer_mode e B ->
     (sub B A) ->
     typing T nil check_mode e A
-| typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
+| typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm) (S : arg),
     disjoint_spec A B ->
-    typing T nil infer_mode e1 A ->
-    typing T nil infer_mode e2 B ->
-    typing T nil infer_mode (trm_merge e1 e2) (typ_and A B)
-| typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm),
+    typing T S infer_mode e1 A ->
+    typing T S infer_mode e2 B ->
+    typing T S infer_mode (trm_merge e1 e2) (typ_and A B)
+| typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm) (S : arg),
     value v1 -> value v2 ->
-    typing nil nil infer_mode v1 A ->
-    typing nil nil infer_mode v2 B ->
+    typing nil S infer_mode v1 A ->
+    typing nil S infer_mode v2 B ->
     consistency_spec v1 v2 ->
-    typing T nil infer_mode (trm_merge v1 v2) (typ_and A B)
+    typing T S infer_mode (trm_merge v1 v2) (typ_and A B)
 | typing_merge_pick : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     typing T S infer_mode (trm_merge e1 e2) B ->
     appsub (cons A S) B C ->

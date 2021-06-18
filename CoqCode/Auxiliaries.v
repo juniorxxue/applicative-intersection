@@ -47,14 +47,6 @@ Proof.
   - inversion Htop; subst. apply IHHsub. assumption.
 Qed.
 
-Lemma temp_rule_check_merge :
-  forall (A B C : typ) (e : trm) (T : ctx),
-    typing T nil check_mode (trm_abs A e) B ->
-    typing T nil check_mode (trm_abs A e) C ->
-    typing T nil check_mode (trm_abs A e) (typ_and B C).
-Proof.
-  Admitted.
-
 Lemma typing_sub_check :
   forall (T : ctx) (v : trm) (A : typ),
     typing T nil check_mode v A -> forall B,
