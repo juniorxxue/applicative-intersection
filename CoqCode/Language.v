@@ -231,7 +231,11 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_merge_pick : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     typing T S infer_mode (trm_merge e1 e2) B ->
     appsub (cons A S) B C ->
-    typing T (cons A S) infer_mode (trm_merge e1 e2) C.
+    typing T (cons A S) infer_mode (trm_merge e1 e2) C
+| typing_chk_and : forall (A B : typ) (T : ctx) (e : trm),
+    typing T nil check_mode e A ->
+    typing T nil check_mode e B ->
+    typing T nil check_mode e (typ_and A B).
 
 Hint Constructors typing : core.
 

@@ -62,7 +62,8 @@ Proof.
       eapply sub_transitivity; eauto.
     + assert (Hchk: typing T nil check_mode (trm_abs A e) (typ_arrow B C)).
       eapply typing_abs; eauto 3.
-      admit.
+      eapply typing_chk_and.
+      admit. admit.
   - eapply typing_abs_top; eauto. eapply toplike_sub_toplike; eauto. 
   - eapply typing_app2; eauto.
     eapply IHHtyp2; eauto.
