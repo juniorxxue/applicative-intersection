@@ -92,6 +92,7 @@ Proof.
   dependent induction Htyp1.
   - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
   - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
+  - inversion Hvl.
   - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
     + clear IHHtyp1. clear IHHtyp2.
       dependent destruction H.
@@ -114,14 +115,13 @@ Lemma papp_preservation_check :
 Proof.
   intros v vl e A B Hv Hvl Hp Htyp1 Htyp2.
   dependent induction Htyp1.
-  - inversion Hv.
   - eapply pvalue_cannot_be_value in H0; eauto 3. inversion H0.
   - inversion Hv.
   - dependent induction Htyp2; try solve [inversion Hv | inversion Hvl].
     + clear IHHtyp1. clear IHHtyp2.
       dependent destruction H0.
       dependent destruction Hp.
-Admitted. 
+Admitted.
 
 Lemma appsub_typing :
   forall (v : trm) (A B : typ) (S : arg),
@@ -199,6 +199,42 @@ Proof.
     + eapply typing_merge_pick; eauto.
 Qed.
 
+Lemma value_check_merge :
+  forall (v : trm) (A B : typ),
+    value v -> typing nil nil check_mode v (typ_and A B) ->
+    typing nil nil check_mode v A /\
+    typing nil nil check_mode v B.
+Proof.
+  intros v A B Hv Htyp.
+  split.
+  eapply typing_sub_check. eapply Htyp.
+  eapply sub_and_l. eapply sub_reflexivity.
+  eapply typing_sub_check. eapply Htyp.
+  eapply sub_and_r. eapply sub_reflexivity.
+Qed.
+
+Lemma toplike_cannot_subtype_int :
+  forall (A : typ),
+    toplike A -> sub A typ_int -> False.
+Proof.
+  intros.
+  dependent induction H; try solve [inversion H0].
+  dependent destruction H1.
+  eapply IHtoplike1; eauto.
+  eapply IHtoplike2; eauto.
+Qed.
+
+Lemma abs_cannot_check_by_int :
+  forall (A : typ) (e : trm),
+    typing nil nil check_mode (trm_abs A e) typ_int -> False.
+Proof.
+  intros.
+  dependent induction H.
+  - inversion H.
+  - dependent destruction H.
+    dependent destruction H0.
+Qed.
+
 Theorem tred_progress :
   forall (v : trm) (A : typ),
     value v -> typing nil nil check_mode v A ->
@@ -206,18 +242,171 @@ Theorem tred_progress :
 Proof.
   intros v A Hv Htyp.
   dependent induction A.
-  - dependent destruction Htyp; try solve [inversion Hv].
+  - dependent induction Hv.
+    + dependent induction H.
+      * dependent destruction Htyp.
+        inversion H.
+        dependent destruction Htyp. dependent destruction H.
+        dependent destruction Htyp.
+        eapply toplike_cannot_subtype_int in H; eauto. contradiction.        
+        dependent destruction Htyp.
+        (* how A plays a role in system *)
+        admit.
+      * dependent destruction Htyp.
+        inversion H0.
+        dependent destruction Htyp. dependent destruction H.
+        assert (Hcontra: typing nil nil check_mode (trm_abs A0 e) typ_int).
+        eapply typing_sub_check; eauto.
+        eapply abs_cannot_check_by_int in Hcontra. contradiction.
+    + dependent destruction Htyp.
+      * inversion H.
+      * dependent destruction Htyp.
+        dependent destruction H0.
+        (* case 1 *)
+        assert (exists v', typedred v1 typ_int v').
+        eapply IHHv1.
+        eapply typing_sub; eauto.
+        destruct H1. exists x. eapply tred_merge_l; eauto.
+        (* case 2 *)
+        assert (exists v', typedred v2 typ_int v').
+        eapply IHHv2.
+        eapply typing_sub; eauto.
+        destruct H1. exists x. eapply tred_merge_r; eauto.
+        (* the same *)
+        dependent destruction H2.
+        (* case 1 *)
+        assert (exists v', typedred v1 typ_int v').
+        eapply IHHv1.
+        eapply typing_sub; eauto.
+        destruct H3. exists x. eapply tred_merge_l; eauto.
+        (* case 2 *)
+        assert (exists v', typedred v2 typ_int v').
+        eapply IHHv2.
+        eapply typing_sub; eauto.
+        destruct H3. exists x. eapply tred_merge_r; eauto.
+  - exists (trm_anno (trm_nat 1) typ_top). eapply tred_top; eauto.
+  - clear IHA1. clear IHA2.
+    dependent induction Hv.
+    + dependent induction H.
+      * dependent destruction Htyp. inversion H0.
+        dependent destruction Htyp. dependent destruction H.
+        assert (Hchk: typing nil nil check_mode (trm_nat n) (typ_arrow A1 A2)).
+        eapply typing_sub_check; eauto.
+        dependent destruction Hchk.
+        (* case 1 *)
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)).
+        eapply tred_top; eauto.
+        (* case 2 *)
+        dependent destruction Hchk.
+        dependent destruction H1.
+         exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)).
+         eapply tred_top; eauto. constructor. eapply toplike_sub_top; eauto.
+      * dependent destruction Htyp. inversion H0.
+        dependent destruction Htyp. dependent destruction H.
+        dependent induction H0.
+        (* case 1 *)
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)).
+        eapply tred_top; eauto. constructor. eapply toplike_sub_top; eauto.
+        (* case 2 *)
+        exists (trm_anno (trm_abs A0 e) (typ_arrow A1 A2)).
+        eapply tred_arrow_anno; eauto.
+        admit.
+        (* case 3 *)
+        dependent destruction Htyp.
+        dependent destruction H.
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)).
+        eapply tred_top; eauto. eapply toplike_sub_toplike. eapply H. eapply H0.
+        dependent destruction Htyp. dependent destruction H1.
+        admit.
+        (* case 4 *)
+        dependent destruction Htyp.
+        dependent destruction H.
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)).
+        eapply tred_top; eauto. eapply toplike_sub_toplike. eapply H1. eapply H0.
+        dependent destruction Htyp. dependent destruction H1.
+        admit.
+    + dependent destruction Htyp.
+      * exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)). eapply tred_top; eauto.
+      * dependent destruction Htyp.
+        (* case 1 *)
+        dependent destruction H0.
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)). eapply tred_top; eauto.
+        assert (Htred1: exists v', typedred v1 (typ_arrow A1 A2) v').
+        eapply IHHv1; eauto. destruct Htred1.
+        exists x. eapply tred_merge_l; eauto.
+        assert (Htred2: exists v', typedred v2 (typ_arrow A1 A2) v').
+        eapply IHHv2; eauto. destruct Htred2.
+        exists x. eapply tred_merge_r; eauto.
+        (* case 2 *)
+        dependent destruction H2.
+        exists (trm_anno (trm_nat 1) (typ_arrow A1 A2)). eapply tred_top; eauto.
+        constructor. eapply toplike_sub_top; eauto.
+        assert (Htred1: exists v', typedred v1 (typ_arrow A1 A2) v').
+        eapply IHHv1; eauto. destruct Htred1.
+        exists x. eapply tred_merge_l; eauto.
+        assert (Htred2: exists v', typedred v2 (typ_arrow A1 A2) v').
+        eapply IHHv2; eauto. destruct Htred2.
+        exists x. eapply tred_merge_r; eauto.
+  (* case 2 *)
+  - assert (exists v', typedred v A1 v').
+    eapply IHA1; eauto 3.
+    eapply value_check_merge in Htyp.
+    destruct Htyp. assumption. assumption.
+    assert (exists v', typedred v A2 v').
+    eapply IHA2; eauto 3.
+    eapply value_check_merge in Htyp.
+    destruct Htyp. assumption. assumption.
+    destruct H. destruct H0.
+    exists (trm_merge x x0). eapply tred_and; eauto.
 Admitted.
 
-
 Theorem progress :
-  forall (e : trm) (A : typ) (S : arg),
-    typing nil S infer_mode e A ->
-    value e \/ exists e', step e e'.
+  forall (e : trm) (A : typ) (S : arg) (dir : mode),
+    typing nil nil dir e A ->
+    value e \/ (exists e', step e e') \/
+    (exists (e' : trm) (A : typ), e = (trm_abs A e')).
 Proof.
-  intros e A S Htyp.
+  intros e A S dir Htyp.
   dependent induction Htyp.
-  - right. exists (trm_anno (trm_nat n) typ_int).
+  - right. left. exists (trm_anno (trm_nat n) typ_int).
     apply step_int_anno.
   - inversion H0.
+  - right. right.
+    exists e. exists A. reflexivity.
+  - dependent induction H0.
+    + right. left.
+      exists (trm_anno (trm_nat n) typ_int).
+      eapply step_int_anno.
+    + right. right.
+      exists e. exists A0. reflexivity.
+  - dependent destruction H.
+    assert (IHHtyp1: value e \/ (exists e' : trm, step e e') \/ (exists (e' : trm) (A : typ), e = trm_abs A e')).
+    eapply IHHtyp; eauto.
+    destruct IHHtyp1.
+    + right. left.
+      assert (Htred: exists e', typedred e A e').
+      eapply tred_progress; eauto.
+      destruct Htred.
+      exists x. eapply step_anno_value; eauto.
+    + destruct H.
+      * right. left.
+        destruct H.
+        exists (trm_anno x A).
+        eapply step_anno; eauto.
+        intro Hval. dependent destruction Hval.
+        admit.
+      * destruct H. destruct H.
+        left. eapply value_anno. rewrite H.
+        eapply pvalue_abs.
+  - right. left.
+    admit.
+  - right. left.
+    destruct IHHtyp1; eauto.
+    + admit.
+    + destruct H.
+      * destruct H.
+        exists (trm_app e1 x). eapply step_app_v; eauto.
+        admit.
+      * admit.
+  - destruct IHHtyp; eauto.
 Admitted.
