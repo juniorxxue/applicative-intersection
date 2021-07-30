@@ -6,3 +6,5 @@
 *.vok
 *.aux
 out.*
+
+.evc
