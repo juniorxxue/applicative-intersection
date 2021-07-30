@@ -167,13 +167,11 @@ Proof.
     + dependent destruction Hred.
       eapply typing_sub; eauto.
     + dependent destruction Hred. 
-  - dependent destruction Hred.
-    + assert (Htyp2: typing nil nil infer_mode v' A).
-      eapply tred_preservation; eauto.
-      eapply appsub_typing; eauto.
-      eapply tred_value; eauto.
-    + eapply typing_anno. assumption.
-      eapply IHHtyp; eauto.
+  - dependent destruction Hred; eauto.
+    assert (Htyp2: typing nil nil infer_mode v' A).
+    eapply tred_preservation; eauto.
+    eapply appsub_typing; eauto.
+    eapply tred_value; eauto.
   - dependent destruction Hred.
     + eapply papp_preservation_infer with (v:=e1) (vl:=e2); eauto.
     + eapply typing_app1; eauto.
@@ -284,7 +282,7 @@ Proof.
         eapply IHHv2.
         eapply typing_sub; eauto.
         destruct H3. exists x. eapply tred_merge_r; eauto.
-  - exists (trm_anno (trm_nat 1) typ_top). eapply tred_top; eauto.
+  - exists (trm_anno (trm_nat 1) typ_top); eauto.
   - clear IHA1. clear IHA2.
     dependent induction Hv.
     + dependent induction H.

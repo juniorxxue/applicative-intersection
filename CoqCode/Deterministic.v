@@ -283,8 +283,6 @@ Lemma ptype_merge_same :
     value v1 -> value v2 -> ptype (trm_merge v1 v2) (typ_and A A) ->
     v1 = v2.
 Proof.
-  intros v1 v2 A Hv1 Hv2 Hp.
-  dependent destruction Hp.
 Admitted.
 
 Lemma papp_determinism :
