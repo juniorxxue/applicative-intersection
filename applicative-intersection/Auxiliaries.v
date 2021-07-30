@@ -55,15 +55,6 @@ Lemma typing_sub_check :
 Proof.
   intros T e A Htyp.
   dependent induction Htyp; intros.
-  - dependent destruction H2.
-    + eapply typing_abs_top; eauto.
-    + eapply typing_abs_top; eauto. constructor. eapply toplike_sub_top; eauto.
-    + eapply typing_abs; eauto 3.
-      eapply sub_transitivity; eauto.
-    + assert (Hchk: typing T nil check_mode (trm_abs A e) (typ_arrow B C)).
-      eapply typing_abs; eauto 3.
-      eapply typing_chk_and.
-      admit. admit.
   - eapply typing_abs_top; eauto. eapply toplike_sub_toplike; eauto. 
   - eapply typing_app2; eauto.
     eapply IHHtyp2; eauto.
@@ -71,7 +62,7 @@ Proof.
     eapply sub_reflexivity.
   - eapply typing_sub. apply Htyp.
     eapply sub_transitivity; eauto.
-Admitted.
+Qed.
 
 Lemma toplike_sub :
   forall (A : typ),
