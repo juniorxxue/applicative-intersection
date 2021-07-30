@@ -283,8 +283,6 @@ Lemma ptype_merge_same :
     value v1 -> value v2 -> ptype (trm_merge v1 v2) (typ_and A A) ->
     v1 = v2.
 Proof.
-  intros v1 v2 A Hv1 Hv2 Hp.
-  dependent destruction Hp.
 Admitted.
 
 Lemma papp_determinism :
@@ -406,7 +404,6 @@ Proof.
   inversion H0.
   dependent destruction Htyp.
   dependent destruction Htyp.
-  - inversion Hv.
   - dependent destruction H1; try solve [inversion Hv].
   - inversion Hv. 
   - exists B0; eauto.
@@ -420,6 +417,10 @@ Lemma lambda_typing1 :
 Proof.
   intros e A B Htyp.
   dependent induction Htyp.
+  - simpl in *.
+    exists (typ_arrow A0 B). eapply typing_sub.
+    assert (Habs: typing nil nil infer_mode (trm_abs A0 e) (typ_arrow A0 B)).
+    eapply typing_abs1; eauto. eapply Habs. eapply sub_reflexivity.
   - dependent destruction H.
     + dependent destruction H0.
       exists (typ_arrow A0 A1). eapply typing_sub; eauto.
@@ -433,21 +434,6 @@ Proof.
     + admit.
   - clear IHHtyp1 IHHtyp2.
     exists B. eapply typing_sub; eauto.
-Admitted.
-
-Lemma lambda_typing2 :
-  forall (e : trm) (A B : typ),
-    typing nil (cons A nil) infer_mode e (typ_arrow A B) ->
-    typing nil nil check_mode e (typ_arrow A B).
-Proof.
-  intros e A B Htyp.
-  dependent induction Htyp.
-  - clear IHHtyp. eapply typing_sub; eauto.
-    admit. (* trivial *)
-  - eapply typing_app2; eauto 3.
-    admit.
-  - eapply typing_sub; eauto.
-    admit. (* trivial *)
 Admitted.
 
 Lemma step_determinism :

@@ -193,10 +193,13 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
     uniq T -> (typing T nil infer_mode (trm_nat n) typ_int)
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T nil infer_mode (trm_fvar x) A
-| typing_abs : forall (L : vars) (T : ctx) (A B C D : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil check_mode (open e (trm_fvar x)) C) ->
-    sub B A ->
-    typing T nil check_mode (trm_abs A e) (typ_arrow B C)
+| typing_abs1 : forall (L : vars) (T : ctx) (A B : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil infer_mode (open e (trm_fvar x)) B) ->
+    typing T nil infer_mode (trm_abs A e) (typ_arrow A B)
+| typing_abs2 : forall (L : vars) (S : arg) (T : ctx) (A B C : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil infer_mode (open e (trm_fvar x)) B) ->
+    sub C A ->
+    typing T (cons C S) infer_mode (trm_abs A e) (typ_arrow A B)
 | typing_abs_top : forall (T : ctx) (p : trm) (A B : typ),
     toplike B ->
     pvalue p ->
@@ -231,11 +234,11 @@ Inductive typing : ctx -> arg -> mode -> trm -> typ -> Prop :=
 | typing_merge_pick : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     typing T S infer_mode (trm_merge e1 e2) B ->
     appsub (cons A S) B C ->
-    typing T (cons A S) infer_mode (trm_merge e1 e2) C
-| typing_chk_and : forall (A B : typ) (T : ctx) (e : trm),
-    typing T nil check_mode e A ->
-    typing T nil check_mode e B ->
-    typing T nil check_mode e (typ_and A B).
+    typing T (cons A S) infer_mode (trm_merge e1 e2) C.
+(* | typing_chk_and : forall (A B : typ) (T : ctx) (e : trm), *)
+(*     typing T nil check_mode e A -> *)
+(*     typing T nil check_mode e B -> *)
+(*     typing T nil check_mode e (typ_and A B). *)
 
 Hint Constructors typing : core.
 
