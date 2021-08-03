@@ -38,20 +38,43 @@
    (≤ (& A B) C)])
 
 (define-judgment-form λi
+  #:mode (appsub? I I)
+  #:contract (appsub? Ψ B)
+  [-------------------------"as?-refl"
+   (appsub? () A)]
+  [(≤ C A)
+   (appsub? (E ...) B)
+   ------------------------ "as?-fun"
+   (appsub? (E ... C) (→ A B))]
+  [(appsub? (E ... C) A)
+   ------------------------ "as?-and-l"
+   (appsub? (E ... C) (& A B))]
+  [(appsub? (E ... C) B)
+   ------------------------ "as?-and-r"
+   (appsub? (E ... C) (& A B))])
+
+
+(define-judgment-form λi
   #:mode (appsub I I O)
   #:contract (appsub Ψ A B)
-  [-------------------- "appsub-refl"
+  [-------------------- "as-refl"
    (appsub () A A)]
   [(≤ C A)
    (appsub (E ...) B D)
-   -------------------- "appsub-fun"
+   -------------------- "as-fun"
    (appsub (E ... C) (→ A B) (→ C D))]
-  [(appsub (E C ...) A D)
-   -------------------- "appsub-andl"
-   (appsub (E C ...) (& A B) D)]
-  [(appsub (E C ...) B D)
-   -------------------- "appsub-andr"
-   (appsub (E C ...) (& A B) D)]
+  [(appsub? (E ... C) A)
+   (side-condition (not (judgment-holds (appsub? (E ... C) B))))
+   -------------------- "as-and-l"
+   (appsub (E ... C) (& A B) A)]
+  [(appsub? (E ... C) B)
+   (side-condition (not (judgment-holds (appsub? (E ... C) A))))
+   -------------------- "as-and-r"
+   (appsub (E ... C) (& A B) B)]
+  [(appsub? (E ... C) A)
+   (appsub? (E ... C) B)
+   -------------------- "as-and-both"
+   (appsub (E ... C) (& A B) (& A B))]
   )
 
 (define-judgment-form λi
@@ -144,9 +167,10 @@
    (infer Γ (E ... A) ⊢ (* e_1 e_2) ⇒ C)]
   )
 
-(define-syntax-rule (draw x) (show-derivations (build-derivations (infer () () ⊢ x ⇒ A))))
-(define-syntax-rule (holds x) (judgment-holds x))
+(define-syntax-rule (draw-type x) (show-derivations (build-derivations (infer () () ⊢ x ⇒ A))))
+(define-syntax-rule (holds? x) (judgment-holds x))
 (define-syntax-rule (type? x) (judgment-holds (infer () () ⊢ x ⇒ A) A))
+(define-syntax-rule (compute-as s t) (judgment-holds (appsub s t A) A))
 
 (type? (* (λ (x : int) x)
           (λ (x : bool) x)))
@@ -159,7 +183,15 @@
            (→ int int))
         1))
 
-#;(draw ((: (* (λ (x : int) x)
-              (λ (x : bool) x))
-           (→ int int))
-        1))
+#;(draw-type ((: (* (λ (x : int) x)
+                    (λ (x : bool) x))
+                 (→ int int))
+              1))
+
+(compute-as (int) (& (→ int int)
+                     (→ int bool)))
+
+(compute-as (int) (& (→ int int)
+                     (→ bool bool)))
+(compute-as (int) (& (→ bool int)
+                     (→ int bool)))
