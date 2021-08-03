@@ -68,3 +68,11 @@ How it reflect in function overloading?
 
 merge appears at arguments
 
+# Choices of Stack
+
+```
+[Type] -- good for nesting
+Type (seems to require Bottom to represent nil)
+Removal
+```
+

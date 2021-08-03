@@ -92,6 +92,28 @@ B <: C
 A & B <: C
 ```
 
+# Application Subtyping (2-ary)
+
+```
+-----------------
+appsub? S A
+-----------------
+
+C <: A
+------------------------ AS?-Fun
+appsub? (S, C) (A -> B)
+
+
+appsub? (S, C) A
+------------------------ AS?-And-L
+appsub? (S, C) A & B
+
+
+appsub? (S, C) B
+------------------------ AS?-And-R
+appsub? (S, C) A & B
+```
+
 # Application Subtyping
 
 ```
@@ -109,16 +131,21 @@ C <: A      S |- B <: D
 S, C |- A -> B <: C -> D
 
 
-S, C |- A <: D
-side-condition1
------------------------- AS-And-L
-S, C |- A & B <: D
-
-
-S, C |- B <: D
-side-condition2
+appsub? (S, C) B
+not (appsub? (S, C) A)
 ------------------------ AS-And-R
-S, C |- A & B <: D
+S, C |- A & B <: B
+
+appsub? (S, C) A
+not (appsub? (S, C) B)
+------------------------ AS-And-L
+S, C |- A & B <: A
+
+
+appsub? (S, C) A
+appsub? (S, C) B
+------------------------ AS-And-Both
+S, C |- A & B <: A & B
 ```
 
 # Disjoint
@@ -364,13 +391,15 @@ T |- v1,,v2 => A & B
 
 
 T; S, A |- e1 => C
-T |- e2 => B (make e2 well-typed)
+T |- e2 => B               (make e2 well-typed)
+disjoint C B               (not sure here)
 ----------------------------------------------- T-Merge-pick-L
 T; S, A |- e1,,e2 => C
 
 
 T; S, A |- e2 => C
 T |- e1 => B (make e1 well-typed)
+disjoint B C
 ----------------------------------------------- T-Merge-pick-R
 T; S, A |- e1,,e2 => C
 ```

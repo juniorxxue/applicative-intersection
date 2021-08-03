@@ -234,11 +234,13 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     typing T nil (trm_merge v1 v2) (typ_and A B)
 | typing_merge_pick_l : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     (* value v1 -> value v2 -> *)
+    disjoint_spec C B ->
     typing T (cons A S) e1 C ->
     typing T nil e2 B ->
     typing T (cons A S) (trm_merge e1 e2) C
 | typing_merge_pick_r : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     (* value v1 -> value v2 -> *)
+    disjoint_spec B C ->
     typing T (cons A S) e2 C ->
     typing T nil e1 B ->
     typing T (cons A S) (trm_merge e1 e2) C.

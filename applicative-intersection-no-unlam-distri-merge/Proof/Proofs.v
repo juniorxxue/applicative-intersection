@@ -383,6 +383,7 @@ Proof.
       dependent destruction H.
 Qed.
 
+(* C should have some connection with A -> B *)
 Lemma stack_and_unstack:
   forall (e : trm) (A B : typ) (S : arg),
     typing nil (cons A S) e (typ_arrow A B) ->
@@ -391,8 +392,20 @@ Proof.
   intros.
   dependent induction H; eauto.
   assert (exists C, typing nil nil e1 C); eauto.
+  - admit.
+  - assert (exists C, typing nil nil e1 C); eauto.
+    destruct H2. exists (typ_and x B0). eapply typing_merge; eauto.
   dependent destruction H0; eauto.
 Admitted.
+
+Lemma stack_and_unstack_enhanced_conslusion:
+  forall (e : trm) (A B C D : typ) (S : arg),
+    typing nil (cons A S) e D ->
+    typing nil nil e C /\ sub C D.
+Proof.
+  intros.
+  dependent induction H; eauto.
+  split.
 
 Theorem determinism:
   forall (e e1 e2 : trm) (A : typ) (S : arg),
