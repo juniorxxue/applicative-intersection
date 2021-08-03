@@ -277,25 +277,20 @@ not (toplike D)
 
 ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1)
 not (toplike ptype(v1 ,, v2))
-v1 ● vl --> e
 -------------------------------------------- PApp-Merge-L
-v1 ,, v2 ● vl --> e
+v1 ,, v2 ● vl --> v1 ● vl
 
 
 ptype(vl) |- ptype(v1 ,, v2) <: ptype(v2)
 not (toplike ptype(v1 ,, v2))
-v2 ● vl --> e
 -------------------------------------------- PApp-Merge-R
-v1 ,, v2 ● vl --> e
+v1 ,, v2 ● vl --> v2 ● vl
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1)
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v2)
+ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1) & ptype(v2)
 not (toplike ptype(v1 ,, v2))
-v1 ● vl --> e1
-v2 ● vl --> e2
 -------------------------------------------- PApp-Merge-Parallel
-v1 ,, v2 ● vl --> e1 ,, e2
+v1 ,, v2 ● vl --> (v1 ● vl) ,, (v2 ● vl)
 ```
 
 # Reduction
@@ -394,16 +389,8 @@ consist v1 v2      . |- v1 => A     . |- v2 => B
 T |- v1,,v2 => A & B
 
 
-T; S, A |- e1 => C
-T |- e2 => B               (make e2 well-typed)
-disjoint C B               (not sure here)
------------------------------------------------ T-Merge-pick-L
-T; S, A |- e1,,e2 => C
-
-
-T; S, A |- e2 => C
-T |- e1 => B (make e1 well-typed)
-disjoint B C
------------------------------------------------ T-Merge-pick-R
-T; S, A |- e1,,e2 => C
+T |- e1,,e2 => A & B
+S, C |- A & B <: D
+----------------------------------------------- T-Merge-pick
+T; S, C |- e1,,e2 => D
 ```
