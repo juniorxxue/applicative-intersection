@@ -134,20 +134,20 @@ C <: A      S |- B <: D
 S, C |- A -> B <: C -> D
 
 
-appsub? C A
-not (appsub? C B)
+     appsub? (S, C) A
+not (appsub? (S, C) B)
 ------------------------ AS-And-L
 S, C |- A & B <: A
 
 
-appsub? C B
-not (appsub? C A)
+     appsub? (S, C) B
+not (appsub? (S, C) A)
 ------------------------ AS-And-R
 S, C |- A & B <: B
 
 
-appsub? C A
-appsub? C B
+appsub? (S, C) A
+appsub? (S, C) B
 ------------------------ AS-And-Both
 S, C |- A & B <: A & B
 ```
