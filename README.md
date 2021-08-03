@@ -18,3 +18,5 @@ type systems for applicative intersection types
 `/applicative-intersection-no-unlam`: drop unannotated lambda to startup a trivial system
 
 `/applicative-intersection-no-unlam-distri-merge`: add functionality of distirbuting in typing and semantics
+
+`/applicative-intersection-new-appsub`: follow up with full-blown application subtyping
