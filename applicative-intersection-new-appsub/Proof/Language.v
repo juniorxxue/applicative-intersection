@@ -96,19 +96,19 @@ Notation "A <: B" := (sub A B) (at level 40).
 
 Definition arg := list typ.
 
-Inductive auxas : arg -> typ -> typ -> Prop :=
+Inductive auxas : arg -> typ -> Prop :=
 | aas_refl : forall (A : typ),
-    auxas nil A A
-| aas_fun : forall (A B C D : typ) (S : arg),
+    auxas nil A
+| aas_fun : forall (A B C : typ) (S : arg),
     sub C A ->
-    auxas S B D ->
-    auxas (cons C S) (typ_arrow A B) (typ_arrow C D)
-| aas_and_l : forall (A B C D: typ) (S : arg),
-    auxas (cons C S) A D ->
-    auxas (cons C S) (typ_and A B) D
-| aas_and_r : forall (A B C D: typ) (S : arg),
-    auxas (cons C S) B D ->
-    auxas (cons C S) (typ_and A B) D.
+    auxas S B ->
+    auxas (cons C S) (typ_arrow A B)
+| aas_and_l : forall (A B C : typ) (S : arg),
+    auxas (cons C S) A ->
+    auxas (cons C S) (typ_and A B)
+| aas_and_r : forall (A B C : typ) (S : arg),
+    auxas (cons C S) B ->
+    auxas (cons C S) (typ_and A B).
 
 Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_refl : forall (A : typ),
@@ -118,35 +118,23 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub S B D ->
     appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
 | as_and_l : forall (A B C D: typ) (S : arg),
-    appsub (cons C S) A D ->
-    not (auxas (cons C S) B D) ->
-    appsub (cons C S) (typ_and A B) D
-| as_and_r : forall (A B C D: typ) (S : arg),
-    appsub (cons C S) B D ->
-    not (auxas (cons C S) A D) ->
-    appsub (cons C S) (typ_and A B) D.
+    auxas (cons C S) A ->
+    not (auxas (cons C S) B) ->
+    appsub (cons C S) (typ_and A B) A
+| as_and_r : forall (A B C: typ) (S : arg),
+    auxas (cons C S) B ->
+    not (auxas (cons C S) A) ->
+    appsub (cons C S) (typ_and A B) B
+| as_and_both : forall (A B C : typ) (S : arg),
+    auxas (cons C S) A ->
+    auxas (cons C S) B ->
+    appsub (cons C S) (typ_and A B) (typ_and A B).
 
-(* aux lemmas needed *)
-(* Fixpoint appsub' (T : arg) (t : typ) : option typ := *)
-(*   match T, t with *)
-(*   | nil, A => Some A *)
-(*   | (cons C T'), (typ_arrow A B) => if (sub C A) then (appsub' T' B) else None *)
-(*   | (cons C T'), (typ_and A B) => match (appsub' (cons C T') B) with *)
-(*                                 | None => appsub' (cons C T') A *)
-(*                                 | _ => None *)
-(*                                 end *)
-(*   | (cons C T'), (typ_and A B) => match (appsub' (cons C T') A) with *)
-(*                                 | None => appsub' (cons C T') B *)
-(*                                 | _ => None *)
-(*                                 end *)
-(*   | _, _ => None *)
-(*   end. *)
-
-
+Hint Constructors auxas : core.
 Hint Constructors appsub : core.
 
 Notation "S ⊢ A <: B" := (appsub S A B) (at level 40).
-Notation "S ➤ A <: B" := (auxas S A B) (at level 40).
+Notation "appsub? S A" := (auxas S A) (at level 40).
 
 Definition disjoint_spec A B :=
   forall (C : typ), sub A C -> sub B C -> toplike C.
@@ -232,26 +220,16 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     typing nil nil v1 A ->
     typing nil nil v2 B ->
     typing T nil (trm_merge v1 v2) (typ_and A B)
-| typing_merge_pick_l : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
-    (* value v1 -> value v2 -> *)
-    disjoint_spec C B ->
-    typing T (cons A S) e1 C ->
-    typing T nil e2 B ->
-    typing T (cons A S) (trm_merge e1 e2) C
-| typing_merge_pick_r : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
-    (* value v1 -> value v2 -> *)
-    disjoint_spec B C ->
-    typing T (cons A S) e2 C ->
-    typing T nil e1 B ->
-    typing T (cons A S) (trm_merge e1 e2) C.
+| typing_merge_pick : forall (T : ctx) (S : arg) (A B C D : typ) (e1 e2 : trm),
+    typing T nil (trm_merge e1 e2) (typ_and A B) ->
+    appsub (cons C S) (typ_and A B) D ->
+    typing T (cons C S) (trm_merge e1 e2) D.
 
 Hint Constructors typing : core.
 
 Notation "T S ⊢ e ⇒ A" := (typing T S e A) (at level 50).
 
 Inductive ptype : trm -> typ -> Prop :=
-| ptype_int : forall (n : nat),
-    ptype (trm_int n) typ_int
 | ptype_anno : forall (e : trm) (A : typ),
     ptype (trm_anno e A) A
 | ptype_merge : forall (e1 e2 : trm) (A B : typ),
@@ -271,18 +249,25 @@ Inductive papp : trm -> trm -> trm -> Prop :=
     not (toplike D) ->
     papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
-| papp_merge_l : forall (A B C : typ) (v1 v2 vl e : trm),
-    ptype v1 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
-    appsub (cons B nil) C A ->
-    not (toplike C) ->
+| papp_merge_l : forall (A B C : typ) (v1 v2 vl e: trm),
+    ptype v1 A -> ptype v2 B -> ptype vl C ->
+    appsub (cons C nil) (typ_and A B) A ->
+    not (toplike (typ_and A B)) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 vl e : trm),
-    ptype v2 A -> ptype vl B -> ptype (trm_merge v1 v2) C ->
-    appsub (cons B nil) C A ->
-    not (toplike C) ->
+    ptype v1 A -> ptype v2 B -> ptype vl C ->
+    appsub (cons C nil) (typ_and A B) B ->
+    not (toplike (typ_and A B)) ->
     papp v2 vl e ->
-    papp (trm_merge v1 v2) vl e.
+    papp (trm_merge v1 v2) vl e
+| papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2: trm),
+    ptype v1 A -> ptype v2 B -> ptype vl C ->
+    appsub (cons C nil) (typ_and A B) (typ_and A B) ->
+    not (toplike (typ_and A B)) ->
+    papp v1 vl e1 ->
+    papp v2 vl e2 ->
+    papp (trm_merge v1 v2) vl (trm_merge e1 e2).
 
 Hint Constructors papp : core.
 

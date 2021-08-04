@@ -1,68 +1,9 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language LibTactics.
+Require Import Language Subtyping LibTactics.
 Require Import Strings.String.
 
 Set Printing Parentheses.
-
-Lemma sub_reflexivity:
-  forall (A : typ), sub A A.
-Proof.
-  induction A; eauto.
-Qed.
-
-Hint Resolve sub_reflexivity : core.
-
-Lemma sub_and_inversion1:
-  forall (A B C : typ), sub A (typ_and B C) -> sub A B /\ sub A C.
-Proof.
-  introv Sub.
-  dependent induction Sub; eauto.
-  destruct (IHSub B C); eauto.
-  destruct (IHSub B C); eauto.
-Qed.
-
-Lemma sub_and_inversion2:
-  forall (A B C : typ), sub (typ_and A B) C -> sub A C \/ sub B C \/ exists C1 C2, C = typ_and C1 C2.
-Proof.
-  introv Hsub.
-  dependent induction Hsub; eauto.
-Qed.
-
-Lemma sub_transitivity:
-  forall (B A C : typ),
-    sub A B -> sub B C -> sub A C.
-Proof.
-  dependent induction B; intros; eauto.
-  - dependent induction H; eauto.
-  - dependent induction H; eauto.
-    dependent induction H0; eauto.
-  - dependent induction H0; eauto.
-    clear IHsub1 IHsub2.
-    dependent induction H; eauto.
-  - eapply sub_and_inversion1 in H. destruct H.
-    dependent induction H0; eauto.
-Qed.
-
-Lemma sub_toplike1:
-  forall (A B : typ),
-    toplike A -> sub B A.
-Proof.
-  intros.
-  generalize dependent B.
-  dependent induction H; eauto.
-Qed.
-
-Lemma sub_toplike2:
-  forall (A : typ),
-    sub typ_top A -> toplike A.
-Proof.
-  intros.
-  dependent induction H; eauto.
-Qed.
-
-Hint Resolve sub_toplike1 : core.
-Hint Resolve sub_toplike2 : core.
 
 Ltac inversion_ordinary :=
   match goal with
@@ -201,7 +142,6 @@ Proof.
   intros. generalize dependent B.
   dependent induction H; eauto; intros.
   - dependent destruction H0; eauto.
-  - dependent destruction H0; eauto.
   - dependent destruction H1; eauto.
     assert (A = A0); eauto.
     assert (B = B0); eauto.
@@ -219,19 +159,15 @@ Proof.
   intros A B1 B2 S Has1 Has2.
   generalize dependent B2.
   dependent induction Has1; intros.
-  - dependent destruction Has2.
-    + reflexivity.
-  - dependent destruction Has2.
-    + assert (Heq: D = D0).
-      eapply IHHas1; eauto.
-      rewrite Heq. reflexivity.
-  - dependent destruction Has2.
-    + eapply IHHas1; eauto.
-    + admit.
-  - dependent destruction Has2.
-    + admit.
-    + eapply IHHas1; eauto.
-Admitted.
+  - dependent destruction Has2; eauto.
+  - dependent destruction Has2; eauto.
+    assert (Heq: D = D0).
+    eapply IHHas1; eauto.
+    rewrite Heq. reflexivity.
+  - dependent destruction Has2; try solve [contradiction]; eauto.
+  - dependent destruction Has2; try solve [contradiction]; eauto.
+  - dependent destruction Has2; try solve [contradiction]; eauto.
+Qed.
 
 Lemma disjoint_spec_same :
   forall (A : typ),
@@ -242,79 +178,41 @@ Proof.
   induction A; eauto.
 Qed.
 
-
-Lemma ptype_merge_same :
-  forall (v1 v2 : trm) (A : typ),
-    value v1 -> value v2 ->
-    (exists A, typing nil nil (trm_merge v1 v2) A) ->
-(*    ptype v1 A -> ptype v2 A *)
-    ptype (trm_merge v1 v2) (typ_and A A) ->
-    v1 = v2.
-Proof.
-  introv Hv1 Hv2 Htyp Hptyp.
-  destruct Htyp.
-  dependent destruction Hptyp.
-  dependent destruction H.
-  - induction Hv1. induction Hv2; eauto.
-    + dependent destruction Hptyp2.
-      dependent destruction Hptyp1.
-      dependent destruction H0. dependent destruction H4.
-      dependent destruction H5. dependent destruction H6.
-      eapply disjoint_spec_same in H; eauto. contradiction. admit.
-Admitted.
-
-Lemma value_ptype_int :
-  forall (v : trm) (A : typ),
-    (exists B, typing nil nil v B) ->
-    sub A typ_int -> sub typ_int A ->
-    value v -> ptype v A ->
-    exists n, v = (trm_anno (trm_int n) A).
-Proof.
-  introv Htyp Hsub1 Hsub2 Hv Hptyp.
-  induction Hv; intros.
-  - induction H.
-    + dependent destruction Hptyp.
-      exists n; eauto.
-    + dependent destruction Hptyp.
-      destruct Htyp. dependent destruction H.
-      simpl_as. dependent destruction H.
-      assert (sub (typ_arrow A1 B) typ_int).
-      eapply sub_transitivity; eauto.
-      inversion H1.
-  - dependent destruction Hptyp.
-    clear IHHv1 IHHv2.
-    (* v = 1,,1 *)
-Admitted.
-
-Lemma ptype_merge_same':
-  forall (v1 : trm) (A : typ),
-    not (toplike A) ->
-    (exists B, typing nil nil v1 B) ->
-    value v1 -> ptype v1 A -> forall (v2 : trm),
-        (exists C, typing nil nil v2 C) ->
-        value v2 -> ptype v2 A ->
-        consistency_spec v1 v2 ->
-        v1 = v2.
-Proof.
-  introv Htl Htyp1 Hv1 Hptyp1.
-  dependent induction Hptyp1; eauto.
-  - inversion Hv1.
-  - introv Htyp2 Hv2 Hptyp2 Hcons. dependent destruction Hv1.
-    dependent induction H.
-    + destruct Htyp1. dependent destruction H.
-      dependent destruction H. simpl_as.
-      (* v2 = n : An *)
-      admit.
-    + destruct Htyp1. dependent destruction H.
-      dependent destruction H. simpl_as.
-Admitted.
-
 Ltac simpl_deter :=
   repeat
     match goal with
     | [H1: ptype ?v ?A1, H2: ptype ?v ?A2 |- _] => (eapply ptype_determinism in H1; eauto; subst)
     | [H1: appsub ?S ?A ?B1, H2: appsub ?S ?A ?B2 |- _] => (eapply appsub_determinism in H1; eauto; subst)
     end.
+
+Lemma typ_and_equal_false1 :
+  forall (A B : typ),
+    A = (typ_and A B) -> False.
+Proof.
+  intros.
+  induction A; try solve [inversion H]; eauto.
+  dependent destruction H.
+  eapply IHA1; eauto.
+Qed.
+
+Lemma typ_and_equal_false2 :
+  forall (A B : typ),
+    B = (typ_and A B) -> False.
+Proof.
+  intros.
+  induction B; try solve [inversion H]; eauto.
+  dependent destruction H.
+  eapply IHB2; eauto.
+Qed.
+
+Ltac solve_equal_false :=
+  match goal with
+  | [H: (typ_and ?A ?B) = ?A |- _] => (symmetry in H; eapply typ_and_equal_false1 in H; inversion H)
+  | [H: (typ_and ?A ?B) = ?B |- _] => (symmetry in H; eapply typ_and_equal_false2 in H; inversion H)
+  | [H: ?A = (typ_and ?A ?B) |- _] => (eapply typ_and_equal_false1 in H; inversion H)
+  | [H: ?B = (typ_and ?A ?B) |- _] => (eapply typ_and_equal_false2 in H; inversion H)
+  end.
+
 
 Lemma papp_determinism :
   forall (v vl e1 e2 : trm),
@@ -329,8 +227,12 @@ Proof.
   - dependent destruction Hp2; try solve [inversion Hv]; eauto.
     + assert (A = A0); eauto. rewrite H3; eauto.
     + dependent destruction H. dependent destruction H0. contradiction.
-    + assert (A = C); eauto. subst. contradiction.
-    + assert (A = C); eauto. subst. contradiction.
+    + dependent destruction H; eauto.
+      simpl_deter. contradiction.
+    + dependent destruction H; eauto.
+      simpl_deter. contradiction.
+    + dependent destruction H; eauto.
+      simpl_deter. contradiction.
   - dependent destruction Hp2.
     + dependent destruction H1. dependent destruction H2. contradiction.
     + assert (v' = v'0). eapply tred_determinism; eauto.
@@ -340,28 +242,34 @@ Proof.
     eapply IHHp1; eauto.
     dependent destruction H; eauto.
     dependent destruction Hp2; eauto.
-    + simpl_deter. contradiction.
+    + dependent destruction H5. simpl_deter. contradiction.
     + simpl_deter.
-      match goal with
-      | [H: ptype (trm_merge ?v1 ?v2) ?A |- _] => dependent destruction H
-      end.
-      simpl_deter.
-      assert (Heq: v1 = v2). eapply ptype_merge_same; eauto.
+      assert (Heq: v1 = v2). admit.
       rewrite Heq; eauto.
+    + simpl_deter. solve_equal_false.
   - dependent destruction Hv.
     dependent destruction Htyp1.
     eapply IHHp1; eauto.
     dependent destruction H; eauto.
     dependent destruction Hp2; eauto.
-    + simpl_deter. contradiction.
+    + dependent destruction H5. simpl_deter. contradiction.
     + simpl_deter.
-      match goal with
-      | [H: ptype (trm_merge ?v1 ?v2) ?A |- _] => dependent destruction H
-      end.
-      simpl_deter.
-      assert (Heq: v1 = v2). eapply ptype_merge_same; eauto.
+      assert (Heq: v1 = v2). admit.
       rewrite <- Heq; eauto.
-Qed.
+    + simpl_deter. solve_equal_false.
+  - dependent destruction Hv.
+    dependent destruction Htyp1.
+    dependent destruction Hp2; eauto.
+    + dependent destruction H5. simpl_deter. contradiction.
+    + simpl_deter. solve_equal_false.
+    + simpl_deter. solve_equal_false.
+    + simpl_deter.
+      assert (e1 = e0). eapply IHHp1_1; eauto.
+      dependent destruction H; eauto.
+      assert (e2 = e3). eapply IHHp1_2; eauto.
+      dependent destruction H; eauto.
+      rewrite_then_refl.
+Admitted.
 
 Lemma value_cannot_step_further:
   forall (v : trm),
@@ -392,10 +300,8 @@ Proof.
   intros.
   dependent induction H; eauto.
   assert (exists C, typing nil nil e1 C); eauto.
-  - admit.
-  - assert (exists C, typing nil nil e1 C); eauto.
-    destruct H2. exists (typ_and x B0). eapply typing_merge; eauto.
-  dependent destruction H0; eauto.
+  (* bruno says it may use some technology to prove *)
+  (* but since our stack only has zero or one items, it may not be a problem *)
 Admitted.
 
 Lemma stack_and_unstack_enhanced_conslusion:
@@ -405,7 +311,7 @@ Lemma stack_and_unstack_enhanced_conslusion:
 Proof.
   intros.
   dependent induction H; eauto.
-  split.
+Admitted.
 
 Theorem determinism:
   forall (e e1 e2 : trm) (A : typ) (S : arg),
@@ -684,9 +590,7 @@ Proof.
   - assert (value (trm_merge v1 v2)); eauto.
     apply value_cannot_step_further in Hred; eauto. inversion Hred.
   - dependent destruction Hred;
-      eapply typing_merge_pick_l; eauto.
-  - dependent destruction Hred;
-      eapply typing_merge_pick_r; eauto.
+      eapply typing_merge_pick; eauto. 
 Qed.
 
 Theorem tred_progress :
@@ -823,7 +727,6 @@ Proof.
   - admit.
 Admitted.
 
-
 Theorem progress_obslete :
   forall (e : trm) (A : typ),
     typing nil nil e A ->
@@ -867,7 +770,6 @@ Proof.
       exists (trm_merge x e2). eapply step_merge_l; eauto.
 Qed.
 
-
 Lemma papp_progress_stack :
   forall (e1 e2 : trm) (A B : typ) (S : arg),
     value e1 -> value e2 ->
@@ -877,19 +779,10 @@ Lemma papp_progress_stack :
 Proof.
   dependent induction e1; introv Hv1 Hv2 Htyp1 Htyp2; try solve [inversion Hv1].
   - dependent destruction Hv1.
-    dependent destruction Htyp1.
-    + assert (exists e', papp e1_1 e2 e'); eauto.
-      destruct H. exists x. admit.
-    + assert (exists e', papp e1_2 e2 e'); eauto.
-      destruct H. exists x. admit.
-  - dependent destruction Htyp1.
-    dependent destruction Hv1.
-    dependent destruction H.
-    + (* n *) dependent destruction Htyp1. clear IHe1.
-      admit.
-    + (* abs *) dependent destruction Htyp1. clear IHe1.
-      admit.
+    admit.
+  - admit.
 Admitted.
+
 
 (* a stack-version progress *)
 Theorem progress_stack :
@@ -929,15 +822,4 @@ Proof.
     + right. destruct H0. exists (trm_merge x e2); eauto. 
     + right. destruct H0.
       exists (trm_merge x e2). eapply step_merge_l; eauto.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + right. destruct H0. exists (trm_merge e1 x); eauto.
-    + right. destruct H. exists (trm_merge x e2); eauto. 
-    + right. destruct H.
-      exists (trm_merge x e2). eapply step_merge_l; eauto.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + right. destruct H0. exists (trm_merge x e2); eauto.
-    + right. destruct H. exists (trm_merge e1 x); eauto. 
-    + right. destruct H0.
-      exists (trm_merge x e2). eapply step_merge_l; eauto.
 Qed.
-  

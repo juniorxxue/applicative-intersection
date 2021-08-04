@@ -241,12 +241,8 @@ v -->(A & B) v1,,v2
 
 ```
 --------------------
-ptype e => A
+ptype v => A
 -------------------
-
------------------- ptype-int
-ptype n => Int
-
 
 ------------------ ptype-anno
 ptype (e : A) => A
@@ -277,20 +273,23 @@ not (toplike D)
 
 ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1)
 not (toplike ptype(v1 ,, v2))
+v1 ● vl --> e
 -------------------------------------------- PApp-Merge-L
-v1 ,, v2 ● vl --> v1 ● vl
+v1 ,, v2 ● vl --> e
 
 
 ptype(vl) |- ptype(v1 ,, v2) <: ptype(v2)
 not (toplike ptype(v1 ,, v2))
+v2 ● vl --> e
 -------------------------------------------- PApp-Merge-R
-v1 ,, v2 ● vl --> v2 ● vl
+v1 ,, v2 ● vl --> e
 
 
 ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1) & ptype(v2)
 not (toplike ptype(v1 ,, v2))
+(v1 ● vl) ,, (v2 ● vl) --> e
 -------------------------------------------- PApp-Merge-Parallel
-v1 ,, v2 ● vl --> (v1 ● vl) ,, (v2 ● vl)
+v1 ,, v2 ● vl --> e
 ```
 
 # Reduction
