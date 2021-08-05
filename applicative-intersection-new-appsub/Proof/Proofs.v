@@ -214,6 +214,15 @@ Ltac solve_equal_false :=
   end.
 
 
+Lemma appsub_solve_false :
+  forall (S : arg) (A : typ),
+    appsub S (typ_and A A) A -> False.
+Proof.
+  intros. dependent induction H; eauto;
+            eapply typ_and_equal_false1 in x; eauto.
+Qed.
+    
+
 Lemma papp_determinism :
   forall (v vl e1 e2 : trm),
     value v -> value vl ->
@@ -243,9 +252,8 @@ Proof.
     dependent destruction H; eauto.
     dependent destruction Hp2; eauto.
     + dependent destruction H5. simpl_deter. contradiction.
-    + simpl_deter.
-      assert (Heq: v1 = v2). admit.
-      rewrite Heq; eauto.
+    + simpl_deter. (* reject via appsub :) *)
+      eapply appsub_solve_false in H8. inversion H8.
     + simpl_deter. solve_equal_false.
   - dependent destruction Hv.
     dependent destruction Htyp1.
@@ -254,8 +262,7 @@ Proof.
     dependent destruction Hp2; eauto.
     + dependent destruction H5. simpl_deter. contradiction.
     + simpl_deter.
-      assert (Heq: v1 = v2). admit.
-      rewrite <- Heq; eauto.
+      eapply appsub_solve_false in H8. inversion H8.
     + simpl_deter. solve_equal_false.
   - dependent destruction Hv.
     dependent destruction Htyp1.
@@ -269,7 +276,7 @@ Proof.
       assert (e2 = e3). eapply IHHp1_2; eauto.
       dependent destruction H; eauto.
       rewrite_then_refl.
-Admitted.
+Qed.
 
 Lemma value_cannot_step_further:
   forall (v : trm),
