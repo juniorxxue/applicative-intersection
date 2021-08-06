@@ -20,3 +20,5 @@ type systems for applicative intersection types
 `/applicative-intersection-no-unlam-distri-merge`: add functionality of distirbuting in typing and semantics
 
 `/applicative-intersection-new-appsub`: follow up with full-blown application subtyping
+
+`/applicative-intersection-new-appsub-no-distri`: new appsub without distributivity
