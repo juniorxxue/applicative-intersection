@@ -124,6 +124,9 @@ appsub? (S, C) (A & B)
 S |- A <: B
 -----------
 
+Spec:
+Exists O, A <: S -> O -> B <: S -> O.
+
 
 ------------------------ AS-Refl
 . |- A <: A
@@ -134,22 +137,23 @@ C <: A      S |- B <: D
 S, C |- A -> B <: C -> D
 
 
-     appsub? (S, C) A
+
 not (appsub? (S, C) B)
+S, C |- A <: D
 ------------------------ AS-And-L
-S, C |- A & B <: A
+S, C |- A & B <: D
 
 
-     appsub? (S, C) B
 not (appsub? (S, C) A)
+S, C |- B <: D
 ------------------------ AS-And-R
-S, C |- A & B <: B
+S, C |- A & B <: D
 
 
-appsub? (S, C) A
-appsub? (S, C) B
+S, C |- A <: D1
+S, C |- B <: D2
 ------------------------ AS-And-Both
-S, C |- A & B <: A & B
+S, C |- A & B <: D1 & D2
 ```
 
 # Disjoint
@@ -357,6 +361,8 @@ x : A \in T
 ----------------- T-Var
 T |- x => A
 
+stack var
+
 
 T, x : A |- e => B
 ----------------------------- T-Lam1
@@ -368,7 +374,7 @@ T, x : A |- e => B       S, C |- A -> B <: A -> B
 T; S, C |- \x. e : A -> B => A -> B
 
 
-T |- e => C      C <: A        S |- A <: B
+T |- e => C      C <: A        S |- A <: B            Q: S, C |- A <: B <- does this work instead of 2 checks?
 --------------------------------------------- T-Ann
 T; S |- e : A => B
 

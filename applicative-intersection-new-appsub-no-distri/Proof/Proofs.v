@@ -150,6 +150,26 @@ Qed.
 
 Hint Resolve ptype_determinism : core.
 
+Lemma appsub_to_auxas :
+  forall (A B : typ) (S : arg),
+    appsub S A B ->
+    auxas S A.
+Proof.
+  intros.
+  dependent induction H; eauto.
+Qed.
+
+Lemma auxas_false :
+  forall (A B : typ) (S : arg),
+    not (auxas S A) ->
+    appsub S A B ->
+    False.
+Proof.
+  intros.
+  eapply appsub_to_auxas in H0.
+  contradiction.
+Qed.
+
 Lemma appsub_determinism :
   forall (A : typ) (B1 B2 : typ) (S : arg),
     appsub S A B1 ->
@@ -164,9 +184,18 @@ Proof.
     assert (Heq: D = D0).
     eapply IHHas1; eauto.
     rewrite Heq. reflexivity.
-  - dependent destruction Has2; try solve [contradiction]; eauto.
-  - dependent destruction Has2; try solve [contradiction]; eauto.
-  - dependent destruction Has2; try solve [contradiction]; eauto.
+  - dependent destruction Has2; eauto.
+    + eapply auxas_false in H; eauto. inversion H.
+    + eapply auxas_false in H; eauto. inversion H.
+  - dependent destruction Has2; eauto.
+    + eapply auxas_false in H; eauto. inversion H.
+    + eapply auxas_false in H; eauto. inversion H.
+  - dependent destruction Has2; eauto.
+    + eapply auxas_false in H; eauto. inversion H.
+    + eapply auxas_false in H; eauto. inversion H.
+    + assert (D1 = D0). eapply IHHas1_1; eauto.
+      assert (D2 = D3). eapply IHHas1_2; eauto.
+      rewrite_then_refl.
 Qed.
 
 Lemma disjoint_spec_same :

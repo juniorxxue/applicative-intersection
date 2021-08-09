@@ -118,17 +118,17 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub S B D ->
     appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
 | as_and_l : forall (A B C D: typ) (S : arg),
-    auxas (cons C S) A ->
+    appsub (cons C S) A D ->
     not (auxas (cons C S) B) ->
-    appsub (cons C S) (typ_and A B) A
-| as_and_r : forall (A B C: typ) (S : arg),
-    auxas (cons C S) B ->
+    appsub (cons C S) (typ_and A B) D
+| as_and_r : forall (A B C D : typ) (S : arg),
+    appsub (cons C S) B D ->
     not (auxas (cons C S) A) ->
-    appsub (cons C S) (typ_and A B) B
-| as_and_both : forall (A B C : typ) (S : arg),
-    auxas (cons C S) A ->
-    auxas (cons C S) B ->
-    appsub (cons C S) (typ_and A B) (typ_and A B).
+    appsub (cons C S) (typ_and A B) D
+| as_and_both : forall (A B C D1 D2: typ) (S : arg),
+    appsub (cons C S) A D1 ->
+    appsub (cons C S) B D2 ->
+    appsub (cons C S) (typ_and A B) (typ_and D1 D2).
 
 Hint Constructors auxas : core.
 Hint Constructors appsub : core.
