@@ -1,4 +1,4 @@
-# Syntax
+#  Syntax
 
 ```
 A, B ::= Int | Top | A -> B | A & B
@@ -133,7 +133,7 @@ Exists O, A <: S -> O -> B <: S -> O.
 
 
 C <: A      S |- B <: D
------------------------- AS-Fun (do we need it?)
+------------------------ AS-Fun
 S, C |- A -> B <: C -> D
 
 
@@ -148,12 +148,6 @@ not (appsub? (S, C) A)
 S, C |- B <: D
 ------------------------ AS-And-R
 S, C |- A & B <: D
-
-
-S, C |- A <: D1
-S, C |- B <: D2
------------------------- AS-And-Both
-S, C |- A & B <: D1 & D2
 ```
 
 # Disjoint
@@ -358,10 +352,13 @@ T |- n => Int
 
 
 x : A \in T
------------------ T-Var
+--------------- T-Var
 T |- x => A
 
-stack var
+
+x : A \in T     S |- A <: B
+----------------------------- T-Var-stack
+T; S |- x => B
 
 
 T, x : A |- e => B

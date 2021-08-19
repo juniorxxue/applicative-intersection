@@ -9,7 +9,7 @@ instance Addable Int  Int where
 instance Addable Int Bool where
     add x y = if y then x + 1 else x
 
-
+ex1 :: Addable Int b => b -> Int
 ex1 = add (1 :: Int)
 
 -- no parallel here
