@@ -6,6 +6,7 @@ e    ::= n | x | \x:A. e | e1 e2 | e1,,e2 | e : A
 
 p    ::= n | \x .e : A -> B
 v    ::= p : A | v1,,v2
+r    ::= v | v r
 
 T    ::= . | T, x : A
 S    ::= . | S, A
@@ -251,43 +252,99 @@ ptype e1 => A   ptype e2 => B
 ptype e1,,e2 => A & B
 ```
 
+# Principal Typing (stack)
+
+```
+ptypes L => S
+
+----------------------- ptypes-empty
+ptypes . => .
+
+
+ptypes L => S      ptype v => A
+----------------------------------- ptypes-cons
+ptypes (L, v) => S, A
+```
+
+# Application Subterm (2-ary)
+
+```
+-----------------------
+appsubt? L v
+-----------------------
+
+appsub? ptypes (L, v) C
+------------------------------------- ASt?-F un
+appsubt? (L, v) (\x. e : A -> B) : C
+
+
+appsubt? (L, v) v1
+--------------------------------- ASt?-L
+appsubt? (L, v) (v1 ,, v2)
+
+
+appsubt? (L, v) v2
+--------------------------------- ASt?-R
+appsubt? (L, v) (v1 ,, v2)
+```
+
+# Application Subterm
+
+```
+-------------------
+L |- v <= v'
+-------------------
+
+
+------------------- ASt-Refl (un-necessary?)
+. |- v <= v
+
+
+ptypes (L, v) |- C <: C
+------------------------------------------------ ASt-Fun
+L, v |- (\x. e : A -> B) : C <= (\x. e : A -> B) : C
+
+
+not (appsubt? (L, v) v2)
+L, v |- v1 <= v'
+------------------------ ASt-Merge-L
+L, v |- v1 ,, v2 <= v'
+
+
+not (appsubt? (L, v) v1)
+L, v |- v2 <= v'
+--------------------------------- ASt-Merge-R
+L, v |- v1 ,, v2 <= v'
+```
+
 # Parallel Application
 
 ```
-----------------
-v ● vl --> e
-----------------
+------------------
+L |- r ● v --> e
+------------------
 
 TopLike (ptype v)
 ----------------------------- PApp-Top
-v ● vl --> 1 : (ptype v)
+L |- v ● vl --> 1 : (ptype v)
 
 
 v -->C v'
 not (toplike D)
--------------------------------------------- PApp-Abs-Anno
-(\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
+--------------------------------------------------- PApp-Abs-Anno
+. |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1)
 not (toplike ptype(v1 ,, v2))
-v1 ● vl --> e
--------------------------------------------- PApp-Merge-L
-v1 ,, v2 ● vl --> e
+L, v |- v1 ,, v2 <= v'
+. |- 9v' ● v --> e
+------------------------- PApp-Pick
+L |- v1 ,, v2 ● v --> e
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v2)
-not (toplike ptype(v1 ,, v2))
-v2 ● vl --> e
--------------------------------------------- PApp-Merge-R
-v1 ,, v2 ● vl --> e
-
-
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1) & ptype(v2)
-not (toplike ptype(v1 ,, v2))
-(v1 ● vl) ,, (v2 ● vl) --> e
--------------------------------------------- PApp-Merge-Parallel
-v1 ,, v2 ● vl --> e
+L, v2 |- r ● v1 --> e
+--------------------------------- PApp-Collect
+L |- r v1 ● v2 --> e
 ```
 
 # Reduction
@@ -305,9 +362,9 @@ n --> n : Int
 \x. e : A -> B --> (\x. e : A -> B) : A -> B
 
 
-v ● vl --> e
----------------- Step-PApp
-v vl --> e
+. |- r ● v --> e
+------------------- Step-PApp
+r v --> e
 
 
 v -->A v'
@@ -328,7 +385,7 @@ e1 e2 --> e1' e2
 
 e2 --> e2'
 ------------------ Step-App-R
-v e2 --> v e2'
+r e2 --> r e2'
 
 
 e1 --> e1'
