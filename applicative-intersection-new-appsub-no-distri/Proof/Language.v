@@ -260,6 +260,8 @@ Hint Constructors ptype : core.
 Hint Constructors ptypes : core.
 
 Inductive auxast : argv -> trm -> Prop :=
+| auxast_refl : forall (v : trm),
+    auxast nil v
 | auxast_fun : forall (v e : trm) (S : arg) (L : argv) (A B C : typ),
     ptypes (cons v L) S ->
     auxas S C ->
@@ -287,8 +289,11 @@ Inductive appsubt : argv -> trm -> trm -> Prop :=
     appsubt (cons v L) v2 v' ->
     appsubt (cons v L) (trm_merge v1 v2) v'.
 
+Hint Constructors auxast : core.
+Hint Constructors appsubt : core.
+
 Notation "L ⊢ v1 <= v2" := (appsubt L v1 v2) (at level 40).
-Notation "appsubt? L v" := (auxas L v) (at level 40).
+Notation "appsubt? L v" := (auxast L v) (at level 40).
 
 Inductive papp : argv -> trm -> trm -> trm -> Prop :=
 | papp_top : forall (v vl : trm) (A : typ),

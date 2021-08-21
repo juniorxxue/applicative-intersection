@@ -273,8 +273,12 @@ ptypes (L, v) => S, A
 appsubt? L v
 -----------------------
 
+-------------------------------- ASt?-Refl
+appsubt? nil v
+
+
 appsub? ptypes (L, v) C
-------------------------------------- ASt?-F un
+------------------------------------- ASt?-Fun
 appsubt? (L, v) (\x. e : A -> B) : C
 
 
@@ -337,7 +341,7 @@ not (toplike D)
 
 not (toplike ptype(v1 ,, v2))
 L, v |- v1 ,, v2 <= v'
-. |- 9v' ● v --> e
+. |- v' ● v --> e
 ------------------------- PApp-Pick
 L |- v1 ,, v2 ● v --> e
 

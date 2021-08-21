@@ -21,4 +21,6 @@ type systems for applicative intersection types
 
 `/applicative-intersection-new-appsub`: follow up with full-blown application subtyping
 
-`/applicative-intersection-new-appsub-no-distri`: new appsub without distributivity
+`/applicative-intersection-new-appsub-no-distri`: new appsub without distributivity
+
+`/applicative-intersection-new-appsub-distri`: system with bcd distributivity
