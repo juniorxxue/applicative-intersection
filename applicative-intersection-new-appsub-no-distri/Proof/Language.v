@@ -61,7 +61,7 @@ Inductive rvalue : trm -> Prop :=
 | rvalue_v : forall (v : trm),
     value v -> rvalue v
 | rvalue_apps : forall (v r : trm),
-    value v -> rvalue (trm_app v r).
+    rvalue r -> value v -> rvalue (trm_app r v).
 
 Hint Constructors pvalue : core.
 Hint Constructors value : core.
