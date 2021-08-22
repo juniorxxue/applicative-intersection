@@ -274,10 +274,10 @@ Hint Constructors ptypes : core.
 Inductive auxast : argv -> trm -> Prop :=
 | auxast_refl : forall (v : trm),
     auxast nil v
-| auxast_fun : forall (v e : trm) (S : arg) (L : argv) (A B C : typ),
+| auxast_fun : forall (v e : trm) (S : arg) (L : argv) (A B C D: typ),
     ptypes (cons v L) S ->
-    auxas S C ->
-    auxast (cons v L) (trm_anno (trm_abs e A B) C)
+    auxas S (typ_arrow C D) ->
+    auxast (cons v L) (trm_anno (trm_abs e A B) (typ_arrow C D))
 | auxast_l : forall (L : argv) (v1 v2 v : trm),
     auxast (cons v L) v1 ->
     auxast (cons v L) (trm_merge v1 v2)
@@ -290,16 +290,14 @@ Hint Constructors auxast : core.
 Notation "appsubt? L v" := (auxast L v) (at level 40).
 
 Inductive papp : argv -> trm -> trm -> trm -> Prop :=
-| papp_top : forall (v vl : trm) (A : typ) (L : argv),
+| papp_top : forall (v vl : trm) (A : typ),
     ptype v A ->
     toplike A ->
-    papp L v vl (trm_anno (trm_int 1) A)
-| papp_abs_anno : forall (A B C D E : typ) (e v v' : trm) (S : arg) (L : argv),
+    papp nil v vl (trm_anno (trm_int 1) A)
+| papp_abs_anno : forall (A B C D E : typ) (e v v' : trm) (L : argv),
     typedred v C v' ->
     not (toplike D) ->
-    ptypes L S ->
-    ptype v E ->
-    auxas (cons E S) (typ_arrow C D) ->
+    auxast (cons v L) (trm_anno (trm_abs e A B) (typ_arrow C D)) ->
     papp L (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
 | papp_pick_l : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,

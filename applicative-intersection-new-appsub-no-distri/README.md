@@ -277,9 +277,9 @@ appsubt? L v
 appsubt? nil v
 
 
-appsub? ptypes (L, v) C
+appsub? ptypes (L, v) (C -> D)
 ------------------------------------- ASt?-Fun
-appsubt? (L, v) (\x. e : A -> B) : C
+appsubt? (L, v) (\x. e : A -> B) : (C -> D)
 
 
 appsubt? (L, v) v1
@@ -301,12 +301,12 @@ L |- r ● v --> e
 
 TopLike (ptype v)
 ----------------------------- PApp-Top
-L |- v ● vl --> 1 : (ptype v)
+. |- v ● vl --> 1 : (ptype v)
 
 
 v -->C v'
 not (toplike D)
-appsub? ptypes(L, v) (C -> D)
+appsubt? (L, v) (\x. e : A -> B) : C -> D
 ---------------------------------------------------------- PApp-Abs-Anno
 L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
