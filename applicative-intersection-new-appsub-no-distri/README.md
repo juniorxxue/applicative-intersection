@@ -292,35 +292,6 @@ appsubt? (L, v) v2
 appsubt? (L, v) (v1 ,, v2)
 ```
 
-# Application Subterm
-
-```
--------------------
-L |- v <= v'
--------------------
-
-
-------------------- ASt-Refl (un-necessary?)
-. |- v <= v
-
-
-ptypes (L, v) |- C <: C
------------------------------------------------- ASt-Fun
-L, v |- (\x. e : A -> B) : C <= (\x. e : A -> B) : C
-
-
-not (appsubt? (L, v) v2)
-L, v |- v1 <= v'
------------------------- ASt-Merge-L
-L, v |- v1 ,, v2 <= v'
-
-
-not (appsubt? (L, v) v1)
-L, v |- v2 <= v'
---------------------------------- ASt-Merge-R
-L, v |- v1 ,, v2 <= v'
-```
-
 # Parallel Application
 
 ```
@@ -335,14 +306,22 @@ L |- v ● vl --> 1 : (ptype v)
 
 v -->C v'
 not (toplike D)
---------------------------------------------------- PApp-Abs-Anno
-. |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
+appsub? ptypes(L, v) (C -> D)
+---------------------------------------------------------- PApp-Abs-Anno
+L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
-not (toplike ptype(v1 ,, v2))
-L, v |- v1 ,, v2 <= v'
-. |- v' ● v --> e
-------------------------- PApp-Pick
+L |- v1 ● v --> e
+not appsubt? (L, v) v2
+not toplike ptype(v1,,v2)
+------------------------- PApp-Pick-L
+L |- v1 ,, v2 ● v --> e
+
+
+L |- v2 ● v --> e
+not appsubt? (L, v) v1
+not toplike ptype(v1,,v2)
+------------------------- PApp-Pick-R
 L |- v1 ,, v2 ● v --> e
 
 
@@ -427,9 +406,9 @@ T, x : A |- e => B
 T |- \x. e : A -> B => A -> B
 
 
-T, x : A |- e => B       S, C |- A -> B <: A -> B
+T, x : A |- e => B       S, C |- A -> B <: D
 -------------------------------------------------------- T-Lam2
-T; S, C |- \x. e : A -> B => A -> B
+T; S, C |- \x. e : A -> B => D
 
 
 T |- e => C      C <: A        S |- A <: B            Q: S, C |- A <: B <- does this work instead of 2 checks?
@@ -454,6 +433,20 @@ T |- v1,,v2 => A & B
 
 T |- e1,,e2 => A & B
 S, C |- A & B <: D
------------------------------------------------ T-Merge-pick
+----------------------------------------------- T-Merge-pick (should we deletgate to e1 or e2)
 T; S, C |- e1,,e2 => D
+
+
+T; S, A |- e1 => C       T |- e2 => B
+not appsub? (S, A) B
+disjoint B C
+----------------------------------------------- T-Merge-pick-L
+T; S, A |- e1,,e2 => C
+
+
+T; S, A |- e2 => C    T |- e1 => B
+not appsub? (S, A) B
+disjoint B C
+----------------------------------------------- T-Merge-pick-R
+T; S, A |- e1,,e2 => C
 ```

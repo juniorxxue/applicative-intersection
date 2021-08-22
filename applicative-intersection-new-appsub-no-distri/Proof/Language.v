@@ -209,10 +209,10 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
 | typing_lam1 : forall (L : vars) (T : ctx) (A B : typ) (e : trm),
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil (open e (trm_fvar x)) B) ->
     typing T nil (trm_abs e A B) (typ_arrow A B)
-| typing_lam2 : forall (L : vars) (S : arg) (T : ctx) (A B C : typ) (e : trm),
+| typing_lam2 : forall (L : vars) (S : arg) (T : ctx) (A B C D : typ) (e : trm),
     (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil (open e (trm_fvar x)) B) ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow A B) ->
-    typing T (cons C S) (trm_abs e A B) (typ_arrow A B)
+    appsub (cons C S) (typ_arrow A B) D ->
+    typing T (cons C S) (trm_abs e A B) D
 | typing_anno : forall (S : arg) (T : ctx) (A B C : typ) (e : trm),
     typing T nil e C -> sub C A -> appsub S A B ->
     typing T S (trm_anno e A) B
@@ -231,10 +231,22 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     typing nil nil v1 A ->
     typing nil nil v2 B ->
     typing T nil (trm_merge v1 v2) (typ_and A B)
-| typing_merge_pick : forall (T : ctx) (S : arg) (A B C D : typ) (e1 e2 : trm),
-    typing T nil (trm_merge e1 e2) (typ_and A B) ->
-    appsub (cons C S) (typ_and A B) D ->
-    typing T (cons C S) (trm_merge e1 e2) D.
+(* | typing_merge_pick : forall (T : ctx) (S : arg) (A B C D : typ) (e1 e2 : trm), *)
+(*     typing T nil (trm_merge e1 e2) (typ_and A B) -> *)
+(*     appsub (cons C S) (typ_and A B) D -> *)
+(*     typing T (cons C S) (trm_merge e1 e2) D. *)
+| typing_merge_pick_l : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
+    disjoint_spec C B ->
+    typing T (cons A S) e1 C ->
+    typing T nil e2 B ->
+    not (auxas (cons A S) B) ->
+    typing T (cons A S) (trm_merge e1 e2) C
+| typing_merge_pick_r : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
+    disjoint_spec B C ->
+    typing T (cons A S) e2 C ->
+    typing T nil e1 B ->
+    not (auxas (cons A S) B) ->
+    typing T (cons A S) (trm_merge e1 e2) C.
 
 Hint Constructors typing : core.
 
@@ -273,44 +285,34 @@ Inductive auxast : argv -> trm -> Prop :=
     auxast (cons v L) v2 ->
     auxast (cons v L) (trm_merge v1 v2).
 
-Inductive appsubt : argv -> trm -> trm -> Prop :=
-| ast_refl : forall (v : trm),
-    appsubt nil v v
-| ast_fun : forall (v e : trm) (S : arg) (L : argv) (A B C : typ),
-    ptypes (cons v L) S ->
-    appsub S C C ->
-    appsubt (cons v L) (trm_anno (trm_abs e A B) C) (trm_anno (trm_abs e A B) C)
-| ast_merge_l : forall (v1 v2 v v' : trm) (L : argv),
-    not (auxast (cons v L) v2) ->
-    appsubt (cons v L) v1 v' ->
-    appsubt (cons v L) (trm_merge v1 v2) v'
-| ast_merge_r : forall (v1 v2 v v' : trm) (L : argv),
-    not (auxast (cons v L) v1) ->
-    appsubt (cons v L) v2 v' ->
-    appsubt (cons v L) (trm_merge v1 v2) v'.
-
 Hint Constructors auxast : core.
-Hint Constructors appsubt : core.
 
-Notation "L ⊢ v1 <= v2" := (appsubt L v1 v2) (at level 40).
 Notation "appsubt? L v" := (auxast L v) (at level 40).
 
 Inductive papp : argv -> trm -> trm -> trm -> Prop :=
-| papp_top : forall (v vl : trm) (A : typ),
+| papp_top : forall (v vl : trm) (A : typ) (L : argv),
     ptype v A ->
     toplike A ->
-    papp nil v vl (trm_anno (trm_int 1) A)
-| papp_abs_anno : forall (A B C D : typ) (e v v' : trm),
+    papp L v vl (trm_anno (trm_int 1) A)
+| papp_abs_anno : forall (A B C D E : typ) (e v v' : trm) (S : arg) (L : argv),
     typedred v C v' ->
     not (toplike D) ->
-    papp nil
-         (trm_anno (trm_abs e A B) (typ_arrow C D)) v
+    ptypes L S ->
+    ptype v E ->
+    auxas (cons E S) (typ_arrow C D) ->
+    papp L (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
-| papp_pick : forall (A B : typ) (v1 v2 v' v e: trm) (L : argv) ,
+| papp_pick_l : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
     ptype v1 A -> ptype v2 B ->
     not (toplike (typ_and A B)) ->
-    appsubt (cons v L) (trm_merge v1 v2) v' ->
-    papp nil v' v e ->
+    not (auxast (cons v L) v2) ->
+    papp L v1 v e ->
+    papp L (trm_merge v1 v2) v e
+| papp_pick_r : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
+    ptype v1 A -> ptype v2 B ->
+    not (toplike (typ_and A B)) ->
+    not (auxast (cons v L) v1) ->
+    papp L v2 v e ->
     papp L (trm_merge v1 v2) v e
 | papp_collect : forall (r v1 v2 e : trm) (L : argv),
     papp (cons v2 L) r v1 e ->
