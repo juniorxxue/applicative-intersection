@@ -136,19 +136,6 @@ Exists O, A <: S -> O -> B <: S -> O.
 C <: A      S |- B <: D
 ------------------------ AS-Fun
 S, C |- A -> B <: C -> D
-
-
-
-not (appsub? (S, C) B)
-S, C |- A <: D
------------------------- AS-And-L
-S, C |- A & B <: D
-
-
-not (appsub? (S, C) A)
-S, C |- B <: D
------------------------- AS-And-R
-S, C |- A & B <: D
 ```
 
 # Disjoint
@@ -240,7 +227,7 @@ v -->(A & B) v1,,v2
 
 ```
 --------------------
-ptype v => A
+ptype r => A
 -------------------
 
 ------------------ ptype-anno
@@ -250,6 +237,11 @@ ptype (e : A) => A
 ptype e1 => A   ptype e2 => B 
 --------------------------------------------------- ptype-merge
 ptype e1,,e2 => A & B
+
+
+ptype r => A -> B    ptype v => C   sub C A
+----------------------------------------------- ptype-rvalue
+ptype (r v) =>  B
 ```
 
 # Principal Typing (stack)
@@ -299,13 +291,7 @@ appsubt? (L, v) (v1 ,, v2)
 L |- r ● v --> e
 ------------------
 
-TopLike (ptype v)
------------------------------ PApp-Top
-. |- v ● vl --> 1 : (ptype v)
-
-
 v -->C v'
-not (toplike D)
 appsubt? (L, v) (\x. e : A -> B) : C -> D
 ---------------------------------------------------------- PApp-Abs-Anno
 L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
@@ -313,14 +299,12 @@ L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 L |- v1 ● v --> e
 not appsubt? (L, v) v2
-not toplike ptype(v1,,v2)
 ------------------------- PApp-Pick-L
 L |- v1 ,, v2 ● v --> e
 
 
 L |- v2 ● v --> e
 not appsubt? (L, v) v1
-not toplike ptype(v1,,v2)
 ------------------------- PApp-Pick-R
 L |- v1 ,, v2 ● v --> e
 
@@ -341,12 +325,18 @@ e --> e'
 n --> n : Int
 
 
------------------------ Step-Abs-Anno
+--------------------------------------------- Step-Abs-Anno
 \x. e : A -> B --> (\x. e : A -> B) : A -> B
 
 
-. |- r ● v --> e
-------------------- Step-PApp
+toplike (ptype (r))
+------------------------- Step-PApp-Toplike
+r v --> 1 : (ptype v)
+
+
+not toplike (ptype (r))
+. |- r * v --> e
+----------------------- Step-PApp
 r v --> e
 
 
@@ -361,8 +351,8 @@ e --> e'
 e : A --> e' : A
 
 
-e1 --> e1'
------------------- Step-App-L
+e1 --> e1'   not (rvalue(e1))
+----------------------------- Step-App-L (part of arguments can pick)
 e1 e2 --> e1' e2
 
 
@@ -411,9 +401,14 @@ T, x : A |- e => B       S, C |- A -> B <: D
 T; S, C |- \x. e : A -> B => D
 
 
-T |- e => C      C <: A        S |- A <: B            Q: S, C |- A <: B <- does this work instead of 2 checks?
---------------------------------------------- T-Ann
+T |- e => C      C <: A        S |- A <: B 
+--------------------------------------------- T-Ann (dropable)
 T; S |- e : A => B
+
+
+T |- e => C      C <: A 
+--------------------------------------------- T-Ann
+T; S |- e : A => A
 
 
 T |- e2 => A      T; S, A |- e1 => A -> B
@@ -433,7 +428,7 @@ T |- v1,,v2 => A & B
 
 T |- e1,,e2 => A & B
 S, C |- A & B <: D
------------------------------------------------ T-Merge-pick (should we deletgate to e1 or e2)
+--------------------------------------- T-Merge-pick (should we deletgate to e1 or e2)
 T; S, C |- e1,,e2 => D
 
 

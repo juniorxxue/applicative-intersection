@@ -124,19 +124,7 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_fun : forall (A B C D : typ) (S : arg),
     sub C A ->
     appsub S B D ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
-| as_and_l : forall (A B C D: typ) (S : arg),
-    appsub (cons C S) A D ->
-    not (auxas (cons C S) B) ->
-    appsub (cons C S) (typ_and A B) D
-| as_and_r : forall (A B C D : typ) (S : arg),
-    appsub (cons C S) B D ->
-    not (auxas (cons C S) A) ->
-    appsub (cons C S) (typ_and A B) D
-| as_and_both : forall (A B C D1 D2: typ) (S : arg),
-    appsub (cons C S) A D1 ->
-    appsub (cons C S) B D2 ->
-    appsub (cons C S) (typ_and A B) (typ_and D1 D2).
+    appsub (cons C S) (typ_arrow A B) (typ_arrow C D).
 
 Hint Constructors auxas : core.
 Hint Constructors appsub : core.
@@ -214,7 +202,7 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     appsub (cons C S) (typ_arrow A B) D ->
     typing T (cons C S) (trm_abs e A B) D
 | typing_anno : forall (S : arg) (T : ctx) (A B C : typ) (e : trm),
-    typing T nil e C -> sub C A -> appsub S A B ->
+    typing T nil e C -> sub C A ->
     typing T S (trm_anno e A) B
 | typing_app : forall (S : arg) (T : ctx) (A B : typ) (e1 e2 : trm),
     typing T nil e2 A ->
@@ -258,7 +246,11 @@ Inductive ptype : trm -> typ -> Prop :=
 | ptype_merge : forall (e1 e2 : trm) (A B : typ),
     ptype e1 A ->
     ptype e2 B ->
-    ptype (trm_merge e1 e2) (typ_and A B).
+    ptype (trm_merge e1 e2) (typ_and A B)
+| ptype_rvalue : forall (r v : trm) (A B C : typ),
+    rvalue r -> value v ->
+    ptype r (typ_arrow A B) -> ptype v C -> sub C A ->
+    ptype (trm_app r v) B.
 
 Inductive ptypes : argv -> arg -> Prop :=
 | ptypes_empty :
@@ -290,25 +282,16 @@ Hint Constructors auxast : core.
 Notation "appsubt? L v" := (auxast L v) (at level 40).
 
 Inductive papp : argv -> trm -> trm -> trm -> Prop :=
-| papp_top : forall (v vl : trm) (A : typ),
-    ptype v A ->
-    toplike A ->
-    papp nil v vl (trm_anno (trm_int 1) A)
 | papp_abs_anno : forall (A B C D E : typ) (e v v' : trm) (L : argv),
     typedred v C v' ->
-    not (toplike D) ->
     auxast (cons v L) (trm_anno (trm_abs e A B) (typ_arrow C D)) ->
     papp L (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
 | papp_pick_l : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
-    ptype v1 A -> ptype v2 B ->
-    not (toplike (typ_and A B)) ->
     not (auxast (cons v L) v2) ->
     papp L v1 v e ->
     papp L (trm_merge v1 v2) v e
 | papp_pick_r : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
-    ptype v1 A -> ptype v2 B ->
-    not (toplike (typ_and A B)) ->
     not (auxast (cons v L) v1) ->
     papp L v2 v e ->
     papp L (trm_merge v1 v2) v e
@@ -325,8 +308,16 @@ Inductive step : trm -> trm -> Prop :=
     step (trm_int n) (trm_anno (trm_int n) typ_int)
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
-| step_papp : forall (r v e : trm),
+| step_papp_toplike : forall (r v : trm) (A B : typ),
+    ptype v A ->
+    ptype r B ->
     rvalue r -> value v ->
+    toplike B ->
+    step (trm_app r v) (trm_anno (trm_int 1) A)
+| step_papp : forall (r v e : trm) (A B : typ),
+    rvalue r -> value v ->
+    ptype v A -> ptype r B ->
+    not (toplike B) ->
     papp nil r v e ->
     step (trm_app r v) e
 | step_anno_value : forall (v v' : trm) (A : typ),
@@ -336,6 +327,7 @@ Inductive step : trm -> trm -> Prop :=
     not (value (trm_anno e A)) ->
     step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
+    not (rvalue e1) ->
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (r e2 e2' : trm),
     rvalue r -> step e2 e2' -> step (trm_app r e2) (trm_app r e2')
