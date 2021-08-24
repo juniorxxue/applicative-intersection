@@ -203,7 +203,7 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     typing T (cons C S) (trm_abs e A B) D
 | typing_anno : forall (S : arg) (T : ctx) (A B C : typ) (e : trm),
     typing T nil e C -> sub C A ->
-    typing T S (trm_anno e A) B
+    typing T S (trm_anno e A) A
 | typing_app : forall (S : arg) (T : ctx) (A B : typ) (e1 e2 : trm),
     typing T nil e2 A ->
     typing T (cons A S) e1 (typ_arrow A B) ->
