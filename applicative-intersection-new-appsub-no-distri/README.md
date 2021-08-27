@@ -53,8 +53,6 @@ Ordinary Int
 Ordinary (A -> B)
 ```
 
-
-
 # Subtyping
 
 ```
@@ -93,6 +91,38 @@ B <: C
 A & B <: C
 ```
 
+# Application Subtyping
+
+```
+-----------
+S |- A <: B
+-----------
+
+Spec:
+Exists O, A <: S -> O -> B <: S -> O.
+
+
+------------------------ AS-Refl
+. |- A <: A
+
+
+C <: A      S |- B <: D
+------------------------ AS-Fun
+S, C |- A -> B <: C -> D
+
+
+not (appsub? (S, C) B)
+S, C |- A <: D
+------------------------ AS-And-L
+S, C |- A & B <: D
+
+
+not (appsub? (S, C) A)
+S, C |- B <: D
+------------------------ AS-And-R
+S, C |- A & B <: D
+```
+
 # Application Subtyping (2-ary)
 
 ```
@@ -116,26 +146,6 @@ appsub? (S, C) (A & B)
 appsub? (S, C) B
 ------------------------ AS?-And-R
 appsub? (S, C) (A & B)
-```
-
-# Application Subtyping
-
-```
------------
-S |- A <: B
------------
-
-Spec:
-Exists O, A <: S -> O -> B <: S -> O.
-
-
------------------------- AS-Refl
-. |- A <: A
-
-
-C <: A      S |- B <: D
------------------------- AS-Fun
-S, C |- A -> B <: C -> D
 ```
 
 # Disjoint
@@ -386,8 +396,8 @@ x : A \in T
 T |- x => A
 
 
-x : A \in T     S |- A <: B
------------------------------ T-Var-stack
+x : A \in T   S |- A <: B 
+------------------------------- T-Var-stack
 T; S |- x => B
 
 
@@ -402,13 +412,8 @@ T; S, C |- \x. e : A -> B => D
 
 
 T |- e => C      C <: A        S |- A <: B 
---------------------------------------------- T-Ann (dropable)
-T; S |- e : A => B
-
-
-T |- e => C      C <: A 
 --------------------------------------------- T-Ann
-T; S |- e : A => A
+T; S |- e : A => B
 
 
 T |- e2 => A      T; S, A |- e1 => A -> B
@@ -424,12 +429,6 @@ T |- e1,,e2 => A & B
 consist v1 v2      . |- v1 => A     . |- v2 => B
 ------------------------------------------------------ T-Merge-Value
 T |- v1,,v2 => A & B
-
-
-T |- e1,,e2 => A & B
-S, C |- A & B <: D
---------------------------------------- T-Merge-pick (should we deletgate to e1 or e2)
-T; S, C |- e1,,e2 => D
 
 
 T; S, A |- e1 => C       T |- e2 => B

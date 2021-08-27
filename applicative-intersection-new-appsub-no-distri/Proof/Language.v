@@ -124,7 +124,16 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_fun : forall (A B C D : typ) (S : arg),
     sub C A ->
     appsub S B D ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow C D).
+    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
+| as_and_l : forall (A B C D: typ) (S : arg),
+    appsub (cons C S) A D ->
+    not (auxas (cons C S) B) ->
+    appsub (cons C S) (typ_and A B) D
+| as_and_r : forall (A B C D : typ) (S : arg),
+    appsub (cons C S) B D ->
+    not (auxas (cons C S) A) ->
+    appsub (cons C S) (typ_and A B) D.
+
 
 Hint Constructors auxas : core.
 Hint Constructors appsub : core.
@@ -202,8 +211,8 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     appsub (cons C S) (typ_arrow A B) D ->
     typing T (cons C S) (trm_abs e A B) D
 | typing_anno : forall (S : arg) (T : ctx) (A B C : typ) (e : trm),
-    typing T nil e C -> sub C A ->
-    typing T S (trm_anno e A) A
+    typing T nil e C -> sub C A -> appsub S A B ->
+    typing T S (trm_anno e A) B
 | typing_app : forall (S : arg) (T : ctx) (A B : typ) (e1 e2 : trm),
     typing T nil e2 A ->
     typing T (cons A S) e1 (typ_arrow A B) ->
@@ -219,10 +228,6 @@ Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
     typing nil nil v1 A ->
     typing nil nil v2 B ->
     typing T nil (trm_merge v1 v2) (typ_and A B)
-(* | typing_merge_pick : forall (T : ctx) (S : arg) (A B C D : typ) (e1 e2 : trm), *)
-(*     typing T nil (trm_merge e1 e2) (typ_and A B) -> *)
-(*     appsub (cons C S) (typ_and A B) D -> *)
-(*     typing T (cons C S) (trm_merge e1 e2) D. *)
 | typing_merge_pick_l : forall (T : ctx) (S : arg) (A B C : typ) (e1 e2 : trm),
     disjoint_spec C B ->
     typing T (cons A S) e1 C ->
