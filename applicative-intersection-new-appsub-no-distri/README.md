@@ -301,14 +301,16 @@ appsubt? (L, v) (v1 ,, v2)
 L |- r ● v --> e
 ------------------
 
+Lemma: compile-time check pass won't cause ambiuguity in dynamic semantics
+
 v -->C v'
 appsubt? (L, v) (\x. e : A -> B) : C -> D
----------------------------------------------------------- PApp-Abs-Anno
+---------------------------------------------------------- PApp-Abs-Anno (wrong)
 L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
 L |- v1 ● v --> e
-not appsubt? (L, v) v2
+not appsubt? (L, v) v2 (removeable checked in compile-time)
 ------------------------- PApp-Pick-L
 L |- v1 ,, v2 ● v --> e
 
@@ -341,11 +343,12 @@ n --> n : Int
 
 toplike (ptype (r))
 ------------------------- Step-PApp-Toplike
-r v --> 1 : (ptype v)
+r v --> 1 : (ptype r)
 
 
 not toplike (ptype (r))
 . |- r * v --> e
+r * [v] --> e
 ----------------------- Step-PApp
 r v --> e
 

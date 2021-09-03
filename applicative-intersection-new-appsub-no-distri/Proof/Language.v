@@ -314,11 +314,10 @@ Inductive step : trm -> trm -> Prop :=
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
 | step_papp_toplike : forall (r v : trm) (A B : typ),
-    ptype v A ->
     ptype r B ->
     rvalue r -> value v ->
     toplike B ->
-    step (trm_app r v) (trm_anno (trm_int 1) A)
+    step (trm_app r v) (trm_anno (trm_int 1) B)
 | step_papp : forall (r v e : trm) (A B : typ),
     rvalue r -> value v ->
     ptype v A -> ptype r B ->

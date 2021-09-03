@@ -386,6 +386,65 @@ Proof.
   eapply ptypes_cons; eauto. eapply typing_to_ptype; eauto.
 Qed.
 
+Lemma papp_determinism_specific :
+  forall (r v e1 : trm),
+    rvalue r -> value v ->
+    papp nil r v e1 ->
+    forall (e2 : trm) (A B : typ) (S : arg),
+      typing nil nil v A ->
+      typing nil (cons A S) r (typ_arrow A B) ->
+      papp nil r v e2 ->
+      e1 = e2.
+Proof.
+  introv Hr Hv Hp1.
+  dependent induction Hp1; introv Htypv Htypr Hp2.
+  - dependent destruction Hr.
+    dependent destruction Hp2; eauto.
+    assert (v' = v'0). eapply tred_determinism; eauto.
+    rewrite H4; eauto.
+  - dependent destruction Hr. dependent destruction H.
+    dependent destruction Hp2.
+    + dependent destruction Htypr; eauto.
+      eapply papp_to_auxast in Hp2; eauto.
+      assert (auxas (cons A0 nil) B1). eapply ast_to_as; eauto.
+      eapply ptypes_cons; eauto. eapply typing_to_ptype; eauto.
+      (* it seems that ast_to_as is kinda weak *)
+      (* could S be arbitrary one? *)
+      (* compare H5 and H3 *)
+      admit.
+    + admit.
+  - admit.
+  - dependent destruction Hp2.
+    dependent destruction Hr. dependent destruction H.
+    clear IHHp1.
+Admitted.
+
+Lemma papp_determinism_second_try :
+  forall (r : trm), rvalue r ->
+               forall (v e1 e2 : trm) (A B : typ) (S : arg),
+                 value v -> typing nil nil v A ->
+                 typing nil (cons A S) r (typ_arrow A B) ->
+                 papp nil r v e1 ->
+                 papp nil r v e2 ->
+                 e1 = e2.
+Proof.
+  introv Hr.
+  dependent induction Hr; introv Hv Htypv Htypr Hp1 Hp2.
+  - dependent induction H; eauto 3.
+    + dependent destruction H.
+      * dependent destruction Hp1.
+      * dependent destruction Hp1.
+        dependent destruction Hp2.
+        assert (v' = v'0). eapply tred_determinism; eauto.
+        rewrite H3; eauto.
+    + dependent destruction Htypr; eauto 3.
+      * admit.
+      * admit.
+  - dependent destruction Hp1. dependent destruction Hp2.
+    (* IH would not be useful *)
+Abort.
+    
+
 Lemma value_cannot_step_further:
   forall (v : trm),
     value v -> forall (e : trm), not (step v e).
@@ -406,6 +465,8 @@ Proof.
       dependent destruction H.
 Qed.
 
+
+(* C = outtype S A *)
 Lemma stack_and_unstack:
   forall (e : trm) (A : typ) (S : arg),
     typing nil S e A ->
@@ -422,7 +483,7 @@ Proof.
     assert (exists C, typing nil nil e1 C); eauto.
     assert (exists C, typing nil nil e2 C); eauto.
     destruct H3. destruct H4.
-Abort.
+Admitted.
 
 Lemma stack_and_unstack_ad_hoc :
   forall (e : trm) (A B : typ),
@@ -445,7 +506,7 @@ Proof.
   - dependent destruction Hstep; eauto.
   - dependent destruction Hstep; eauto.
   - dependent destruction Hstep; eauto.
-    + assert (A = A1); eauto. rewrite H9. reflexivity.
+    + assert (B = B0); eauto. congruence.
     + assert (B = B0); eauto. subst. contradiction.
     + contradiction.
     + eapply value_cannot_step_further in Hstep; eauto. inversion Hstep.
@@ -466,13 +527,13 @@ Proof.
       dependent destruction Htyp.
       eapply IHHstep1; eauto.
       dependent destruction Htyp; eauto.
-      rewrite Heq. reflexivity.
+      congruence.
   - dependent destruction Hstep.
     + contradiction.
     + contradiction.
     + dependent destruction Htyp; eauto.
-      (* eapply stack_and_unstack in Htyp2. destruct Htyp2. *)
-      admit.
+      eapply stack_and_unstack in Htyp2. destruct Htyp2; eauto.
+      assert (e1' = e1'0); eauto. congruence.
     + contradiction.
   - dependent destruction Hstep.
     + eapply value_cannot_step_further in Hstep1; eauto. inversion Hstep1.
@@ -490,7 +551,7 @@ Proof.
     + assert (e2' = e2'0).
       dependent destruction Htyp; eapply IHHstep1; eauto.
       rewrite H1. reflexivity.
-Admitted.
+Qed.
 
 Theorem determinism_s:
   forall (e e1 e2 : trm) (A : typ) (S : arg),
@@ -505,15 +566,16 @@ Proof.
   - dependent destruction Hstep; eauto.
   - dependent destruction Hstep; eauto.
   - dependent destruction Hstep; eauto.
-    + assert (A = A1); eauto. rewrite H9. reflexivity.
+    + assert (B = B0); eauto. congruence.
     + assert (B = B0); eauto. subst. contradiction.
     + contradiction.
     + eapply value_cannot_step_further in Hstep; eauto. inversion Hstep.
   - dependent destruction Hstep; eauto.
     + assert (B = B0); eauto. subst. contradiction.
     + dependent destruction Htyp; eauto.
-      admit.
       (* eapply papp_determinism; eauto. *)
+      simpl_deter.
+      eapply papp_determinism_specific; eauto.
     + contradiction.
     + eapply value_cannot_step_further in Hstep; eauto. inversion Hstep.
   - dependent destruction Hstep.
@@ -548,7 +610,7 @@ Proof.
     + assert (e2' = e2'0).
       dependent destruction Htyp; eapply IHHstep1; eauto.
       rewrite H1. reflexivity.
-Admitted.
+Qed.
 
 Lemma tred_value :
   forall (v v' : trm) (A : typ),
@@ -647,14 +709,20 @@ Proof.
 Qed.
 
 Lemma papp_preservation :
-  forall (e e1 e2 : trm) (A B : typ) (S : arg),
-    value e1 -> value e2 ->
-    typing nil nil e2 A ->
-    typing nil (cons A S) e1 (typ_arrow A B) ->
-    papp nil e1 e2 e ->
+  forall (r v e : trm) (A B : typ) (S : arg),
+    rvalue r -> value v ->
+    typing nil nil v A ->
+    typing nil (cons A S) r (typ_arrow A B) ->
+    papp nil r v e ->
     typing nil S e B.
 Proof.
-Abort.
+  introv Hr Hv Htypv Htypr Hp.
+  generalize dependent A.
+  generalize dependent B.
+  generalize dependent S.
+  dependent induction Hp; eauto; intros.
+Admitted.
+  
 
 Lemma appsub_toplike_preservation :
   forall (S : arg) (A B : typ),
@@ -701,6 +769,9 @@ Proof.
     eapply tred_preservation; eauto.
     eapply appsub_type_preservation; eauto.
   - assert (typing nil S (trm_app e1 e2) B); eauto.
+    dependent destruction Hred; eauto.
+    + admit.
+    + eapply papp_preservation; eauto.
   - dependent destruction Hred.
     + eapply typing_merge; eauto.
     + eapply typing_merge; eauto.
@@ -708,7 +779,7 @@ Proof.
     apply value_cannot_step_further in Hred; eauto. inversion Hred.
   - dependent destruction Hred; eauto.
   - dependent destruction Hred; eauto.
-Qed.
+Admitted.
 
 Theorem tred_progress :
   forall (v : trm) (A B : typ),
@@ -825,81 +896,23 @@ Qed.
 
 Hint Resolve value_or_not_value : core.
 
-Lemma papp_progress :
-  forall (e1 e2 : trm) (A B : typ),
-    value e2 -> typing nil (cons A nil) e1 (typ_arrow A B) ->
-    typing nil nil e2 A ->
-    exists e', papp e1 e2 e'.
-Proof.
-Admitted.
-
-Lemma not_value_arrow_inversion :
-  forall (e : trm) (S : arg) (A B : typ),
-    typing nil (cons A S) e (typ_arrow A B) ->
-    not (value e) ->
-    exists e', step e e'.
-Proof.
-  introv Htyp Hnot.
-  induction e; try solve [inversion Htyp]; eauto.
-  - admit.
-Admitted.
-
-Theorem progress_obslete :
-  forall (e : trm) (A : typ),
-    typing nil nil e A ->
-    value e \/ (exists e', step e e').
-Proof.
-  intros e A Htyp.
-  dependent induction Htyp; eauto.
-  - inversion H0.
-  - simpl_as.
-    destruct IHHtyp; eauto.
-    + dependent destruction H0.
-      * right.
-        assert (exists v', typedred (trm_anno e A0) A v').
-        eapply tred_progress; eauto.
-        destruct H1. exists x. eapply step_anno_value; eauto.
-      * right.
-        assert (exists v', typedred (trm_merge v1 v2) A v').
-        eapply tred_progress; eauto.
-        destruct H0. exists x. eapply step_anno_value; eauto.
-    + assert (value (trm_anno e A) \/ not (value (trm_anno e A))); eauto.
-      destruct H1.
-      * left. auto.
-      * right. destruct H0. exists (trm_anno x A).
-        eapply step_anno; eauto.
-  - assert (value e2 \/ (exists e', step e2 e')); eauto.
-    clear IHHtyp1 IHHtyp2. right.
-    destruct H.
-    + destruct (value_or_not_value e1).
-      * assert (exists e', papp e1 e2 e'). eapply papp_progress; eauto.
-        destruct H1. exists x. eapply step_papp; eauto.
-      * assert (exists e', step e1 e'). eapply not_value_arrow_inversion; eauto.
-        destruct H1. exists (trm_app x e2); eauto.
-    + destruct (value_or_not_value e1).
-      *  destruct H. exists (trm_app e1 x). eapply step_app_r; eauto.
-      *  assert (exists e', step e1 e'). eapply not_value_arrow_inversion; eauto.
-         destruct H1. exists (trm_app x e2); eauto.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + right. destruct H1. exists (trm_merge e1 x); eauto.
-    + right. destruct H0. exists (trm_merge x e2); eauto. 
-    + right. destruct H0.
-      exists (trm_merge x e2). eapply step_merge_l; eauto.
-Qed.
-
 Lemma papp_progress_stack :
-  forall (e1 e2 : trm) (A B : typ) (S : arg),
-    value e1 -> value e2 ->
-    typing nil (cons A S) e1 (typ_arrow A B) ->
-    typing nil nil e2 A ->
-    exists e', papp e1 e2 e'.
+  forall (r v : trm) (A B : typ) (S : arg),
+    rvalue r -> value v ->
+    typing nil (cons A S) r (typ_arrow A B) ->
+    typing nil nil v A ->
+    exists e, papp nil r v e.
 Proof.
-  dependent induction e1; introv Hv1 Hv2 Htyp1 Htyp2; try solve [inversion Hv1].
-  - dependent destruction Hv1.
-    admit.
-  - admit.
+  introv Hr Hv Htypr Htypv.
+  generalize dependent v.
+  dependent induction Htypr; try solve [inversion Hr]; eauto 3; intros.
+  - inversion H0.
+  - dependent destruction Hr. inversion H2.
+  - dependent destruction Hr. dependent destruction H1.
+    dependent induction H1; eauto.
+    + dependent destruction Htypr. dependent destruction H1.
+      (* add not toplike *)
 Admitted.
-
 
 (* a stack-version progress *)
 Theorem progress_stack :
@@ -909,6 +922,7 @@ Theorem progress_stack :
 Proof.
   introv Htyp.
   dependent induction Htyp; eauto.
+  - inversion H0.
   - inversion H0.
   - destruct IHHtyp; eauto.
     + dependent destruction H1; eauto.
@@ -926,17 +940,21 @@ Proof.
       * right. destruct H1. exists (trm_anno x A).
         eapply step_anno; eauto.
   - right. destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + assert (exists e', papp e1 e2 e'). eapply papp_progress_stack; eauto.
-      destruct H1. exists x. eapply step_papp; eauto.
+    + assert (exists e', papp nil e1 e2 e'). eapply papp_progress_stack; eauto.
+      destruct H1. exists x.
+      admit.
+      (* eapply step_papp; eauto. *)
     + destruct H0.
       exists (trm_app x e2); eauto.
+      eapply step_app_l; eauto. admit.
     + destruct H.
       exists (trm_app e1 x); eauto.
     + destruct H0.
       exists (trm_app x e2); eauto.
+      eapply step_app_l; eauto. admit.
   - destruct IHHtyp1; destruct IHHtyp2; eauto.
     + right. destruct H1. exists (trm_merge e1 x); eauto.
     + right. destruct H0. exists (trm_merge x e2); eauto. 
     + right. destruct H0.
       exists (trm_merge x e2). eapply step_merge_l; eauto.
-Qed.
+Admitted.
