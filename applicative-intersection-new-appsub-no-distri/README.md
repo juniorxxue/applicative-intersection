@@ -254,76 +254,62 @@ ptype r => A -> B    ptype v => C   sub C A
 ptype (r v) =>  B
 ```
 
-# Principal Typing (stack)
-
-```
-ptypes L => S
-
------------------------ ptypes-empty
-ptypes . => .
-
-
-ptypes L => S      ptype v => A
------------------------------------ ptypes-cons
-ptypes (L, v) => S, A
-```
-
-# Application Subterm (2-ary)
-
-```
------------------------
-appsubt? L v
------------------------
-
--------------------------------- ASt?-Refl
-appsubt? nil v
-
-
-appsub? ptypes (L, v) (C -> D)
-------------------------------------- ASt?-Fun
-appsubt? (L, v) (\x. e : A -> B) : (C -> D)
-
-
-appsubt? (L, v) v1
---------------------------------- ASt?-L
-appsubt? (L, v) (v1 ,, v2)
-
-
-appsubt? (L, v) v2
---------------------------------- ASt?-R
-appsubt? (L, v) (v1 ,, v2)
-```
-
-# Parallel Application
+# Collective Application (Phase I)
 
 ```
 ------------------
-L |- r ● v --> e
+r * L --> e
 ------------------
 
-Lemma: compile-time check pass won't cause ambiuguity in dynamic semantics
+v ● L --> e
+-------------------- CApp-PApp
+v * L --> e
+
+
+r * (L, v) --> e
+-------------------- CApp-Collect
+(r v) * L --> e
+```
+
+# Parallel Application (Phase II)
+
+```
+------------------
+v ● L --> e
+------------------
+
+(\x. e : A -> B) : C -> D ⊗ L --> e'
+--------------------------------------- PApp-Beta
+(\x. e : A -> B) : C -> D ● L --> e'
+
+
+v1 ● L --> e
+----------------------- PApp-pick-L
+(v1 ,, v2) ● L --> e
+
+
+v2 ● L --> e
+---------------------- PApp-pick-R
+(v1 ,, v2) ● L --> e
+```
+
+# Multiple Beta-Reduction (Phase III)
+
+```
+--------------------------------------------------
+(\x. e : A -> B) : C -> D ⊗ L --> e (not complete) (induction on two terms)
+---------------------------------------------------
+
 
 v -->C v'
-appsubt? (L, v) (\x. e : A -> B) : C -> D
----------------------------------------------------------- PApp-Abs-Anno (wrong)
-L |- (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
+---------------------------------------------------------------- MBeta-Nil
+(\x. e : A -> B) : C -> D ⊗ (nil, v) --> e [x |-> v'] : D
 
 
-L |- v1 ● v --> e
-not appsubt? (L, v) v2 (removeable checked in compile-time)
-------------------------- PApp-Pick-L
-L |- v1 ,, v2 ● v --> e
-
-
-L |- v2 ● v --> e
-not appsubt? (L, v) v1
-------------------------- PApp-Pick-R
-L |- v1 ,, v2 ● v --> e
-
-
-L, v2 |- r ● v1 --> e
---------------------------------- PApp-Collect
-L |- r v1 ● v2 --> e
+v -->C v'
+e [x |- v'] : D ⊗ L --> e'
+---------------------------------------------------------------- MBeta-List
+(\x. e : A -> B) : C -> D ⊗ (L, v) --> e'
 ```
 
 # Reduction
@@ -347,8 +333,7 @@ r v --> 1 : (ptype r)
 
 
 not toplike (ptype (r))
-. |- r * v --> e
-r * [v] --> e
+(r v) * nil --> e
 ----------------------- Step-PApp
 r v --> e
 

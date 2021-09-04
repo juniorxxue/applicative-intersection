@@ -257,56 +257,43 @@ Inductive ptype : trm -> typ -> Prop :=
     ptype r (typ_arrow A B) -> ptype v C -> sub C A ->
     ptype (trm_app r v) B.
 
-Inductive ptypes : argv -> arg -> Prop :=
-| ptypes_empty :
-    ptypes nil nil
-| ptypes_cons : forall (L : argv) (S : arg) (v : trm) (A : typ),
-    ptypes L S ->
-    ptype v A ->
-    ptypes (cons v L) (cons A S).
-
 Hint Constructors ptype : core.
-Hint Constructors ptypes : core.
 
-Inductive auxast : argv -> trm -> Prop :=
-| auxast_refl : forall (v : trm),
-    auxast nil v
-| auxast_fun : forall (v e : trm) (S : arg) (L : argv) (A B C D: typ),
-    ptypes (cons v L) S ->
-    auxas S (typ_arrow C D) ->
-    auxast (cons v L) (trm_anno (trm_abs e A B) (typ_arrow C D))
-| auxast_l : forall (L : argv) (v1 v2 v : trm),
-    auxast (cons v L) v1 ->
-    auxast (cons v L) (trm_merge v1 v2)
-| auxast_r : forall (L : argv) (v1 v2 v : trm),
-    auxast (cons v L) v2 ->
-    auxast (cons v L) (trm_merge v1 v2).
-
-Hint Constructors auxast : core.
-
-Notation "appsubt? L v" := (auxast L v) (at level 40).
-
-Inductive papp : argv -> trm -> trm -> trm -> Prop :=
-| papp_abs_anno : forall (A B C D E : typ) (e v v' : trm) (L : argv),
+Inductive mbeta : trm -> argv -> trm -> Prop :=
+| mbeta_nil : forall (v v' e : trm) (A B C D : typ),
     typedred v C v' ->
-    auxast (cons v L) (trm_anno (trm_abs e A B) (typ_arrow C D)) ->
-    papp L (trm_anno (trm_abs e A B) (typ_arrow C D)) v
-         (trm_anno (open e v') D)
-| papp_pick_l : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
-    not (auxast (cons v L) v2) ->
-    papp L v1 v e ->
-    papp L (trm_merge v1 v2) v e
-| papp_pick_r : forall (A B C : typ) (v1 v2 v' v e: trm) (L : argv) ,
-    not (auxast (cons v L) v1) ->
-    papp L v2 v e ->
-    papp L (trm_merge v1 v2) v e
-| papp_collect : forall (r v1 v2 e : trm) (L : argv),
-    papp (cons v2 L) r v1 e ->
-    papp L (trm_app r v1) v2 e.
+    mbeta (trm_anno (trm_abs e A B) (typ_arrow C D)) (cons v nil) (trm_anno (open e v') D)
+| mbeta_cons : forall (v v' e e' : trm) (A B C D : typ) (L : argv),
+    typedred v C v' ->
+    mbeta (trm_anno (open e v') D) L e' ->
+    mbeta (trm_anno (trm_abs e A B) (typ_arrow C D)) (cons v L) e'.
 
+Inductive papp : trm -> argv -> trm -> Prop :=
+| papp_beta : forall (v e e' : trm) (L : argv) (A B C D : typ),
+    mbeta (trm_anno (trm_abs e A B) (typ_arrow C D)) L e' ->
+    papp (trm_anno (trm_abs e A B) (typ_arrow C D)) L e'
+| papp_pick_l : forall (v1 v2 e : trm) (L : argv),
+    papp v1 L e ->
+    papp (trm_merge v1 v2) L e
+| papp_pick_r : forall (v1 v2 e : trm) (L : argv),
+    papp v2 L e ->
+    papp (trm_merge v1 v2) L e.
+
+Inductive capp : trm -> argv -> trm -> Prop :=
+| capp_papp : forall (v e : trm) (L : argv),
+    papp v L e ->
+    capp v L e
+| capp_collect : forall (r v e : trm) (L : argv),
+    capp r (cons v L) e ->
+    capp (trm_app r v) L e.
+
+Hint Constructors mbeta : core.
 Hint Constructors papp : core.
+Hint Constructors capp : core.
 
-Notation "L ⊢ r ◐ v ~-> e" := (papp L r v e) (at level 69).
+Notation "r ◐ L ~-> e" := (papp r L e) (at level 69).
+Notation "r ٭ L ~-> e" := (capp r L e) (at level 69).
+Notation "r ⊗ L ~-> e" := (mbeta r L e) (at level 69).
 
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
@@ -318,11 +305,11 @@ Inductive step : trm -> trm -> Prop :=
     rvalue r -> value v ->
     toplike B ->
     step (trm_app r v) (trm_anno (trm_int 1) B)
-| step_papp : forall (r v e : trm) (A B : typ),
+| step_papp : forall (r v e : trm) (B : typ),
     rvalue r -> value v ->
-    ptype v A -> ptype r B ->
+    ptype r B ->
     not (toplike B) ->
-    papp nil r v e ->
+    capp (trm_app r v) nil e ->
     step (trm_app r v) e
 | step_anno_value : forall (v v' : trm) (A : typ),
     value v -> typedred v A v' ->
