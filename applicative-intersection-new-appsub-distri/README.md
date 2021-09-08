@@ -33,6 +33,22 @@ TopLike B
 TopLike (A -> B)
 ```
 
+# Splittable Types
+
+ ```
+ -------------
+ B <| A |>C
+ -------------
+ 
+ -------------------- Sp-And
+ A <| A & B |> B
+ 
+ 
+ C <| B |> D
+ ---------------------------- Sp-Arrow
+ A -> C <| A -> B |> A -> D
+ ```
+
 # Ordinary
 
 ```
@@ -48,47 +64,90 @@ Ordinary Top
 Ordinary Int
 
 
+Ordinary B
 ------------------ Ord-Arrow
 Ordinary (A -> B)
 ```
 
-
-
-# Subtyping
+# Subtyping (Dec)
 
 ```
-------
-A <: B     (Subtyping, rule form)
-------
+----------
+A <: B
+----------
 
-Int <: Int         S-Int
-
-
-A <: Top           S-Top
+----------------- S-Refl
+A <: A
 
 
-Top <: C
-----------------   S-Top-Arr
-A <: B -> C
+A <: B    B <: C
+--------------------- S-Trans
+A <: C
 
 
-C <: A    B <: D
-----------------   S-Arrow
-A -> B <: C -> D
+-------------------- S-Top
+A <: Top
 
 
-A <: B    A <: C
-----------------   S-And
+-------------------- S-Top-Arr
+Top <: Top -> Top
+
+
+B <: A      C <: D
+------------------------- S-Arr
+A -> C <: B -> D
+
+
+A <: B     A <: C
+------------------------ S-And
 A <: B & C
 
 
-A <: C
-----------         S-And-L
+------------------------ S-And-L
+A & B <: A
+
+
+------------------------ S-And-R
+A & B <: B
+
+
+--------------------------------------- S-Distri-Arr
+(A -> B) & (A -> C) <: A -> B & C
+```
+
+# Subtyping (Algo)
+
+```
+----------
+A <: B
+----------
+
+------------------ S-Int
+Int <: Int
+
+
+ordinary B     toplike B
+----------------------------- S-Top
+A <: B
+
+
+B <: A    C <: D     oridinary D
+----------------------------------- S-Arr
+A -> C <: B -> D
+
+
+B <| D |> C    A <: B    A <: C
+-----------------------------------   S-And
+A <: D
+
+
+A <: C     ordinary C
+------------------------- S-And-L
 A & B <: C
 
 
-B <: C
-----------         S-And-R
+B <: C     ordinary C
+-------------------------- S-And-R
 A & B <: C
 ```
 
@@ -133,19 +192,18 @@ Exists O, A <: S -> O -> B <: S -> O.
 
 
 C <: A      S |- B <: D
------------------------- AS-Fun (do we need it?)
+------------------------ AS-Fun
 S, C |- A -> B <: C -> D
 
 
-
-not (appsub? (S, C) B)
 S, C |- A <: D
+not (appsub? (S, C) B)
 ------------------------ AS-And-L
 S, C |- A & B <: D
 
 
-not (appsub? (S, C) A)
 S, C |- B <: D
+not (appsub? (S, C) A)
 ------------------------ AS-And-R
 S, C |- A & B <: D
 
@@ -264,13 +322,7 @@ ptype e1,,e2 => A & B
 v ● vl --> e
 ----------------
 
-TopLike (ptype v)
------------------------------ PApp-Top
-v ● vl --> 1 : (ptype v)
-
-
-v -->C v'
-not (toplike D)
+v -->A v'
 -------------------------------------------- PApp-Abs-Anno
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
@@ -307,12 +359,18 @@ e --> e'
 n --> n : Int
 
 
------------------------ Step-Abs-Anno
+-------------------------------------------- Step-Abs-Anno
 \x. e : A -> B --> (\x. e : A -> B) : A -> B
 
 
+toplike (ptype (v))
+------------------------- Step-PApp-Toplike
+v vl --> 1 : (ptype v)
+
+
+not toplike (ptype (v))
 v ● vl --> e
----------------- Step-PApp
+----------------------- Step-PApp
 v vl --> e
 
 
@@ -361,7 +419,10 @@ x : A \in T
 ----------------- T-Var
 T |- x => A
 
-stack var
+
+x : A \in T   S |- A <: B 
+------------------------------- T-Var-stack
+T; S |- x => B
 
 
 T, x : A |- e => B
@@ -369,12 +430,12 @@ T, x : A |- e => B
 T |- \x. e : A -> B => A -> B
 
 
-T, x : A |- e => B       S, C |- A -> B <: A -> B
+T, x : A |- e => B       S, C |- A -> B <: D
 -------------------------------------------------------- T-Lam2
-T; S, C |- \x. e : A -> B => A -> B
+T; S, C |- \x. e : A -> B => D
 
 
-T |- e => C      C <: A        S |- A <: B            Q: S, C |- A <: B <- does this work instead of 2 checks?
+T |- e => C      C <: A        S |- A <: B
 --------------------------------------------- T-Ann
 T; S |- e : A => B
 
@@ -394,8 +455,22 @@ consist v1 v2      . |- v1 => A     . |- v2 => B
 T |- v1,,v2 => A & B
 
 
-T |- e1,,e2 => A & B
-S, C |- A & B <: D
------------------------------------------------ T-Merge-pick
-T; S, C |- e1,,e2 => D
+T; S, A |- e1 => C       T |- e2 => B
+not appsub? (S, A) B
+disjoint B C
+----------------------------------------------- T-Merge-pick-L
+T; S, A |- e1,,e2 => C
+
+
+T; S, A |- e2 => C    T |- e1 => B
+not appsub? (S, A) B
+disjoint B C
+----------------------------------------------- T-Merge-pick-R
+T; S, A |- e1,,e2 => C
+
+
+T; S, A |- e2 => B    T; S, A |- e1 => C
+disjoint B C
+----------------------------------------------- T-Merge-pick-R
+T; S, A |- e1,,e2 => B & C
 ```
