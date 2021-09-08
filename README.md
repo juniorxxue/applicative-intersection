@@ -24,3 +24,5 @@ type systems for applicative intersection types
 `/applicative-intersection-new-appsub-no-distri`: new appsub without distributivity
 
 `/applicative-intersection-new-appsub-distri`: system with bcd distributivity
+
+`/applicative-intersection-no-typing-stack`: system with bcd distributivity, but without stack on typing
