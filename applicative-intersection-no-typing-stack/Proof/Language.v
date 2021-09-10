@@ -119,7 +119,7 @@ Inductive sub : typ -> typ -> Prop :=
     sub A B
 | sub_arrow : forall (A B C D : typ),
     sub B A -> sub C D -> ordinary D ->
-    sub (typ_arrow A B) (typ_arrow C D)
+    sub (typ_arrow A C) (typ_arrow B D)
 | sub_and : forall (A B C D : typ),
     splitable D B C ->
     sub A B -> sub A C -> sub A D
