@@ -8,7 +8,7 @@ p    ::= n | \x .e : A -> B
 v    ::= p : A | v1,,v2
 
 T    ::= . | T, x : A
-S    ::= . | S, A
+S    ::= . | A
 ```
 
 # TopLike
@@ -37,7 +37,7 @@ TopLike (A -> B)
 
  ```
  -------------
- B <| A |>C
+ B <| A |> C
  -------------
  
  -------------------- Sp-And
@@ -193,7 +193,7 @@ Exists O, A <: S -> O -> B <: S -> O.
 
 C <: A      S |- B <: D
 ------------------------ AS-Fun
-S, C |- A -> B <: C -> D
+S, C |- A -> B <: D
 
 
 S, C |- A <: D
@@ -327,25 +327,26 @@ v -->A v'
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1)
-not (toplike ptype(v1 ,, v2))
+appsub? ptype(vl) ptype(v1)
+not (appsub? ptype(vl) ptype(v2))
 v1 ● vl --> e
 -------------------------------------------- PApp-Merge-L
 v1 ,, v2 ● vl --> e
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v2)
-not (toplike ptype(v1 ,, v2))
+appsub? ptype(vl) ptype(v2)
+not (appsub? ptype(vl) ptype(v1))
 v2 ● vl --> e
 -------------------------------------------- PApp-Merge-R
 v1 ,, v2 ● vl --> e
 
 
-ptype(vl) |- ptype(v1 ,, v2) <: ptype(v1) & ptype(v2)
-not (toplike ptype(v1 ,, v2))
-(v1 ● vl) ,, (v2 ● vl) --> e
+appsub? ptype(vl) ptype(v1)
+appsub? ptype(vl) ptype(v2)
+v1 ● vl --> e1
+v2 ● vl --> e2
 -------------------------------------------- PApp-Merge-Parallel
-v1 ,, v2 ● vl --> e
+v1 ,, v2 ● vl --> e1 ,, e2
 ```
 
 # Reduction
@@ -408,7 +409,7 @@ v ,, e2 --> v ,, e2'
 # Typing
 
 ```
-T; S |- e => A
+T |- e => A
 
 
 ---------------- T-Int
@@ -420,29 +421,19 @@ x : A \in T
 T |- x => A
 
 
-x : A \in T   S |- A <: B 
-------------------------------- T-Var-stack
-T; S |- x => B
-
-
 T, x : A |- e => B
------------------------------ T-Lam1
+----------------------------- T-Lam
 T |- \x. e : A -> B => A -> B
 
 
-T, x : A |- e => B       S, C |- A -> B <: D
--------------------------------------------------------- T-Lam2
-T; S, C |- \x. e : A -> B => D
-
-
-T |- e => C      C <: A        S |- A <: B
+T |- e => C      C <: A
 --------------------------------------------- T-Ann
-T; S |- e : A => B
+T |- e : A => A
 
 
-T |- e2 => A      T; S, A |- e1 => A -> B
-------------------------------------------- T-App
-T; S |- e1 e2 => B
+T |- e2 => A      T |- e1 => B    A |- B <: C
+---------------------------------------------------- T-App
+T |- e1 e2 => C
 
 
 disjoint A B        T |- e1 => A   T |- e2 => B
@@ -453,24 +444,4 @@ T |- e1,,e2 => A & B
 consist v1 v2      . |- v1 => A     . |- v2 => B
 ------------------------------------------------------ T-Merge-Value
 T |- v1,,v2 => A & B
-
-
-T; S, A |- e1 => C       T |- e2 => B
-not appsub? (S, A) B
-disjoint B C
------------------------------------------------ T-Merge-pick-L
-T; S, A |- e1,,e2 => C
-
-
-T; S, A |- e2 => C    T |- e1 => B
-not appsub? (S, A) B
-disjoint B C
------------------------------------------------ T-Merge-pick-R
-T; S, A |- e1,,e2 => C
-
-
-T; S, A |- e2 => B    T; S, A |- e1 => C
-disjoint B C
------------------------------------------------ T-Merge-pick-R
-T; S, A |- e1,,e2 => B & C
 ```

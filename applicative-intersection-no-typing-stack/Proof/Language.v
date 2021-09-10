@@ -70,65 +70,104 @@ Hint Constructors toplike : core.
 Inductive ordinary : typ -> Prop :=
 | ord_top : ordinary typ_top
 | ord_int : ordinary typ_int
-| ord_arrow : forall (A B : typ), ordinary (typ_arrow A B).
+| ord_arrow : forall (A B : typ),
+    ordinary B -> ordinary (typ_arrow A B).
 
 Hint Constructors ordinary : core.
+
+Inductive sub_dec : typ -> typ -> Prop :=
+| subd_refl : forall (A : typ),
+    sub_dec A A
+| subd_trans : forall (A B C : typ),
+    sub_dec A B -> sub_dec B C -> sub_dec A C
+| subd_top : forall (A : typ),
+    sub_dec A typ_top
+| subd_top_arr :
+    sub_dec typ_top (typ_arrow typ_top typ_top)
+| subd_arr : forall (A B C D : typ),
+    sub_dec B A -> sub_dec C D ->
+    sub_dec (typ_arrow A C) (typ_arrow B D)
+| subd_and : forall (A B C : typ),
+    sub_dec A B -> sub_dec A C ->
+    sub_dec A (typ_and B C)
+| subd_and_l : forall (A B : typ),
+    sub_dec (typ_and A B) A
+| subd_and_r : forall (A B : typ),
+    sub_dec (typ_and A B) B
+| subd_distri_arr : forall (A B C : typ),
+    sub_dec (typ_and (typ_arrow A B)
+                     (typ_arrow A C))
+            (typ_arrow A
+                       (typ_and B C)).
+
+Hint Constructors sub_dec : core.
+
+Inductive splitable : typ -> typ -> typ -> Prop :=
+| sp_and : forall (A B : typ),
+    splitable (typ_and A B) A B
+| sp_arrow : forall (A B C D : typ),
+    splitable B C D ->
+    splitable (typ_arrow A B) (typ_arrow A C) (typ_arrow A D).
+
+Hint Constructors splitable : core.
 
 Inductive sub : typ -> typ -> Prop :=
 | sub_int :
     sub typ_int typ_int
-| sub_top : forall (A:typ),
-    sub A typ_top
-| sub_top_arr : forall (A B C : typ),
-    sub typ_top C -> sub A (typ_arrow B C)
-| sub_arrow : forall (A B C D:typ),
-    sub C A -> sub B D -> sub (typ_arrow A B) (typ_arrow C D)
-| sub_and : forall (A B C:typ),
-    sub A B -> sub A C -> sub A (typ_and B C)
-| sub_and_l : forall (A B C:typ),
-    sub A C -> sub (typ_and A B) C
-| sub_and_r : forall (A B C:typ),
-    sub B C -> sub (typ_and A B) C.
+| sub_top : forall (A B : typ),
+    ordinary B -> toplike B ->
+    sub A B
+| sub_arrow : forall (A B C D : typ),
+    sub B A -> sub C D -> ordinary D ->
+    sub (typ_arrow A B) (typ_arrow C D)
+| sub_and : forall (A B C D : typ),
+    splitable D B C ->
+    sub A B -> sub A C -> sub A D
+| sub_and_l : forall (A B C : typ),
+    sub A C -> ordinary C ->
+    sub (typ_and A B) C
+| sub_and_r : forall (A B C : typ),
+    sub B C -> ordinary C ->
+    sub (typ_and A B) C.
 
 Hint Constructors sub : core.
 
 Notation "A <: B" := (sub A B) (at level 40).
 
-Definition arg := list typ.
+Definition arg := option typ.
 
 Inductive auxas : arg -> typ -> Prop :=
 | aas_refl : forall (A : typ),
-    auxas nil A
-| aas_fun : forall (A B C : typ) (S : arg),
+    auxas None A
+| aas_fun : forall (A B C : typ),
     sub C A ->
-    auxas S B ->
-    auxas (cons C S) (typ_arrow A B)
-| aas_and_l : forall (A B C : typ) (S : arg),
-    auxas (cons C S) A ->
-    auxas (cons C S) (typ_and A B)
-| aas_and_r : forall (A B C : typ) (S : arg),
-    auxas (cons C S) B ->
-    auxas (cons C S) (typ_and A B).
+    auxas (Some C) (typ_arrow A B)
+| aas_and_l : forall (A B C : typ),
+    auxas (Some C) A ->
+    auxas (Some C) (typ_and A B)
+| aas_and_r : forall (A B C : typ),
+    auxas (Some C) B ->
+    auxas (Some C) (typ_and A B).
 
 Inductive appsub : arg -> typ -> typ -> Prop :=
 | as_refl : forall (A : typ),
-    appsub nil A A
-| as_fun : forall (A B C D : typ) (S : arg),
+    appsub None A A
+| as_fun : forall (A B C D : typ),
     sub C A ->
-    appsub S B D ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow C D)
-| as_and_l : forall (A B C D: typ) (S : arg),
-    appsub (cons C S) A D ->
-    not (auxas (cons C S) B) ->
-    appsub (cons C S) (typ_and A B) D
-| as_and_r : forall (A B C D : typ) (S : arg),
-    appsub (cons C S) B D ->
-    not (auxas (cons C S) A) ->
-    appsub (cons C S) (typ_and A B) D
+    appsub None B D ->
+    appsub (Some C) (typ_arrow A B) (typ_arrow C D)
+| as_and_l : forall (A B C D: typ),
+    appsub (Some C) A D ->
+    not (auxas (Some C) B) ->
+    appsub (Some C) (typ_and A B) D
+| as_and_r : forall (A B C D : typ),
+    appsub (Some C) B D ->
+    not (auxas (Some C) A) ->
+    appsub (Some C) (typ_and A B) D
 | as_and_both : forall (A B C D1 D2: typ) (S : arg),
-    appsub (cons C S) A D1 ->
-    appsub (cons C S) B D2 ->
-    appsub (cons C S) (typ_and A B) (typ_and D1 D2).
+    appsub (Some C) A D1 ->
+    appsub (Some C) B D2 ->
+    appsub (Some C) (typ_and A B) (typ_and D1 D2).
 
 Hint Constructors auxas : core.
 Hint Constructors appsub : core.
@@ -190,44 +229,37 @@ Notation "e ~->> A e'" := (typedred e A e') (at level 68).
 Definition consistency_spec e1 e2 :=
   forall (A : typ) (e1' e2' : trm), typedred e1 A e1' -> typedred e2 A e2' -> e1' = e2'.
 
-Inductive typing : ctx -> arg -> trm -> typ -> Prop :=
+Inductive typing : ctx -> trm -> typ -> Prop :=
 | typing_int : forall (T : ctx) (n : nat),
-    uniq T -> typing T nil (trm_int n) typ_int
+    uniq T -> typing T (trm_int n) typ_int
 | typing_var : forall (T : ctx) (x : var) (A : typ),
-    uniq T -> binds x A T -> typing T nil (trm_fvar x) A
-| typing_lam1 : forall (L : vars) (T : ctx) (A B : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil (open e (trm_fvar x)) B) ->
-    typing T nil (trm_abs e A B) (typ_arrow A B)
-| typing_lam2 : forall (L : vars) (S : arg) (T : ctx) (A B C : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) nil (open e (trm_fvar x)) B) ->
-    appsub (cons C S) (typ_arrow A B) (typ_arrow A B) ->
-    typing T (cons C S) (trm_abs e A B) (typ_arrow A B)
-| typing_anno : forall (S : arg) (T : ctx) (A B C : typ) (e : trm),
-    typing T nil e C -> sub C A -> appsub S A B ->
-    typing T S (trm_anno e A) B
-| typing_app : forall (S : arg) (T : ctx) (A B : typ) (e1 e2 : trm),
-    typing T nil e2 A ->
-    typing T (cons A S) e1 (typ_arrow A B) ->
-    typing T S (trm_app e1 e2) B
+    uniq T -> binds x A T -> typing T (trm_fvar x) A
+| typing_lam : forall (L : vars) (T : ctx) (A B : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) (open e (trm_fvar x)) B) ->
+    typing T (trm_abs e A B) (typ_arrow A B)
+| typing_anno : forall (T : ctx) (A B C : typ) (e : trm),
+    typing T e C -> sub C A ->
+    typing T (trm_anno e A) A
+| typing_app : forall (S : arg) (T : ctx) (A B C : typ) (e1 e2 : trm),
+    typing T e2 A ->
+    typing T e1 B ->
+    appsub (Some A) B C ->
+    typing T (trm_app e1 e2) C
 | typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
     disjoint_spec A B ->
-    typing T nil e1 A ->
-    typing T nil e2 B ->
-    typing T nil (trm_merge e1 e2) (typ_and A B)
+    typing T e1 A ->
+    typing T e2 B ->
+    typing T (trm_merge e1 e2) (typ_and A B)
 | typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm),
     value v1 -> value v2 ->
     consistency_spec v1 v2 ->
-    typing nil nil v1 A ->
-    typing nil nil v2 B ->
-    typing T nil (trm_merge v1 v2) (typ_and A B)
-| typing_merge_pick : forall (T : ctx) (S : arg) (A B C D : typ) (e1 e2 : trm),
-    typing T nil (trm_merge e1 e2) (typ_and A B) ->
-    appsub (cons C S) (typ_and A B) D ->
-    typing T (cons C S) (trm_merge e1 e2) D.
+    typing nil v1 A ->
+    typing nil v2 B ->
+    typing T (trm_merge v1 v2) (typ_and A B).
 
 Hint Constructors typing : core.
 
-Notation "T S ⊢ e ⇒ A" := (typing T S e A) (at level 50).
+Notation "T ⊢ e ⇒ A" := (typing T e A) (at level 50).
 
 Inductive ptype : trm -> typ -> Prop :=
 | ptype_anno : forall (e : trm) (A : typ),
@@ -240,31 +272,26 @@ Inductive ptype : trm -> typ -> Prop :=
 Hint Constructors ptype : core.
 
 Inductive papp : trm -> trm -> trm -> Prop :=
-| papp_top : forall (v vl : trm) (A : typ),
-    ptype v A ->
-    toplike A ->
-    papp v vl (trm_anno (trm_int 1) A)
 | papp_abs_anno : forall (A B C D : typ) (e v v' : trm),
-    typedred v C v' ->
-    not (toplike D) ->
+    typedred v A v' ->
     papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
 | papp_merge_l : forall (A B C : typ) (v1 v2 vl e: trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    appsub (cons C nil) (typ_and A B) A ->
-    not (toplike (typ_and A B)) ->
+    auxas (Some C) A ->
+    not (auxas (Some C) B) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 vl e : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    appsub (cons C nil) (typ_and A B) B ->
-    not (toplike (typ_and A B)) ->
+    not (auxas (Some C) A) ->
+    auxas (Some C) B ->
     papp v2 vl e ->
     papp (trm_merge v1 v2) vl e
-| papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2: trm),
+| papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2 : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    appsub (cons C nil) (typ_and A B) (typ_and A B) ->
-    not (toplike (typ_and A B)) ->
+    auxas (Some C) A ->
+    auxas (Some C) B ->
     papp v1 vl e1 ->
     papp v2 vl e2 ->
     papp (trm_merge v1 v2) vl (trm_merge e1 e2).
@@ -278,8 +305,13 @@ Inductive step : trm -> trm -> Prop :=
     step (trm_int n) (trm_anno (trm_int n) typ_int)
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
-| step_papp : forall (v vl e : trm),
+| step_papp_toplike : forall (v vl e : trm) (A : typ),
     value v -> value vl ->
+    ptype v A -> toplike A ->
+    step (trm_app v vl) (trm_anno (trm_int 1) A)
+| step_papp : forall (v vl e : trm) (A : typ),
+    value v -> value vl ->
+    ptype v A -> not (toplike A) ->
     papp v vl e ->
     step (trm_app v vl) e
 | step_anno_value : forall (v v' : trm) (A : typ),
