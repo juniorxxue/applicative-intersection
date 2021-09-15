@@ -154,8 +154,7 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub None A A
 | as_fun : forall (A B C D : typ),
     sub C A ->
-    appsub None B D ->
-    appsub (Some C) (typ_arrow A B) (typ_arrow C D)
+    appsub (Some C) (typ_arrow A B) B
 | as_and_l : forall (A B C D: typ),
     appsub (Some C) A D ->
     not (auxas (Some C) B) ->
@@ -217,10 +216,11 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
 | tred_merge_r : forall (v1 v2 v2': trm) (A : typ),
     typedred v2 A v2' -> ordinary A ->
     typedred (trm_merge v1 v2) A v2'
-| tred_and : forall (v1 v2 v : trm) (A B : typ),
-    typedred v A v1 ->
-    typedred v B v2 ->
-    typedred v (typ_and A B) (trm_merge v1 v2).
+| tred_and : forall (v1 v2 v : trm) (A B C : typ),
+    splitable A B C ->
+    typedred v B v1 ->
+    typedred v C v2 ->
+    typedred v A (trm_merge v1 v2).
 
 Hint Constructors typedred : core.
 

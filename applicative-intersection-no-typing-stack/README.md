@@ -2,9 +2,9 @@
 
 ```
 A, B ::= Int | Top | A -> B | A & B
-e    ::= n | x | \x:A. e | e1 e2 | e1,,e2 | e : A
+e    ::= n | x | \x.e : A -> B | e1 e2 | e1,,e2 | e : A
 
-p    ::= n | \x .e : A -> B
+p    ::= n | \x. e : A -> B
 v    ::= p : A | v1,,v2
 
 T    ::= . | T, x : A
@@ -161,19 +161,19 @@ appsub? S B
 ---------------------------- AS?-Refl
 appsub? . A
 
-C <: A     appsub? S B
+C <: A
 ----------------------------- AS?-Fun
-appsub? (S, C) (A -> B)
+appsub? C (A -> B)
 
 
-appsub? (S, C) A
+appsub? C A
 ------------------------ AS?-And-L
-appsub? (S, C) (A & B)
+appsub? C (A & B)
 
 
-appsub? (S, C) B
+appsub? C B
 ------------------------ AS?-And-R
-appsub? (S, C) (A & B)
+appsub? C (A & B)
 ```
 
 # Application Subtyping
@@ -183,35 +183,32 @@ appsub? (S, C) (A & B)
 S |- A <: B
 -----------
 
-Spec:
-Exists O, A <: S -> O -> B <: S -> O.
-
 
 ------------------------ AS-Refl
 . |- A <: A
 
 
-C <: A      S |- B <: D
+C <: A
 ------------------------ AS-Fun
-S, C |- A -> B <: D
+C |- A -> B <: B
 
 
 S, C |- A <: D
 not (appsub? (S, C) B)
 ------------------------ AS-And-L
-S, C |- A & B <: D
+C |- A & B <: D
 
 
-S, C |- B <: D
+C |- B <: D
 not (appsub? (S, C) A)
 ------------------------ AS-And-R
-S, C |- A & B <: D
+C |- A & B <: D
 
 
-S, C |- A <: D1
-S, C |- B <: D2
+C |- A <: D1
+C |- B <: D2
 ------------------------ AS-And-Both
-S, C |- A & B <: D1 & D2
+C |- A & B <: D1 & D2
 ```
 
 # Disjoint
@@ -293,10 +290,11 @@ Ordinary A
 v1,,v2 -->A v2'
 
 
-v -->A v1
-v -->B v2
+B <| A |> C
+v -->B v1
+v -->C v2
 --------------------------------- Tred-And
-v -->(A & B) v1,,v2
+v --> A v1,,v2
 ```
 
 # Principal Typing
@@ -323,7 +321,7 @@ v ● vl --> e
 ----------------
 
 v -->A v'
--------------------------------------------- PApp-Abs-Anno
+------------------------------------------------- PApp-Abs-Anno
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
