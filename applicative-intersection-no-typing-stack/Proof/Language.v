@@ -110,6 +110,7 @@ Inductive splitable : typ -> typ -> typ -> Prop :=
     splitable (typ_arrow A B) (typ_arrow A C) (typ_arrow A D).
 
 Hint Constructors splitable : core.
+Notation "B ↩ A ↪ C" := (splitable A B C) (at level 40).
 
 Inductive sub : typ -> typ -> Prop :=
 | sub_int :

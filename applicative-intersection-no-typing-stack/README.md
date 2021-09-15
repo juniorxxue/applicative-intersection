@@ -69,6 +69,29 @@ Ordinary B
 Ordinary (A -> B)
 ```
 
+# Proper Types
+
+```
+|-& A
+
+------------------- PT-Int
+|-& Int
+
+
+------------------- PT-Top
+|-& Top
+
+
+Ordinary B   |-& A  |-& B
+--------------------------- PT-Ord-Fun
+|-& A -> B
+
+
+B <| A |> C      |-& B    |-& C
+---------------------------------- PT-Split
+|-& A
+```
+
 # Subtyping (Dec)
 
 ```
