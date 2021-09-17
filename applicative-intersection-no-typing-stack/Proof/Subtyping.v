@@ -36,7 +36,8 @@ Proof.
   induction A; eauto.
 Qed.
 
-Ltac proper_ind A := assert (r: proper_typ A) by apply (proper_typ_complete A); induction r.
+Ltac proper_ind A := assert (r: proper_typ A)
+    by apply (proper_typ_complete A); induction r.
 
 Lemma split_and_ord :
   forall (A A1 A2 : typ),
@@ -134,8 +135,9 @@ Proof.
   - dependent destruction Hsp2.
     split; eauto.
   - dependent destruction Hsp2.
+    pose proof IHHsp1; eauto.
     assert (C = C0 /\ D = D0); eauto.
-    destruct H. split; congruence.
+    destruct_conjs. split; congruence.
 Qed.
 
 Lemma sub_inversion_split_l :
@@ -163,14 +165,9 @@ Lemma sub_inversion_split_r :
     sub A B -> splitable B B1 B2 -> sub A B1 /\ sub A B2.
 Proof.
   intros * Hsub Hspl.
-  dependent destruction Hsub; eauto.
-  - eapply split_and_ord in H; eauto. contradiction.
-  - dependent destruction Hspl.
-    eapply split_and_ord in H; eauto. contradiction.
-  - eapply split_determinism in H; eauto.
-    destruct_conjs. subst; eauto.
-  - eapply split_and_ord in H; eauto. contradiction.
-  - eapply split_and_ord in H; eauto. contradiction.
+  dependent destruction Hsub; try solve [eauto | exfalso; eauto].
+  eapply split_determinism in H; eauto.
+  destruct_conjs. subst; eauto.
 Qed.
 
 Lemma toplike_spl_combine :
@@ -190,14 +187,10 @@ Lemma sub_toplike_preservation :
     toplike A -> sub A B -> toplike B.
 Proof.
   introv Hord1 Hord2 Htl Hsub.
-  dependent induction Hsub; eauto.
-  - eapply tl_arrow; eauto.
-    dependent destruction Htl; eauto.
-    dependent destruction Hord1; eauto.
-  - eapply split_and_ord in Hord2; eauto.
-    contradiction.
-  - inversion Hord1.
-  - inversion Hord1.
+  dependent induction Hsub; try solve [eauto | exfalso; eauto].
+  eapply tl_arrow; eauto.
+  dependent destruction Htl; eauto.
+  dependent destruction Hord1; eauto.
 Qed.
 
 Lemma sub_transitivity:
@@ -211,13 +204,10 @@ Proof.
   - dependent induction Hs2; eauto.
   - dependent induction Hs2; eauto.
     clear IHHs2_1 IHHs2_2.
-    dependent induction Hs1; eauto.
+    dependent induction Hs1; try solve [eauto | exfalso; eauto].
     + dependent destruction H1; eauto.
       assert (toplike D); eauto.
       eapply sub_toplike_preservation; eauto.
-    + dependent destruction H1.
-      eapply split_and_ord in H; eauto.
-      contradiction.
   - gen A B.
     proper_ind C0; introv Hs1 Hs2 Hspl Hrb IH; eauto.
     + eapply sub_inversion_split_r in Hs1; eauto.
