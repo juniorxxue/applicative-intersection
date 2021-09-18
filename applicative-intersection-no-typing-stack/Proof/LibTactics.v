@@ -92,3 +92,29 @@ Tactic Notation "introv" simple_intropattern(I1) simple_intropattern(I2)
  simple_intropattern(I6) simple_intropattern(I7) simple_intropattern(I8)
  simple_intropattern(I9) simple_intropattern(I10) :=
   introv I1; introv I2 I3 I4 I5 I6 I7 I8 I9 I10.
+
+Tactic Notation "gen" ident(X1) :=
+  generalize dependent X1.
+Tactic Notation "gen" ident(X1) ident(X2) :=
+  gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) :=
+  gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4)  :=
+  gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5) :=
+  gen X5; gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5)
+ ident(X6) :=
+  gen X6; gen X5; gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5)
+ ident(X6) ident(X7) :=
+  gen X7; gen X6; gen X5; gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5)
+ ident(X6) ident(X7) ident(X8) :=
+  gen X8; gen X7; gen X6; gen X5; gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5)
+ ident(X6) ident(X7) ident(X8) ident(X9) :=
+  gen X9; gen X8; gen X7; gen X6; gen X5; gen X4; gen X3; gen X2; gen X1.
+Tactic Notation "gen" ident(X1) ident(X2) ident(X3) ident(X4) ident(X5)
+ ident(X6) ident(X7) ident(X8) ident(X9) ident(X10) :=
+  gen X10; gen X9; gen X8; gen X7; gen X6; gen X5; gen X4; gen X3; gen X2; gen X1.
