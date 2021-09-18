@@ -167,7 +167,7 @@ Proof.
   intros * Hsub Hspl.
   dependent destruction Hsub; try solve [eauto | exfalso; eauto].
   eapply split_determinism in H; eauto.
-  destruct_conjs. subst; eauto.
+  intuition; subst; eauto.
 Qed.
 
 Lemma toplike_spl_combine :
