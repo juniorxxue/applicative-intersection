@@ -183,14 +183,14 @@ Qed.
 
 Lemma sub_toplike_preservation :
   forall (A B : typ),
-    ordinary A -> ordinary B ->
     toplike A -> sub A B -> toplike B.
 Proof.
-  introv Hord1 Hord2 Htl Hsub.
-  dependent induction Hsub; try solve [eauto | exfalso; eauto].
-  eapply tl_arrow; eauto.
-  dependent destruction Htl; eauto.
-  dependent destruction Hord1; eauto.
+  introv Htl Hsub.
+  dependent induction Hsub; try solve [inversion Htl]; eauto.
+  - dependent destruction Htl; eauto.
+  - eapply toplike_spl_combine; eauto.
+  - dependent destruction Htl; eauto.
+  - dependent destruction Htl; eauto.
 Qed.
 
 Lemma sub_transitivity:
