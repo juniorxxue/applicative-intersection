@@ -109,29 +109,6 @@ Lemma appsub_solve_false :
 Proof.
 Abort.
 
-Lemma typing_to_ptype :
-  forall (A : typ) (v : trm),
-    value v ->
-    typing nil v A ->
-    ptype v A.
-Proof.
-  introv Hv Htyp.
-  generalize dependent A.
-  dependent induction Hv; eauto; introv Htyp.
-  - dependent destruction Htyp; eauto.
-  - dependent destruction Htyp; eauto.
-Qed.
-
-Hint Resolve typing_to_ptype : core.
-
-Lemma not_toplike_and_inversion :
-  forall (A B : typ),
-    not (toplike (typ_and A B)) ->
-    not (toplike A) /\ not (toplike B).
-Proof.
-  intros.
-Abort.
-
 Lemma value_cannot_step_further:
   forall (v : trm),
     value v -> forall (e : trm), not (step v e).
@@ -248,13 +225,12 @@ Proof.
       right. destruct H0. exists (trm_anno x A); eauto.
   - right. destruct IHHtyp1; destruct IHHtyp2; eauto.
     + assert (typing nil (trm_app e1 e2) C); eauto.
-      eapply papp_progress in H2.
-      destruct H2; eauto.
       assert (toplike B \/ not (toplike B)).
       eapply toplike_or_not_toplike.
       destruct H3.
       * exists (trm_anno (trm_int 1) B); eauto.
-      * exists x; eauto.
+      * eapply papp_progress in Htyp1; eauto 3.
+        destruct Htyp1. exists x; eauto.
     + destruct H1; eauto.
     + destruct H0; eauto.
     + destruct H1; eauto.

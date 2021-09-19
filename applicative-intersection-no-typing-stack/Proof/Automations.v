@@ -59,3 +59,26 @@ Proof.
 Qed.
 
 Hint Resolve value_or_not_value : core.
+
+Lemma not_toplike_and_inversion :
+  forall (A B : typ),
+    not (toplike (typ_and A B)) ->
+    not (toplike A) /\ not (toplike B).
+Proof.
+  intros.
+Admitted.
+
+Lemma typing_to_ptype :
+  forall (A : typ) (v : trm),
+    value v ->
+    typing nil v A ->
+    ptype v A.
+Proof.
+  introv Hv Htyp.
+  generalize dependent A.
+  dependent induction Hv; eauto; introv Htyp.
+  - dependent destruction Htyp; eauto.
+  - dependent destruction Htyp; eauto.
+Qed.
+
+Hint Resolve typing_to_ptype : core.
