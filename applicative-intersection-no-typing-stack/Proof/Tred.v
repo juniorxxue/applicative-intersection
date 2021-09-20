@@ -1,16 +1,9 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
-Require Import Language Automations Subtyping LibTactics.
+Require Import Language LibTactics.
 Require Import Strings.String.
-
-Lemma toplike_int_false :
-  toplike typ_int -> False.
-Proof.
-  intros. inversion H.
-Qed.
-
-Hint Resolve toplike_int_false : core.
+Require Import Subtyping Value Toplike.
 
 (* aux lemma for tred_determinism *)
 Lemma tred_ord_toplike :
@@ -91,62 +84,6 @@ Theorem tred_preservation:
     typing nil v' A.
 Proof.
 Abort.
-
-Lemma value_int_n_false :
-  forall (n : nat), value (trm_int n) -> False.
-Proof.
-  intros. inversion H.
-Qed.
-
-Hint Resolve value_int_n_false : core.
-
-Lemma sub_arrow_int_false :
-  forall (A B : typ),
-    sub (typ_arrow A B) typ_int -> False.
-Proof.
-  introv H.
-  dependent destruction H; eauto.
-Qed.
-
-Hint Resolve sub_arrow_int_false : core.
-
-Theorem splitable_not_toplike_preservation :
-  forall (A B C : typ),
-    splitable A B C -> not (toplike A) ->
-    not (toplike B).
-Proof.
-Admitted.
-
-Lemma sub_int_arrow_false :
-  forall (A B : typ),
-    not (toplike B) ->
-    sub typ_int (typ_arrow A B) ->
-    False.
-Proof.
-  introv Htl Hsub.
-  dependent induction Hsub; eauto.
-  - dependent destruction H0. contradiction.
-  - dependent destruction H.
-    assert (toplike C \/ not (toplike C)).
-    eapply toplike_or_not_toplike.
-    destruct H0; eauto.
-    assert (not (toplike C)).
-    eapply splitable_not_toplike_preservation; eauto.
-    contradiction.
-Qed.
-
-Theorem sub_int_form :
-  forall (A : typ),
-    sub typ_int A -> not (toplike A) -> ordinary A -> A = typ_int.
-Proof.
-  introv Hsub Htl Hord.
-  dependent induction Hord; eauto.
-  - destruct Htl; eauto.
-  - dependent destruction Hsub.
-    + contradiction.
-    + dependent destruction H.
-      exfalso; eauto.
-Qed.
 
 Theorem tred_progress :
   forall (v : trm) (A B : typ),

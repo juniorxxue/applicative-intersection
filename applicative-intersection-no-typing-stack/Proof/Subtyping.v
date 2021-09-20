@@ -1,8 +1,9 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language LibTactics.
 Require Import Strings.String.
 Require Import Program.Tactics.
+Require Import Language LibTactics.
+Require Import Toplike.
 
 Set Printing Parentheses.
 
@@ -220,4 +221,52 @@ Proof.
       destruct Hs2; eauto.
     + eapply sub_inversion_split_r in Hs2; eauto.
       destruct Hs2; eauto.
+Qed.
+
+Lemma sub_arrow_int_false :
+  forall (A B : typ),
+    sub (typ_arrow A B) typ_int -> False.
+Proof.
+  introv H.
+  dependent destruction H; eauto.
+Qed.
+
+Hint Resolve sub_arrow_int_false : core.
+
+Theorem splitable_not_toplike_preservation :
+  forall (A B C : typ),
+    splitable A B C -> not (toplike A) ->
+    not (toplike B).
+Proof.
+Admitted.
+
+Lemma sub_int_arrow_false :
+  forall (A B : typ),
+    not (toplike B) ->
+    sub typ_int (typ_arrow A B) ->
+    False.
+Proof.
+  introv Htl Hsub.
+  dependent induction Hsub; eauto.
+  - dependent destruction H0. contradiction.
+  - dependent destruction H.
+    assert (toplike C \/ not (toplike C)).
+    eapply toplike_or_not_toplike.
+    destruct H0; eauto.
+    assert (not (toplike C)).
+    eapply splitable_not_toplike_preservation; eauto.
+    contradiction.
+Qed.
+
+Theorem sub_int_form :
+  forall (A : typ),
+    sub typ_int A -> not (toplike A) -> ordinary A -> A = typ_int.
+Proof.
+  introv Hsub Htl Hord.
+  dependent induction Hord; eauto.
+  - destruct Htl; eauto.
+  - dependent destruction Hsub.
+    + contradiction.
+    + dependent destruction H.
+      exfalso; eauto.
 Qed.

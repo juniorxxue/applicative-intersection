@@ -1,7 +1,7 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language Automations Subtyping LibTactics.
-Require Import Strings.String.
+Require Import Language LibTactics.
+Require Import Subtyping Toplike Ptype Appsub.
 
 Theorem papp_determinism :
   forall (v vl e1 e2 : trm) (A : typ),
@@ -42,7 +42,7 @@ Proof.
         assert (ptype v2 B0); eauto.
         assert (ptype v0 B); eauto.
         exists x. eapply papp_merge_l; eauto.
-        admit.
+        eapply appsub_to_auxas in Has. assumption.
       * admit.
     + admit.
     + admit.

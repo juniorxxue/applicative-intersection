@@ -1,28 +1,8 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
+Require Import Coq.Program.Tactics.
 Require Import Language LibTactics.
-
-Lemma ptype_construction :
-  forall (A B : typ) (v1 v2 : trm),
-    ptype v1 A -> ptype v2 B ->
-    ptype (trm_merge v1 v2) (typ_and A B).
-Proof.
-  intros.
-  eapply ptype_merge; eauto.
-Qed.
-
-Lemma toplike_or_not_toplike :
-  forall (A : typ),
-    toplike A \/ not (toplike A).
-Proof.
-  intros A.
-  dependent induction A; eauto;
-    try solve [right; intros Hcontra; inversion Hcontra].
-  - destruct IHA1; destruct IHA2; eauto;
-      try solve [right; intros H1; dependent destruction H1; contradiction].
-  - destruct IHA1; destruct IHA2; eauto;
-      try solve [right; intros H1; dependent destruction H1; contradiction].
-Qed.
+Require Import Strings.String.
 
 Lemma pvalue_cannot_be_value :
   forall (e : trm),
@@ -60,25 +40,38 @@ Qed.
 
 Hint Resolve value_or_not_value : core.
 
-Lemma not_toplike_and_inversion :
-  forall (A B : typ),
-    not (toplike (typ_and A B)) ->
-    not (toplike A) /\ not (toplike B).
+Lemma value_cannot_step_further:
+  forall (v : trm),
+    value v -> forall (e : trm), not (step v e).
 Proof.
-  intros.
-Admitted.
-
-Lemma typing_to_ptype :
-  forall (A : typ) (v : trm),
-    value v ->
-    typing nil v A ->
-    ptype v A.
-Proof.
-  introv Hv Htyp.
-  generalize dependent A.
-  dependent induction Hv; eauto; introv Htyp.
-  - dependent destruction Htyp; eauto.
-  - dependent destruction Htyp; eauto.
+  intros v Hv.
+  dependent induction v; intros; try solve [inversion Hv]; eauto.
+  - dependent destruction Hv. intros Hm.
+    dependent destruction Hm.
+    + eapply IHv1; eauto.
+    + eapply IHv2; eauto.
+  - dependent destruction Hv.
+    induction H; eauto.
+    + intros Hs.
+      dependent destruction Hs; eauto.
+      inversion H.
+    + intros Hs.
+      dependent destruction Hs; eauto.
+      inversion H.
 Qed.
 
-Hint Resolve typing_to_ptype : core.
+Ltac solve_value_cannot :=
+  match goal with
+  | [H1: value ?v, H2: step ?v ?e |- _] =>
+      (eapply value_cannot_step_further in H2; eauto; contradiction)
+  end.
+
+Hint Extern 5 => solve_value_cannot : determinism.
+
+Lemma value_int_n_false :
+  forall (n : nat), value (trm_int n) -> False.
+Proof.
+  intros. inversion H.
+Qed.
+
+Hint Resolve value_int_n_false : core.

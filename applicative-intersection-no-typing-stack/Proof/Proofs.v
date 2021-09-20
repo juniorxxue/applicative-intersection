@@ -1,140 +1,11 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language Automations Subtyping Tred Papp LibTactics.
 Require Import Strings.String.
+Require Import Language LibTactics.
+Require Import Subtyping Appsub Ptype Disjoint Value Toplike.
+Require Import Tred Papp.
 
 Set Printing Parentheses.
-
-Lemma ptype_determinism :
-  forall (e : trm) (A B : typ),
-    ptype e A -> ptype e B -> A = B.
-Proof.
-  intros. generalize dependent B.
-  dependent induction H; eauto; intros * Hptyp.
-  - dependent destruction Hptyp; eauto.
-  - dependent destruction Hptyp; eauto.
-    assert (A = A0); eauto.
-    assert (B = B0); eauto.
-    congruence.
-Qed.
-
-Hint Resolve ptype_determinism : core.
-
-(* Hint Rewrite *)
-
-Lemma appsub_to_auxas :
-  forall (A B : typ) (S : arg),
-    appsub S A B ->
-    auxas S A.
-Proof.
-  intros.
-  dependent induction H; eauto.
-Qed.
-
-Lemma auxas_false :
-  forall (A B : typ) (S : arg),
-    not (auxas S A) ->
-    appsub S A B ->
-    False.
-Proof.
-  intros.
-  eapply appsub_to_auxas in H0.
-  contradiction.
-Qed.
-
-Hint Resolve auxas_false : core.
-
-Lemma appsub_determinism :
-  forall (A : typ) (B1 B2 : typ) (S : arg),
-    appsub S A B1 ->
-    appsub S A B2 ->
-    B1 = B2.
-Proof.
-  intros A B1 B2 C Has1 Has2.
-  generalize dependent B2.
-  dependent induction Has1; intros;
-    dependent destruction Has2; try solve [eauto | exfalso; eauto].
-  assert (D1 = D0); eauto.
-  assert (D2 = D3); eauto.
-  congruence.
-Qed.
-
-Lemma disjoint_spec_same :
-  forall (A : typ),
-    not (toplike A) ->
-    disjoint_spec A A -> False.
-Proof.
-  intros.
-  induction A; eauto.
-Qed.
-
-Ltac simpl_deter :=
-  repeat
-    match goal with
-    | [H1: ptype ?v ?A1, H2: ptype ?v ?A2 |- _] => (eapply ptype_determinism in H1; eauto; subst)
-    | [H1: appsub ?S ?A ?B1, H2: appsub ?S ?A ?B2 |- _] => (eapply appsub_determinism in H1; eauto; subst)
-    end.
-
-Lemma typ_and_equal_false1 :
-  forall (A B : typ),
-    A = (typ_and A B) -> False.
-Proof.
-  intros.
-  induction A; try solve [inversion H]; eauto.
-  dependent destruction H.
-  eapply IHA1; eauto.
-Qed.
-
-Lemma typ_and_equal_false2 :
-  forall (A B : typ),
-    B = (typ_and A B) -> False.
-Proof.
-  intros.
-  induction B; try solve [inversion H]; eauto.
-  dependent destruction H.
-  eapply IHB2; eauto.
-Qed.
-
-Ltac solve_equal_false :=
-  match goal with
-  | [H: (typ_and ?A ?B) = ?A |- _] => (symmetry in H; eapply typ_and_equal_false1 in H; inversion H)
-  | [H: (typ_and ?A ?B) = ?B |- _] => (symmetry in H; eapply typ_and_equal_false2 in H; inversion H)
-  | [H: ?A = (typ_and ?A ?B) |- _] => (eapply typ_and_equal_false1 in H; inversion H)
-  | [H: ?B = (typ_and ?A ?B) |- _] => (eapply typ_and_equal_false2 in H; inversion H)
-  end.
-
-Lemma appsub_solve_false :
-  forall (S : arg) (A : typ),
-    appsub S (typ_and A A) A -> False.
-Proof.
-Abort.
-
-Lemma value_cannot_step_further:
-  forall (v : trm),
-    value v -> forall (e : trm), not (step v e).
-Proof.
-  intros v Hv.
-  dependent induction v; intros; try solve [inversion Hv]; eauto.
-  - dependent destruction Hv. intros Hm.
-    dependent destruction Hm.
-    + eapply IHv1; eauto.
-    + eapply IHv2; eauto.
-  - dependent destruction Hv.
-    induction H; eauto.
-    + intros Hs.
-      dependent destruction Hs; eauto.
-    + intros Hs.
-      dependent destruction Hs; eauto.
-      inversion H.
-Qed.
-
-Ltac solve_value_cannot :=
-  match goal with
-  | [H1: value ?v, H2: step ?v ?e |- _] =>
-      (eapply value_cannot_step_further in H2; eauto; contradiction)
-  end.
-
-Hint Extern 5 => solve_value_cannot : determinism.
 
 Theorem determinism:
   forall (e e1 e2 : trm) (A : typ),
@@ -176,23 +47,6 @@ Proof with eauto with determinism.
     assert (e2' = e2'0); eauto.
     dependent destruction Htyp; eauto.
     congruence.
-Admitted.
-
-Lemma appsub_toplike_preservation :
-  forall (S : arg) (A B : typ),
-    toplike A ->
-    appsub S A B ->
-    toplike B.
-Proof.
-  introv Htl Has.
-Admitted.
-
-Lemma appsub_type_preservation :
-  forall (v : trm) (S : arg) (A B : typ),
-    value v -> typing nil v A ->
-    appsub S A B ->
-    typing nil v B.
-Proof.
 Admitted.
 
 Theorem preservation :
