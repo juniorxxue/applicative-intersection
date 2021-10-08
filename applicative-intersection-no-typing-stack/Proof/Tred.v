@@ -45,6 +45,7 @@ Theorem tred_determinism :
     typedred v1 C v1' -> typedred v2 C v2' ->
     consistency_spec v1 v2 -> v1' = v2'.
 Proof.
+  introv Hv1 Hv2 Htyp.
 Admitted.
 
 Lemma tred_value_preservation :
@@ -81,9 +82,9 @@ Theorem tred_preservation:
     value v ->
     typing nil v B ->
     typedred v A v' ->
-    typing nil v' A.
+    (exists C, typing nil v' C /\ isomorphic C A).
 Proof.
-Abort.
+Admitted.
 
 Theorem tred_progress :
   forall (v : trm) (A B : typ),

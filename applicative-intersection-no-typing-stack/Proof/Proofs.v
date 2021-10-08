@@ -23,11 +23,10 @@ Proof with eauto with determinism.
   - dependent destruction Hstep2...
     + assert (A = A0); eauto. subst. contradiction.
     + simpl_deter.
-      eapply papp_determinism; eauto.
+      eapply papp_determinism. eapply H. eapply H0. eapply H3. eapply H8. eapply Htyp.
   - dependent destruction Hstep2...
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
-      unfold consistency_spec.
       admit.
   - dependent destruction Hstep2...
     + assert (Heq: e' = e'0).
@@ -50,14 +49,30 @@ Proof with eauto with determinism.
 Admitted.
 
 Theorem preservation :
-  forall (e e' : trm) (A : typ) (S : arg),
+  forall (e e' : trm) (A: typ),
     typing nil e A ->
     step e e' ->
-    typing nil e' A.
+    (exists B, typing nil e' B /\ isomorphic B A).
 Proof.
-  intros e e' A S Htyp Hred.
-  generalize dependent e'.
+  intros e e' A Htyp Hred.
   dependent induction Htyp; intros; try solve [inversion Hred].
+  - dependent destruction Hred.
+    exists typ_int. split; eauto.
+  - dependent destruction Hred.
+    exists (typ_arrow A B). split; eauto.
+  - dependent destruction Hred.
+    + eapply tred_preservation in H1; eauto.
+    + admit.
+  - dependent destruction Hred.
+    + admit.
+    + assert (ptype e1 B).
+      eapply typing_to_ptype; eauto.
+      simpl_deter.
+      eapply papp_preservation in H4; eauto.
+    + admit.
+    + admit.
+  - admit.
+  - admit.
 Admitted.
 
 Theorem progress :
@@ -77,11 +92,10 @@ Proof.
       eapply value_or_not_value.
       destruct H1; eauto.
       right. destruct H0. exists (trm_anno x A); eauto.
-  - right. destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + assert (typing nil (trm_app e1 e2) C); eauto.
-      assert (toplike B \/ not (toplike B)).
+  - right. destruct IHHtyp1; destruct IHHtyp2; eauto 3.
+    + assert (toplike B \/ not (toplike B)).
       eapply toplike_or_not_toplike.
-      destruct H3.
+      destruct H2.
       * exists (trm_anno (trm_int 1) B); eauto.
       * eapply papp_progress in Htyp1; eauto 3.
         destruct Htyp1. exists x; eauto.

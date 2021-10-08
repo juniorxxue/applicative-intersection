@@ -174,6 +174,29 @@ B <: C     ordinary C
 A & B <: C
 ```
 
+# Isomorphic
+
+```
+----------
+iso A A
+----------
+
+----------------------- Iso-Refl
+iso A A
+
+
+Toplike A
+----------------------- Iso-Top
+iso Top A
+
+
+B1 <| B |> B2
+iso A1 B1
+iso A2 B2
+----------------------- Iso-And
+iso (A1 & A2) B
+```
+
 # Application Subtyping (2-ary)
 
 ```
@@ -277,6 +300,43 @@ Disjoint A B1       Disjoint A B2
 Disjoint A (B1 & B2)
 ```
 
+# Consistent
+
+```
+-----------------
+v1 ~~ v2
+-----------------
+
+------------------------------ Con-Int
+n : Int ~~ n : Int
+
+
+------------------------------------------------ Con-Abs
+\x. e : A -> B1 : C1  ~~ \x. e : A -> B2 : C2
+
+
+
+------------------------------------------------ Con-Abs
+e : A ~~ e : B
+
+
+ptype v1 A    ptype v2 B     disjoint A B
+------------------------------------------------ Con-Disjoint
+v1 ~~ v2
+
+
+v1 ~~ v
+v2 ~~ v
+------------------------------------------------ Con-Merge-L
+v1 ,, v2 ~~ v
+
+
+v ~~ v1
+v ~~ v2
+------------------------------------------------ Con-Merge-R
+v ~~ v1 ,, v2
+```
+
 # Typed Reduction
 
 ```
@@ -298,7 +358,7 @@ v -->A (1 : A)
 not (TopLike D)
 E <: C -> D
 ---------------------------------------------------------- Tred-Arrow-Anno
-(\x. e : A -> B) : E  -->(C -> D)     (\x. e : A -> B) : C -> D
+(\x. e : A -> B) : E  -->(C -> D)  (\x. e : A -> B) : C -> D
 
 
 v1 -->A v1'

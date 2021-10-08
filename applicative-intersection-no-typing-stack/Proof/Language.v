@@ -27,6 +27,25 @@ Inductive trm : Set :=
 
 Hint Constructors trm : core.
 
+Fixpoint size_typ (A : typ) {struct A} : nat :=
+  match A with
+  | typ_int => 1
+  | typ_top => 1
+  | typ_arrow A1 B1 => 1 + (size_typ A1) + (size_typ B1)
+  | typ_and A1 B1 => 1 + (size_typ A1) + (size_typ B1)
+  end.
+
+Fixpoint size_trm (e : trm) {struct e} : nat :=
+  match e with
+  | trm_int n => 1
+  | trm_bvar n => 1
+  | trm_fvar x => 1
+  | trm_abs e1 A B => 1 + (size_trm e1) + (size_typ A) + (size_typ B)
+  | trm_app e1 e2 => 1 + (size_trm e1) + (size_trm e2)
+  | trm_merge e1 e2 => 1 + (size_trm e1) + (size_trm e2)
+  | trm_anno e1 A => 1 + (size_trm e1) + (size_typ A)
+  end.
+
 Notation "e ∷ A" := (trm_anno e A) (at level 20).
 Notation "ƛ. e ∷ A → B" := (trm_abs e A B) (at level 20).
 
@@ -334,3 +353,19 @@ Inductive step : trm -> trm -> Prop :=
 
 Hint Constructors step : core.
 Notation "e ~-> e'" := (step e e') (at level 68).
+
+Inductive isomorphic : typ -> typ -> Prop :=
+| iso_refl : forall (A : typ),
+    isomorphic A A
+| iso_top : forall (A : typ),
+    toplike A ->
+    isomorphic typ_top A
+| iso_and : forall (A1 A2 B B1 B2 : typ),
+    splitable B B1 B2 ->
+    isomorphic A1 B1 ->
+    isomorphic A2 B2 ->
+    isomorphic (typ_and A1 A2) B.
+
+Hint Constructors isomorphic : core.
+
+Notation "A << B" := (isomorphic A B) (at level 40).

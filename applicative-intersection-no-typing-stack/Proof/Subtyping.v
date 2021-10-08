@@ -233,13 +233,6 @@ Qed.
 
 Hint Resolve sub_arrow_int_false : core.
 
-Theorem splitable_not_toplike_preservation :
-  forall (A B C : typ),
-    splitable A B C -> not (toplike A) ->
-    not (toplike B).
-Proof.
-Admitted.
-
 Lemma sub_int_arrow_false :
   forall (A B : typ),
     not (toplike B) ->
@@ -250,12 +243,10 @@ Proof.
   dependent induction Hsub; eauto.
   - dependent destruction H0. contradiction.
   - dependent destruction H.
-    assert (toplike C \/ not (toplike C)).
-    eapply toplike_or_not_toplike.
-    destruct H0; eauto.
-    assert (not (toplike C)).
-    eapply splitable_not_toplike_preservation; eauto.
-    contradiction.
+    destruct (toplike_or_not_toplike C); eauto.
+    destruct (toplike_or_not_toplike D); eauto.
+    eapply split_and_toplike in H; eauto.
+    intuition.
 Qed.
 
 Theorem sub_int_form :

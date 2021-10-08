@@ -15,14 +15,6 @@ Proof.
       try solve [right; intros H1; dependent destruction H1; contradiction].
 Qed.
 
-Lemma not_toplike_and_inversion :
-  forall (A B : typ),
-    not (toplike (typ_and A B)) ->
-    not (toplike A) /\ not (toplike B).
-Proof.
-  intros.
-Admitted.
-
 Lemma toplike_int_false :
   toplike typ_int -> False.
 Proof.
@@ -30,3 +22,17 @@ Proof.
 Qed.
 
 Hint Resolve toplike_int_false : core.
+
+Lemma split_and_toplike :
+  forall (A B C : typ),
+    not (toplike A) -> splitable A B C ->
+    not (toplike B) \/ not (toplike C).
+Proof.
+Admitted.
+    
+  
+
+      
+
+    
+
