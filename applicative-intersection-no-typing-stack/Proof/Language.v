@@ -246,8 +246,37 @@ Hint Constructors typedred : core.
 
 Notation "e ~->> A e'" := (typedred e A e') (at level 68).
 
-Definition consistency_spec e1 e2 :=
-  forall (A : typ) (e1' e2' : trm), typedred e1 A e1' -> typedred e2 A e2' -> e1' = e2'.
+Inductive ptype : trm -> typ -> Prop :=
+| ptype_anno : forall (e : trm) (A : typ),
+    ptype (trm_anno e A) A
+| ptype_merge : forall (e1 e2 : trm) (A B : typ),
+    ptype e1 A ->
+    ptype e2 B ->
+    ptype (trm_merge e1 e2) (typ_and A B).
+
+Hint Constructors ptype : core.
+
+Definition consistency_spec v1 v2 :=
+  forall (A : typ) (v1' v2' : trm), ordinary A -> typedred v1 A v1' -> typedred v2 A v2' -> v1' = v2'.
+
+Inductive consistent : trm -> trm -> Prop :=
+| con_int : forall (n : nat) (A1 A2 : typ),
+    consistent (trm_anno (trm_int n) A1) (trm_anno (trm_int n) A2)
+| con_abs : forall (e : trm) (A B1 B2 C1 C2 : typ),
+    consistent (trm_anno (trm_abs e A B1) C1) (trm_anno (trm_abs e A B2) C2)
+| con_disjoint : forall (v1 v2 : trm) (A B : typ),
+    ptype v1 A -> ptype v2 B -> disjoint A B ->
+    consistent v1 v2
+| con_merge_l : forall (v v1 v2 : trm),
+    consistent v1 v ->
+    consistent v2 v ->
+    consistent (trm_merge v1 v2) v
+| con_merge_r : forall (v v1 v2 : trm),
+    consistent v v1 ->
+    consistent v v2 ->
+    consistent v (trm_merge v1 v2).
+
+Hint Constructors consistent : core.
 
 Inductive typing : ctx -> trm -> typ -> Prop :=
 | typing_int : forall (T : ctx) (n : nat),
@@ -266,13 +295,13 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
     appsub (Some A) B C ->
     typing T (trm_app e1 e2) C
 | typing_merge : forall (T : ctx) (A B : typ) (e1 e2 : trm),
-    disjoint_spec A B ->
+    disjoint A B ->
     typing T e1 A ->
     typing T e2 B ->
     typing T (trm_merge e1 e2) (typ_and A B)
 | typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm),
     value v1 -> value v2 ->
-    consistency_spec v1 v2 ->
+    consistent v1 v2 ->
     typing nil v1 A ->
     typing nil v2 B ->
     typing T (trm_merge v1 v2) (typ_and A B).
@@ -281,35 +310,32 @@ Hint Constructors typing : core.
 
 Notation "T ⊢ e ⇒ A" := (typing T e A) (at level 50).
 
-Inductive ptype : trm -> typ -> Prop :=
-| ptype_anno : forall (e : trm) (A : typ),
-    ptype (trm_anno e A) A
-| ptype_merge : forall (e1 e2 : trm) (A B : typ),
-    ptype e1 A ->
-    ptype e2 B ->
-    ptype (trm_merge e1 e2) (typ_and A B).
-
-Hint Constructors ptype : core.
-
 Inductive papp : trm -> trm -> trm -> Prop :=
+| papp_toplike : forall (A : typ) (v vl : trm),
+    ptype v A -> toplike A ->
+    papp v vl (trm_anno (trm_int 1) A)
 | papp_abs_anno : forall (A B C D : typ) (e v v' : trm),
     typedred v A v' ->
+    not (toplike D) ->
     papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (open e v') D)
 | papp_merge_l : forall (A B C : typ) (v1 v2 vl e: trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
+    not (toplike (typ_and A B)) ->
     auxas (Some C) A ->
     not (auxas (Some C) B) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 vl e : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
+    not (toplike (typ_and A B)) ->
     not (auxas (Some C) A) ->
     auxas (Some C) B ->
     papp v2 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2 : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
+    not (toplike (typ_and A B)) ->
     auxas (Some C) A ->
     auxas (Some C) B ->
     papp v1 vl e1 ->
@@ -325,13 +351,8 @@ Inductive step : trm -> trm -> Prop :=
     step (trm_int n) (trm_anno (trm_int n) typ_int)
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
-| step_papp_toplike : forall (v vl e : trm) (A : typ),
-    value v -> value vl ->
-    ptype v A -> toplike A ->
-    step (trm_app v vl) (trm_anno (trm_int 1) A)
 | step_papp : forall (v vl e : trm) (A : typ),
     value v -> value vl ->
-    ptype v A -> not (toplike A) ->
     papp v vl e ->
     step (trm_app v vl) e
 | step_anno_value : forall (v v' : trm) (A : typ),

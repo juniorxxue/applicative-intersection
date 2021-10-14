@@ -304,20 +304,15 @@ Disjoint A (B1 & B2)
 
 ```
 -----------------
-v1 ~~ v2
+e1 ~~ e2
 -----------------
 
 ------------------------------ Con-Int
-n : Int ~~ n : Int
+n : A1 ~~ n : A2
 
 
 ------------------------------------------------ Con-Abs
 \x. e : A -> B1 : C1  ~~ \x. e : A -> B2 : C2
-
-
-
------------------------------------------------- Con-Abs
-e : A ~~ e : B
 
 
 ptype v1 A    ptype v2 B     disjoint A B
@@ -403,7 +398,13 @@ ptype e1,,e2 => A & B
 v ● vl --> e
 ----------------
 
+toplike (ptype v)
+---------------------------------- PApp-Toplike
+v ● vl --> 1 : (ptype v)
+
+
 v -->A v'
+not toplike D
 ------------------------------------------------- PApp-Abs-Anno
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
@@ -411,6 +412,7 @@ v -->A v'
 appsub? ptype(vl) ptype(v1)
 not (appsub? ptype(vl) ptype(v2))
 v1 ● vl --> e
+not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-L
 v1 ,, v2 ● vl --> e
 
@@ -418,6 +420,7 @@ v1 ,, v2 ● vl --> e
 appsub? ptype(vl) ptype(v2)
 not (appsub? ptype(vl) ptype(v1))
 v2 ● vl --> e
+not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-R
 v1 ,, v2 ● vl --> e
 
@@ -426,6 +429,7 @@ appsub? ptype(vl) ptype(v1)
 appsub? ptype(vl) ptype(v2)
 v1 ● vl --> e1
 v2 ● vl --> e2
+not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-Parallel
 v1 ,, v2 ● vl --> e1 ,, e2
 ```
@@ -445,12 +449,6 @@ n --> n : Int
 \x. e : A -> B --> (\x. e : A -> B) : A -> B
 
 
-toplike (ptype (v))
-------------------------- Step-PApp-Toplike
-v vl --> 1 : (ptype v)
-
-
-not toplike (ptype (v))
 v ● vl --> e
 ----------------------- Step-PApp
 v vl --> e
@@ -522,7 +520,7 @@ disjoint A B        T |- e1 => A   T |- e2 => B
 T |- e1,,e2 => A & B
 
 
-consist v1 v2      . |- v1 => A     . |- v2 => B
+consistent v1 v2      . |- v1 => A     . |- v2 => B
 ------------------------------------------------------ T-Merge-Value
 T |- v1,,v2 => A & B
 ```

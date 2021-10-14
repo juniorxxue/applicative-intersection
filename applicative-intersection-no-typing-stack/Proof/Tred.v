@@ -3,7 +3,7 @@ Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Language LibTactics.
 Require Import Strings.String.
-Require Import Subtyping Value Toplike.
+Require Import SubAndTopLike Value.
 
 (* aux lemma for tred_determinism *)
 Lemma tred_ord_toplike :
@@ -11,9 +11,10 @@ Lemma tred_ord_toplike :
     ordinary A -> toplike A -> typedred v A v' ->
     v' = (trm_anno (trm_int 1) A).
 Proof.
-  induction 3; try solve [eauto | exfalso; eauto].
-  inversion H0.
-  contradiction.
+  induction 3; eauto.
+  - inversion H0.
+  - dependent destruction H0. contradiction.
+  - exfalso; eauto.
 Qed.
 
 Hint Resolve tred_ord_toplike : core.
@@ -43,7 +44,7 @@ Theorem tred_determinism :
     value v1 -> value v2 ->
     typing nil v1 A -> typing nil v2 B ->
     typedred v1 C v1' -> typedred v2 C v2' ->
-    consistency_spec v1 v2 -> v1' = v2'.
+    consistent v1 v2 -> v1' = v2'.
 Proof.
   introv Hv1 Hv2 Htyp.
 Admitted.
@@ -65,15 +66,6 @@ Lemma tred_transitivity :
     typedred v1 A v2 ->
     typedred v2 B v3 ->
     typedred v1 B v3.
-Proof.
-Abort.
-
-Lemma tred_consistency :
-  forall (v v1 v2 : trm) (A B C : typ),
-    value v -> typing nil v C ->
-    typedred v A v1 ->
-    typedred v B v2 ->
-    consistency_spec v1 v2.
 Proof.
 Abort.
 

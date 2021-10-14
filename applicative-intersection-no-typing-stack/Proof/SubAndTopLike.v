@@ -3,7 +3,6 @@ Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Program.Tactics.
 Require Import Language LibTactics.
-Require Import Toplike.
 
 Set Printing Parentheses.
 
@@ -229,9 +228,46 @@ Lemma sub_arrow_int_false :
 Proof.
   introv H.
   dependent destruction H; eauto.
+  inversion H0.
 Qed.
 
 Hint Resolve sub_arrow_int_false : core.
+
+Lemma toplike_or_not_toplike :
+  forall (A : typ),
+    toplike A \/ not (toplike A).
+Proof.
+  intros A.
+  induction A;
+    try solve [right; intros Hcontra; inversion Hcontra]; eauto.
+  - destruct IHA1; destruct IHA2; eauto.
+    + right; intros H1; dependent destruction H1; contradiction.
+    + right; intros H1; dependent destruction H1; contradiction.
+  - destruct IHA1; destruct IHA2; eauto.
+    + right; intros H1; dependent destruction H1; contradiction.
+    + right; intros H1; dependent destruction H1; contradiction.
+    + right; intros H1; dependent destruction H1; contradiction.
+Qed.
+
+Lemma split_and_not_toplike :
+  forall (A B C : typ),
+    not (toplike A) -> splitable A B C ->
+    not (toplike B) \/ not (toplike C).
+Proof.
+  introv Hntl Hspl.
+  gen B C.
+  induction A; intros.
+  - inversion Hspl.
+  - inversion Hspl.
+  - dependent destruction Hspl.
+    assert (not (toplike C) \/ not (toplike D)); eauto.
+    destruct H.
+    + left. intros Hcontra. dependent destruction Hcontra. contradiction.
+    + right. intros Hcontra. dependent destruction Hcontra. contradiction.
+  - dependent destruction Hspl.
+    destruct (toplike_or_not_toplike A1);
+    destruct (toplike_or_not_toplike A2); eauto.
+Qed.
 
 Lemma sub_int_arrow_false :
   forall (A B : typ),
@@ -245,7 +281,7 @@ Proof.
   - dependent destruction H.
     destruct (toplike_or_not_toplike C); eauto.
     destruct (toplike_or_not_toplike D); eauto.
-    eapply split_and_toplike in H; eauto.
+    eapply split_and_not_toplike in H; eauto.
     intuition.
 Qed.
 

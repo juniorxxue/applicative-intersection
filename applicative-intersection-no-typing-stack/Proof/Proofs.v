@@ -18,12 +18,7 @@ Proof with eauto with determinism.
   - dependent destruction Hstep2...
   - dependent destruction Hstep2...
   - dependent destruction Hstep2...
-    + assert (A = A0); info_eauto. congruence.
-    + assert (A = A0); eauto. subst. contradiction.
-  - dependent destruction Hstep2...
-    + assert (A = A0); eauto. subst. contradiction.
-    + simpl_deter.
-      eapply papp_determinism. eapply H. eapply H0. eapply H3. eapply H8. eapply Htyp.
+    eapply papp_determinism. eapply H. eapply H0. eapply H1. eapply H4. eapply Htyp.
   - dependent destruction Hstep2...
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
@@ -63,12 +58,9 @@ Proof.
   - dependent destruction Hred.
     + eapply tred_preservation in H1; eauto.
     + admit.
-  - dependent destruction Hred.
-    + admit.
-    + assert (ptype e1 B).
-      eapply typing_to_ptype; eauto.
-      simpl_deter.
-      eapply papp_preservation in H4; eauto.
+  - dependent destruction Hred; eauto.
+    + eapply papp_preservation.
+      eapply H0. eapply H1. eapply Htyp2. eapply Htyp1. assumption. assumption.
     + admit.
     + admit.
   - admit.

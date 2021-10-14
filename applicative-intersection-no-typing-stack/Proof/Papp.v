@@ -14,23 +14,20 @@ Proof.
   introv Hv Hvl Hp1 Hp2 Htyp.
   gen e2 A.
   dependent induction Hp1; intros.
-  - dependent destruction Hp2.
-    dependent destruction Htyp.
-    assert (v' = v'0).
-    eapply tred_determinism; eauto 3. admit.
-    congruence.
-  - admit.
   - admit.
   - dependent destruction Hp2.
-    + admit.
-    + admit.
-    + dependent destruction Hv.
-      dependent destruction Htyp.
-      assert (e1 = e0). eapply IHHp1_1; eauto 3.
-      admit.
-      assert (e2 = e3). eapply IHHp1_2; eauto 3.
-      admit.
+    + dependent destruction H1. dependent destruction H2.
+      contradiction.
+    + dependent destruction Htyp.
+      assert (v' = v'0).
+      eapply tred_determinism; eauto 3. admit.
       congruence.
+  - admit.
+  - admit.
+  - dependent destruction Hp2.
+    + admit.
+    + admit.
+    + admit.
 Admitted.
 
 Theorem papp_preservation :
@@ -39,14 +36,13 @@ Theorem papp_preservation :
     typing nil v1 A ->
     typing nil v2 B ->
     appsub (Some B) A C ->
-    not (toplike A) ->
     papp v1 v2 e ->
     (exists D, typing nil e D /\ isomorphic D C).
 Proof.
-  introv Hv1 Hv2 Htyp1 Htyp2 Has Htl Hp.
+  introv Hv1 Hv2 Htyp1 Htyp2 Has Hp.
   gen A B C.
   dependent induction Hp; intros.
-  - dependent destruction Htyp1. dependent destruction Htyp1.
+  - dependent destruction Htyp1.
 Admitted.
 
 Inductive applicable : typ -> Prop :=
@@ -77,27 +73,15 @@ Proof.
   dependent induction H; eauto.
 Qed.
 
-Lemma applicable_cannot_sub_int :
-  forall (A : typ),
-    not (toplike A) ->
-    applicable A -> sub typ_int A -> False.
-Proof.
-  introv Htl Ha Hs.
-  dependent induction Hs; eauto.
-  - inversion Ha.
-Abort.
-              
-      
 Theorem papp_progress :
   forall (v1 v2 : trm) (A B C: typ),
-    not (toplike A) ->
     value v1 -> value v2 ->
     typing nil v1 A ->
     typing nil v2 B ->
     appsub (Some B) A C ->
     exists e, papp v1 v2 e.
 Proof.
-  introv Htl Hv1 Hv2 Htyp1 Htyp2 Has.
+  introv Hv1 Hv2 Htyp1 Htyp2 Has.
   gen A B C v2.
   dependent induction Hv1; intros.
   - dependent destruction H.
@@ -111,17 +95,15 @@ Proof.
   - dependent destruction Has.
     + inversion Htyp1.
     + dependent destruction Htyp1.
-      * eapply split_and_toplike in Htl; eauto.
-        destruct Htl.
-        ** assert (exists e, papp v1 v0 e); eauto.
-           destruct H2.
-           assert (ptype v1 A); eauto.
-           assert (ptype v2 B0); eauto.
-           assert (ptype v0 B); eauto.
-           exists x. eapply papp_merge_l; eauto.
-           eapply appsub_to_auxas in Has. assumption.
-        ** admit.        
-      * admit.
-    + admit.
-    + admit.
+      * assert (exists e, papp v1 v0 e). (* from appsub *)
+        eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
+        destruct H1. exists x. eapply papp_merge_l.
+        eapply typing_to_ptype; eauto.
+        eapply typing_to_ptype; eauto.
+        eapply typing_to_ptype; eauto.
+        (* talk about toplike later *) admit.
+        eapply appsub_to_auxas; eauto. assumption. assumption.
+      * admit. (* diff should be consistency *)
+    + admit. (* merge_r *)
+    + admit. (* merge_all *)
 Admitted.
