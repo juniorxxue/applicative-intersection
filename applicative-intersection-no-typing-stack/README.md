@@ -312,7 +312,7 @@ n : A1 ~~ n : A2
 
 
 ------------------------------------------------ Con-Abs
-\x. e : A -> B1 : C1  ~~ \x. e : A -> B2 : C2
+\x. e : A -> B : C1  ~~ \x. e : A -> B : C2
 
 
 ptype v1 A    ptype v2 B     disjoint A B

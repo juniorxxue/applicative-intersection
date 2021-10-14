@@ -262,8 +262,8 @@ Definition consistency_spec v1 v2 :=
 Inductive consistent : trm -> trm -> Prop :=
 | con_int : forall (n : nat) (A1 A2 : typ),
     consistent (trm_anno (trm_int n) A1) (trm_anno (trm_int n) A2)
-| con_abs : forall (e : trm) (A B1 B2 C1 C2 : typ),
-    consistent (trm_anno (trm_abs e A B1) C1) (trm_anno (trm_abs e A B2) C2)
+| con_abs : forall (e : trm) (A B C1 C2 : typ),
+    consistent (trm_anno (trm_abs e A B) C1) (trm_anno (trm_abs e A B) C2)
 | con_disjoint : forall (v1 v2 : trm) (A B : typ),
     ptype v1 A -> ptype v2 B -> disjoint A B ->
     consistent v1 v2
