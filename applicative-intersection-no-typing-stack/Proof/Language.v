@@ -227,6 +227,7 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     typedred v A (trm_anno (trm_int 1) A)
 | tred_arrow_anno : forall (A B C D E : typ) (e : trm),
     not (toplike D) -> sub E (typ_arrow C D) ->
+    ordinary D ->
     typedred (trm_anno (trm_abs e A B) E)
              (typ_arrow C D)
              (trm_anno (trm_abs e A B) (typ_arrow C D))

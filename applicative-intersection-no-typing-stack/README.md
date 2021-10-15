@@ -197,7 +197,7 @@ iso A2 B2
 iso (A1 & A2) B
 ```
 
-# Application Subtyping (2-ary)
+# Application Subtyping (Binary)
 
 ```
 -----------------
@@ -312,7 +312,7 @@ n : A1 ~~ n : A2
 
 
 ------------------------------------------------ Con-Abs
-\x. e : A -> B : C1  ~~ \x. e : A -> B : C2
+(\x. e : A -> B) : C1  ~~ (\x. e : A -> B) : C2
 
 
 ptype v1 A    ptype v2 B     disjoint A B
@@ -352,6 +352,7 @@ v -->A (1 : A)
 
 not (TopLike D)
 E <: C -> D
+Ordinary D
 ---------------------------------------------------------- Tred-Arrow-Anno
 (\x. e : A -> B) : E  -->(C -> D)  (\x. e : A -> B) : C -> D
 
