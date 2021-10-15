@@ -3,7 +3,8 @@ Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Language LibTactics.
 Require Import Strings.String.
-Require Import SubAndTopLike Value.
+Require Import SubAndTopLike Value Disjoint Ptype.
+Require Import Psatz. (* lia *)
 
 (* aux lemma for tred_determinism *)
 Lemma tred_ord_toplike :
@@ -46,8 +47,63 @@ Theorem tred_determinism :
     typedred v1 C v1' -> typedred v2 C v2' ->
     consistent v1 v2 -> v1' = v2'.
 Proof.
-  introv Hv1 Hv2 Htyp.
-Admitted.
+  introv Hv1 Hv2 Htyp1 Htyp2 Hr1 Hr2 Hcons.
+  gen A B v1 v2 v1' v2'.
+  ind_typ_size (size_typ C).
+  destruct (split_or_ord C).
+  - gen A B. induction Hcons; intros.
+    + dependent destruction Htyp1. dependent destruction Htyp1.
+      dependent destruction Htyp2. dependent destruction Htyp2.
+      dependent destruction Hr1; dependent destruction Hr2;
+        try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+      * inversion H0.
+      * inversion H.
+    + dependent destruction Htyp1. dependent destruction Htyp1.
+      dependent destruction Htyp2. dependent destruction Htyp2.
+      dependent destruction Hr1; dependent destruction Hr2;
+        try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+      * dependent destruction H. contradiction.
+      * dependent destruction H2. contradiction.
+    + assert (ptype v1 A0) by (now eapply typing_to_ptype in Htyp1).
+      eapply ptype_determinism in H0; eauto. subst.
+      assert (ptype v2 B0) by (now eapply typing_to_ptype in Htyp2).
+      eapply ptype_determinism in H1; eauto. subst.
+      eapply disjoint_complete in H2.
+      assert (sub A C) by (eapply tred_sub in Hr1; eauto).
+      assert (sub B C) by (eapply tred_sub in Hr2; eauto).
+      assert (toplike C) by (now eapply H2).
+      eapply tred_ord_toplike in Hr1; eauto.
+      eapply tred_ord_toplike in Hr2; eauto.
+      now subst.
+    + dependent destruction Hv1.
+      dependent destruction Hr1.
+      * symmetry. eapply tred_ord_toplike; eauto.
+      * dependent destruction Htyp1; eapply IHHcons1; eauto.
+      * dependent destruction Htyp1; eapply IHHcons2; eauto.
+      * exfalso; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Hr2.
+      * eapply tred_ord_toplike; eauto.
+      * dependent destruction Htyp2; eapply IHHcons1; eauto.
+      * dependent destruction Htyp2; eapply IHHcons2; eauto.
+      * exfalso; eauto.
+  - destruct_conjs.
+    dependent destruction Hr1; try solve [exfalso; eauto 3].
+    dependent destruction Hr2; try solve [exfalso; eauto 3].
+    eapply split_determinism in H0; eauto.
+    destruct_conjs. subst.
+    eapply split_determinism in H; eauto.
+    destruct_conjs. subst.
+    assert (forall A B C, splitable A B C -> size_typ B < size_typ A /\ size_typ C < size_typ A).
+    eapply split_decrease_size.
+    pose proof (H A0 B0 C H3).
+    destruct_conjs.
+    assert (size_typ B0 < i) by lia.
+    assert (size_typ C < i) by lia.
+    assert (v1 = v2); eauto 3.
+    assert (v0 = v3); eauto 3.
+    congruence.
+Qed.
 
 Lemma tred_value_preservation :
   forall (v v' : trm) (A : typ),
