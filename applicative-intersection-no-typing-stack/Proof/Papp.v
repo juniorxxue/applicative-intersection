@@ -1,7 +1,7 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language LibTactics.
-Require Import Subtyping Toplike Ptype Appsub Tred.
+Require Import SubAndTopLike Ptype Appsub Tred Consistent.
 
 Theorem papp_determinism :
   forall (v vl e1 e2 : trm) (A : typ),
@@ -14,20 +14,31 @@ Proof.
   introv Hv Hvl Hp1 Hp2 Htyp.
   gen e2 A.
   dependent induction Hp1; intros.
-  - admit.
+  - dependent destruction Hp2.
+    + assert (A = A0) by (eapply ptype_determinism; eauto). subst.
+      reflexivity.
+    + dependent destruction H. dependent destruction H0. contradiction.
+    + dependent destruction H.
+      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
+      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      contradiction.
+    + dependent destruction H.
+      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
+      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      contradiction.
+    + dependent destruction H.
+      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
+      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      contradiction.
   - dependent destruction Hp2.
     + dependent destruction H1. dependent destruction H2.
       contradiction.
     + dependent destruction Htyp.
       assert (v' = v'0).
-      eapply tred_determinism; eauto 3. admit.
+      eapply tred_determinism; eauto 3.
+      eapply consistent_reflexivity; eauto.
       congruence.
-  - admit.
-  - admit.
   - dependent destruction Hp2.
-    + admit.
-    + admit.
-    + admit.
 Admitted.
 
 Theorem papp_preservation :

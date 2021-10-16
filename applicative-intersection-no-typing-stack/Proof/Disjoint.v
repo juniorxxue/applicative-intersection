@@ -77,3 +77,12 @@ Proof.
     + eapply IH; eauto 3. lia.
     + eapply IH; eauto 3. lia.
 Qed.
+
+Lemma disjoint_symmetry:
+  forall (A B : typ),
+    disjoint A B -> disjoint B A.
+Proof.
+  introv H.
+  dependent induction H; eauto.
+Qed.
+  

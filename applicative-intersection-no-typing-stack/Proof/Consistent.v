@@ -1,7 +1,7 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language LibTactics.
-Require Import Tred.
+Require Import Disjoint Tred.
 
 Theorem consistent_soundness :
   forall (v1 v2 : trm) (A B : typ),
@@ -41,4 +41,43 @@ Proof.
   dependent destruction Hv1; dependent destruction Hv2; eauto.
   - dependent destruction H; dependent destruction H0.
     + eapply tred_progress in Htyp1; eauto.
+      eapply tred_progress in Htyp2; eauto.
+      unfold consistency_spec in Hcons.
 Abort.
+
+Lemma consistent_merge_l :
+  forall v1 v2 v,
+    consistent (trm_merge v1 v2) v ->
+    consistent v1 v /\ consistent v2 v.
+Proof.
+  introv Hcons.
+Abort.
+
+Lemma consistent_symmetry :
+  forall (v1 v2 : trm),
+    consistent v1 v2 -> consistent v2 v1.
+Proof.
+  introv Hcon.
+  dependent induction Hcon; eauto.
+  eapply disjoint_symmetry in H1.
+  eapply con_disjoint; eauto 3.
+Qed.
+
+Lemma consistent_reflexivity :
+  forall (v : trm) (A : typ),
+    typing nil v A ->
+    value v -> consistent v v.
+Proof.
+  introv Htyp Hv.
+  gen A.
+  dependent induction Hv; eauto; intros.
+  - dependent destruction H; eauto.
+  - dependent destruction Htyp.
+    + assert (consistent v1 v2); eauto.
+      eapply con_merge_l; eauto.
+      eapply con_merge_r; eauto.
+      now apply consistent_symmetry.
+    + eapply con_merge_l; eauto.
+      eapply con_merge_r; eauto.
+      now apply consistent_symmetry.
+Qed.

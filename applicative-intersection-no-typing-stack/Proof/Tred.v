@@ -132,7 +132,7 @@ Theorem tred_preservation:
     typedred v A v' ->
     (exists C, typing nil v' C /\ isomorphic C A).
 Proof.
-Admitted.
+Abort.
 
 Theorem tred_progress :
   forall (v : trm) (A B : typ),
