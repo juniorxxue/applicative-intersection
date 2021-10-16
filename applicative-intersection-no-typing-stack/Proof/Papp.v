@@ -1,7 +1,52 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language LibTactics.
+Require Import Coq.Program.Tactics.
 Require Import SubAndTopLike Ptype Appsub Tred Consistent.
+
+Set Printing Parentheses.
+
+Lemma typing_merge_distri_app_l :
+  forall (A C D: typ) (v1 v2 vl : trm),
+    value v1 -> value v2 -> value vl ->
+    ptype v1 A -> ptype vl C ->
+    typing nil (trm_app (trm_merge v1 v2) vl) D ->
+    auxas (Some C) A ->
+    exists E, typing nil (trm_app v1 vl) E.
+Proof.
+  introv Hv1 Hv2 Hvl Hp1 Hpl Htyp Has.
+  dependent destruction Htyp.
+  dependent destruction Htyp2.
+  - dependent destruction H0; eauto.
+    eapply typing_to_ptype in Htyp2_1; eauto.
+    eapply typing_to_ptype in Htyp1; eauto.
+    simpl_deter. contradiction.
+  - dependent destruction H2; eauto.
+    eapply typing_to_ptype in Htyp2_1; eauto.
+    eapply typing_to_ptype in Htyp1; eauto.
+    simpl_deter. contradiction.
+Qed.
+
+Lemma typing_merge_distri_app_r :
+  forall (B C D: typ) (v1 v2 vl : trm),
+    value v1 -> value v2 -> value vl ->
+    ptype v2 B -> ptype vl C ->
+    typing nil (trm_app (trm_merge v1 v2) vl) D ->
+    auxas (Some C) B ->
+    exists E, typing nil (trm_app v2 vl) E.
+Proof.
+  introv Hv1 Hv2 Hvl Hp2 Hpl Htyp Has.
+  dependent destruction Htyp.
+  dependent destruction Htyp2.
+  - dependent destruction H0; eauto.
+    eapply typing_to_ptype in Htyp2_2; eauto.
+    eapply typing_to_ptype in Htyp1; eauto.
+    simpl_deter. contradiction.
+  - dependent destruction H2; eauto.
+    eapply typing_to_ptype in Htyp2_2; eauto.
+    eapply typing_to_ptype in Htyp1; eauto.
+    simpl_deter. contradiction.
+Qed.
 
 Theorem papp_determinism :
   forall (v vl e1 e2 : trm) (A : typ),
@@ -15,20 +60,17 @@ Proof.
   gen e2 A.
   dependent induction Hp1; intros.
   - dependent destruction Hp2.
-    + assert (A = A0) by (eapply ptype_determinism; eauto). subst.
+    + simpl_deter.
       reflexivity.
     + dependent destruction H. dependent destruction H0. contradiction.
     + dependent destruction H.
-      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
-      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      simpl_deter.
       contradiction.
     + dependent destruction H.
-      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
-      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      simpl_deter.
       contradiction.
     + dependent destruction H.
-      assert (A = A0) by (eapply ptype_determinism; eauto). subst.
-      assert (B = B0) by (eapply ptype_determinism; eauto). subst.
+      simpl_deter.
       contradiction.
   - dependent destruction Hp2.
     + dependent destruction H1. dependent destruction H2.
@@ -39,7 +81,44 @@ Proof.
       eapply consistent_reflexivity; eauto.
       congruence.
   - dependent destruction Hp2.
-Admitted.
+    + dependent destruction H5.
+      simpl_deter. contradiction.
+    + (* correct *)
+      simpl_deter.
+      dependent destruction Hv.
+      eapply typing_merge_distri_app_l in Htyp; eauto 3.
+      destruct Htyp.
+      eapply IHHp1; eauto 3.
+    + simpl_deter. contradiction.
+    + simpl_deter. contradiction.
+  - dependent destruction Hp2.
+    + dependent destruction H5.
+      simpl_deter. contradiction.
+    + simpl_deter. contradiction.
+    + (* correct *)
+      simpl_deter.
+      dependent destruction Hv.
+      eapply typing_merge_distri_app_r in Htyp; eauto 3.
+      destruct Htyp.
+      eapply IHHp1; eauto 3.
+    + simpl_deter. contradiction.
+  - dependent destruction Hp2.
+    + dependent destruction H5.
+      simpl_deter. contradiction.
+    + simpl_deter. contradiction.
+    + simpl_deter. contradiction.
+    + (* correct *)
+      simpl_deter.
+      dependent destruction Hv.
+      assert (exists E, typing nil (trm_app v1 vl) E).
+      eapply typing_merge_distri_app_l in Htyp; eauto.
+      assert (exists E, typing nil (trm_app v2 vl) E).
+      eapply typing_merge_distri_app_r in Htyp; eauto.
+      destruct_conjs.
+      assert (e1 = e0); eauto 3.
+      assert (e2 = e3); eauto 3.
+      congruence.
+Qed.
 
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
