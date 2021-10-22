@@ -2,8 +2,9 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Language LibTactics.
-Require Import Subtyping Appsub Ptype Disjoint Value Toplike.
-Require Import Tred Papp.
+Require Import SubAndTopLike Appsub.
+Require Import Ptype Disjoint Value.
+Require Import Consistent Tred Papp.
 
 Set Printing Parentheses.
 
@@ -22,7 +23,7 @@ Proof with eauto with determinism.
   - dependent destruction Hstep2...
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
-      admit.
+      eapply consistent_reflexivity; eauto 3.
   - dependent destruction Hstep2...
     + assert (Heq: e' = e'0).
       dependent destruction Htyp; eauto.
@@ -41,7 +42,7 @@ Proof with eauto with determinism.
     assert (e2' = e2'0); eauto.
     dependent destruction Htyp; eauto.
     congruence.
-Admitted.
+Qed.
 
 Theorem preservation :
   forall (e e' : trm) (A: typ),
@@ -56,16 +57,15 @@ Proof.
   - dependent destruction Hred.
     exists (typ_arrow A B). split; eauto.
   - dependent destruction Hred.
-    + eapply tred_preservation in H1; eauto.
+    + admit.
     + admit.
   - dependent destruction Hred; eauto.
-    + eapply papp_preservation.
-      eapply H0. eapply H1. eapply Htyp2. eapply Htyp1. assumption. assumption.
+    + admit.
     + admit.
     + admit.
   - admit.
   - admit.
-Admitted.
+Abort.
 
 Theorem progress :
   forall (e : trm) (A : typ),
@@ -89,8 +89,7 @@ Proof.
       eapply toplike_or_not_toplike.
       destruct H2.
       * exists (trm_anno (trm_int 1) B); eauto.
-      * eapply papp_progress in Htyp1; eauto 3.
-        destruct Htyp1. exists x; eauto.
+      * admit.
     + destruct H1; eauto.
     + destruct H0; eauto.
     + destruct H1; eauto.
@@ -98,4 +97,4 @@ Proof.
     + destruct H1; eauto.
     + destruct H0; eauto.
     + destruct H0; eauto.
-Qed.
+Admitted.

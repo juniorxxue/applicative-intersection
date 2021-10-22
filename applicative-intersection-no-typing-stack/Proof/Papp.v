@@ -133,7 +133,7 @@ Proof.
   gen A B C.
   dependent induction Hp; intros.
   - dependent destruction Htyp1.
-Admitted.
+Abort.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),
@@ -196,4 +196,32 @@ Proof.
       * admit. (* diff should be consistency *)
     + admit. (* merge_r *)
     + admit. (* merge_all *)
-Admitted.
+Abort.
+
+Theorem papp_progress_not_toplike :
+  forall (v1 v2 : trm) (A B C: typ),
+    value v1 -> value v2 ->
+    typing nil v1 A ->
+    typing nil v2 B ->
+    appsub (Some B) A C ->
+    not (toplike A) ->
+    exists e, papp v1 v2 e.
+Proof.
+  introv Hv1 Hv2 Htyp1 Htyp2 Has nHtl.
+  gen A B C v2.
+  dependent induction Hv1; intros.
+  - dependent destruction H.
+    + dependent destruction Htyp1.
+      dependent destruction Htyp1.
+      (* 1 : (Int -> Top) & Int *) admit.
+    + dependent destruction Htyp1.
+      dependent destruction Htyp1.
+      (* (\x. e : Int -> Int) : (Int -> Top) & (Int -> Int) *) admit.
+  - dependent destruction Htyp1.
+    + (* disjoint *)
+      eapply split_and_not_toplike in nHtl; eauto.
+      destruct nHtl.
+Abort.
+      
+      
+      
