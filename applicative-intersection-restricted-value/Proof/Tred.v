@@ -163,7 +163,7 @@ Proof.
       dependent destruction H0.
       (* case int *)
       dependent destruction Htyp.
-      eapply sub_int_arrow_false in H1; eauto. contradiction.
+      eapply sub_int_arrow_false in H2; eauto. contradiction.
       intro Hcontra. eapply sub_toplike_preservation in Hsub2; eauto.
       (* case arrow *)
       dependent destruction Htyp.
@@ -173,27 +173,8 @@ Proof.
     assert (exists v', typedred v C v'); eauto.
     destruct_conjs; eauto.
   - dependent destruction Htyp; eauto; try solve [inversion Hv].
-    + destruct (toplike_or_not_toplike C).
-      * exists (trm_anno (trm_int 1) C); eauto.
-      * dependent destruction Hv.
-        dependent destruction H0.
-        (* case int *)
-        dependent destruction Htyp.
-        dependent destruction H1. inversion H1. dependent destruction H1.
-        assert (sub typ_int C). eapply sub_transitivity. eapply H1_. eapply Hsub.
-        eapply sub_int_form in H1; eauto. subst.
-        eauto.
-    (* case arrow *)
-        dependent destruction Htyp.
-        dependent destruction H1. inversion H1.
-        dependent destruction H1.
-        assert (sub (typ_arrow A0 B0) C).
-        eapply sub_transitivity. eapply H1_. eapply Hsub.
-        dependent destruction H1.
-        contradiction.
-        exists (trm_anno (trm_abs e A0 B0) (typ_arrow  B2 D)); eauto.
-        eapply tred_arrow_anno; eauto.
-        exfalso; eauto.
+    + dependent destruction Hv.
+      inversion H1.
     + dependent destruction Hv.
       assert (exists v', typedred e1 C v'); eauto.
       destruct_conjs; eauto.
@@ -201,27 +182,8 @@ Proof.
       assert (exists v', typedred v1 C v'); eauto.
       destruct_conjs; eauto.
   - dependent destruction Htyp; eauto; try solve [inversion Hv].
-    + destruct (toplike_or_not_toplike C).
-      * exists (trm_anno (trm_int 1) C); eauto.
-      * dependent destruction Hv.
-        dependent destruction H0.
-        (* case int *)
-        dependent destruction Htyp.
-        dependent destruction H1. inversion H1. dependent destruction H1.
-        assert (sub typ_int C). eapply sub_transitivity. eapply H1_0. eapply Hsub.
-        eapply sub_int_form in H1; eauto. subst.
-        eauto.
-        (* case arrow *)
-        dependent destruction Htyp.
-        dependent destruction H1. inversion H1.
-        dependent destruction H1.
-        assert (sub (typ_arrow A0 B0) C).
-        eapply sub_transitivity. eapply H1_0. eapply Hsub.
-        dependent destruction H1.
-        contradiction.
-        exists (trm_anno (trm_abs e A0 B0) (typ_arrow  B2 D)); eauto.
-        eapply tred_arrow_anno; eauto.
-        exfalso; eauto.
+    + dependent destruction Hv.
+      inversion H1.
     + dependent destruction Hv.
       assert (exists v', typedred e2 C v'); eauto.
       destruct_conjs; eauto.

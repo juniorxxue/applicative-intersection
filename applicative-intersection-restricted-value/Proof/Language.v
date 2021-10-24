@@ -66,13 +66,21 @@ Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
 
 Definition open t u := open_rec 0 u t.
 
+Inductive ordinary : typ -> Prop :=
+| ord_top : ordinary typ_top
+| ord_int : ordinary typ_int
+| ord_arrow : forall (A B : typ),
+    ordinary B -> ordinary (typ_arrow A B).
+
+Hint Constructors ordinary : core.
+
 Inductive pvalue : trm -> Prop :=
 | pvalue_nat : forall (n : nat), pvalue (trm_int n)
 | pvalue_abs : forall (e : trm) (A B : typ), pvalue (trm_abs e A B).
 
 Inductive value : trm -> Prop :=
 | value_anno : forall (A : typ) (e : trm),
-    pvalue e -> value (trm_anno e A)
+    pvalue e -> ordinary A -> value (trm_anno e A)
 | value_merge : forall (v1 v2 : trm),
     value v1 -> value v2 -> value (trm_merge v1 v2).
 
@@ -85,14 +93,6 @@ Inductive toplike : typ -> Prop :=
 | tl_arrow : forall (A B : typ), toplike B -> toplike (typ_arrow A B).
 
 Hint Constructors toplike : core.
-
-Inductive ordinary : typ -> Prop :=
-| ord_top : ordinary typ_top
-| ord_int : ordinary typ_int
-| ord_arrow : forall (A B : typ),
-    ordinary B -> ordinary (typ_arrow A B).
-
-Hint Constructors ordinary : core.
 
 Inductive sub_dec : typ -> typ -> Prop :=
 | subd_refl : forall (A : typ),
@@ -350,8 +350,14 @@ Notation "v ◐ vl ~-> e" := (papp v vl e) (at level 69).
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
     step (trm_int n) (trm_anno (trm_int n) typ_int)
+| step_int_split : forall (A A1 A2 : typ) (n : nat),
+    splitable A A1 A2 ->
+    step (trm_anno (trm_int n) A) (trm_merge (trm_anno (trm_int n) A1) (trm_anno (trm_int n) A2))
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
+| step_abs_split : forall (A B C C1 C2 : typ) (e : trm),
+    splitable C C1 C2 ->
+    step (trm_anno (trm_abs e A B) C) (trm_merge (trm_anno (trm_abs e A B) C1) (trm_anno (trm_abs e A B) C2))
 | step_papp : forall (v vl e : trm) (A : typ),
     value v -> value vl ->
     papp v vl e ->
@@ -360,7 +366,7 @@ Inductive step : trm -> trm -> Prop :=
     value v -> typedred v A v' ->
     step (trm_anno v A) v'
 | step_anno : forall (e e' : trm) (A : typ),
-    not (value (trm_anno e A)) ->
+    not (pvalue e) ->
     step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)

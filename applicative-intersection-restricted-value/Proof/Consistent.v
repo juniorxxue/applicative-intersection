@@ -41,8 +41,6 @@ Proof.
   dependent destruction Hv1; dependent destruction Hv2; eauto.
   - dependent destruction H; dependent destruction H0.
     + eapply tred_progress in Htyp1; eauto.
-      eapply tred_progress in Htyp2; eauto.
-      unfold consistency_spec in Hcons.
 Abort.
 
 Lemma consistent_merge_l :

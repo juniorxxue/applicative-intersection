@@ -163,6 +163,39 @@ Proof.
   dependent induction H; eauto.
 Qed.
 
+Lemma ord_sub_int :
+  forall (A : typ),
+    sub typ_int A ->
+    ordinary A ->
+    A = typ_int \/ toplike A.
+Proof.
+  introv Hsub Hord.
+  induction Hord; eauto.
+  dependent destruction Hsub; eauto.
+  dependent destruction H.
+  eapply split_and_ord in H; eauto.
+  contradiction.
+Qed.
+
+Lemma ord_sub_arrow :
+  forall (A B C : typ),
+    sub (typ_arrow A B) C ->
+    ordinary C ->
+    (exists D E, C = typ_arrow D E /\ sub B E /\ sub D A /\ not (toplike E)) \/ toplike C.
+Proof.
+  introv Hsub Hord.  
+  induction Hord; eauto.
+  dependent destruction Hsub; eauto.
+  - inversion H.
+  - destruct (toplike_or_not_toplike B0); eauto.
+    dependent destruction Hsub; eauto.
+    + left. exists A0. exists B0.
+      eauto.
+    + assert (ordinary (typ_arrow A0 B0)) by eauto.
+      eapply split_and_ord in H1; eauto.
+      contradiction.
+Qed.
+
 Theorem papp_progress :
   forall (v1 v2 : trm) (A B C: typ),
     value v1 -> value v2 ->
@@ -177,51 +210,72 @@ Proof.
   - dependent destruction H.
     + dependent destruction Htyp1.
       dependent destruction Htyp1.
-      (* 1 : (Int -> Top) & Int *)
-      admit.
+      eapply ord_sub_int in H1; eauto.
+      destruct H1.
+      * subst. inversion Has.
+      * exists (trm_anno (trm_int 1) A).
+        eapply papp_toplike; eauto.
     + dependent destruction Htyp1.
       dependent destruction Htyp1.
-      admit.
+      eapply ord_sub_arrow in H0; eauto.
+      destruct H0.
+      * destruct_conjs. subst.
+        dependent destruction Has.
+        assert (exists v2', typedred v2 A0 v2').
+        eapply tred_progress; eauto.
+        eapply sub_transitivity; eauto.
+        destruct_conjs.
+        exists (trm_anno (open e H7) H2).
+        eapply papp_abs_anno; eauto.
+      * exists (trm_anno (trm_int 1) A).
+        eapply papp_toplike; eauto.
   - dependent destruction Has.
     + inversion Htyp1.
-    + dependent destruction Htyp1.
-      * assert (exists e, papp v1 v0 e). (* from appsub *)
-        eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
-        destruct H1. exists x. eapply papp_merge_l.
-        eapply typing_to_ptype; eauto.
-        eapply typing_to_ptype; eauto.
-        eapply typing_to_ptype; eauto.
-        (* talk about toplike later *) admit.
-        eapply appsub_to_auxas; eauto. assumption. assumption.
-      * admit. (* diff should be consistency *)
-    + admit. (* merge_r *)
-    + admit. (* merge_all *)
-Abort.
-
-Theorem papp_progress_not_toplike :
-  forall (v1 v2 : trm) (A B C: typ),
-    value v1 -> value v2 ->
-    typing nil v1 A ->
-    typing nil v2 B ->
-    appsub (Some B) A C ->
-    not (toplike A) ->
-    exists e, papp v1 v2 e.
-Proof.
-  introv Hv1 Hv2 Htyp1 Htyp2 Has nHtl.
-  gen A B C v2.
-  dependent induction Hv1; intros.
-  - dependent destruction H.
-    + dependent destruction Htyp1.
-      dependent destruction Htyp1.
-      (* 1 : (Int -> Top) & Int *) admit.
-    + dependent destruction Htyp1.
-      dependent destruction Htyp1.
-      (* (\x. e : Int -> Int) : (Int -> Top) & (Int -> Int) *) admit.
-  - dependent destruction Htyp1.
-    + (* disjoint *)
-      eapply split_and_not_toplike in nHtl; eauto.
-      destruct nHtl.
-Abort.
+    + destruct (toplike_or_not_toplike (typ_and A B0)).
+      * exists (trm_anno (trm_int 1) (typ_and A B0)).
+        eapply papp_toplike; eauto.
+      * dependent destruction Htyp1.
+        ** assert (exists e, papp v1 v0 e). (* from appsub *)
+           eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
+           destruct H2. exists x. eapply papp_merge_l; eauto.
+           eapply appsub_to_auxas; eauto. 
+        ** assert (exists e, papp v1 v0 e). (* from appsub *)
+           eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
+           destruct H4. exists x. eapply papp_merge_l; eauto.
+           eapply appsub_to_auxas; eauto.
+    + destruct (toplike_or_not_toplike (typ_and A B0)).
+      * exists (trm_anno (trm_int 1) (typ_and A B0)).
+        eapply papp_toplike; eauto.
+      * dependent destruction Htyp1.
+        ** assert (exists e, papp v2 v0 e). (* from appsub *)
+           eapply IHHv1_2. eapply Htyp1_2. eapply Has. eapply Hv2. eapply Htyp2.
+           destruct H2. exists x. eapply papp_merge_r; eauto.
+           eapply appsub_to_auxas; eauto. 
+        ** assert (exists e, papp v2 v0 e). (* from appsub *)
+           eapply IHHv1_2. eapply Htyp1_2. eapply Has. eapply Hv2. eapply Htyp2.
+           destruct H4. exists x. eapply papp_merge_r; eauto.
+           eapply appsub_to_auxas; eauto.
+    + destruct (toplike_or_not_toplike (typ_and A B0)).
+      * exists (trm_anno (trm_int 1) (typ_and A B0)).
+        eapply papp_toplike; eauto.
+      * dependent destruction Htyp1.
+        ** assert (exists e, papp v1 v0 e). (* from appsub *)
+           eapply IHHv1_1. eapply Htyp1_1. eapply Has1. eapply Hv2. eapply Htyp2.
+           assert (exists e, papp v2 v0 e).
+           eapply IHHv1_2. eapply Htyp1_2. eapply Has2. eapply Hv2. eapply Htyp2.
+           destruct_conjs.
+           exists (trm_merge H1 H2). eapply papp_merge_p; eauto.
+           eapply appsub_to_auxas; eauto.
+           eapply appsub_to_auxas; eauto.
+        ** assert (exists e, papp v1 v0 e). (* from appsub *)
+           eapply IHHv1_1. eapply Htyp1_1. eapply Has1. eapply Hv2. eapply Htyp2.
+           assert (exists e, papp v2 v0 e).
+           eapply IHHv1_2. eapply Htyp1_2. eapply Has2. eapply Hv2. eapply Htyp2.
+           destruct_conjs.
+           exists (trm_merge H3 H4). eapply papp_merge_p; eauto.
+           eapply appsub_to_auxas; eauto.
+           eapply appsub_to_auxas; eauto.
+Qed.
       
       
       

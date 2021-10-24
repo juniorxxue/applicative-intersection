@@ -3,6 +3,7 @@ Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Language LibTactics.
 Require Import Strings.String.
+Require Import SubAndTopLike.
 
 Lemma pvalue_cannot_be_value :
   forall (e : trm),
@@ -20,6 +21,17 @@ Proof.
   dependent induction e; eauto; try solve [right; intro H; inversion H].
 Qed.
 
+Lemma ordinary_decidable :
+  forall (A : typ),
+    ordinary A \/ not (ordinary A).
+Proof.
+  introv.
+  induction A; eauto.
+  - destruct IHA1; destruct IHA2; eauto.
+    + right. intros Hcontra. dependent destruction Hcontra. contradiction.
+    + right. intros Hcontra. dependent destruction Hcontra. contradiction.
+Qed.
+
 Lemma value_or_not_value :
   forall (e : trm),
     value e \/ not (value e).
@@ -31,11 +43,11 @@ Proof.
   - destruct IHe.
     + right. unfold not. intros. dependent destruction H0.
       eapply pvalue_cannot_be_value; eauto.
-    + assert (Hp: pvalue e \/ not (pvalue e)).
-      eapply pvalue_or_not_pvalue.
-      destruct Hp.
-      * left. constructor. assumption.
-      * right. unfold not. intros. dependent destruction H1. contradiction.
+    + destruct (pvalue_or_not_pvalue e);
+        destruct (ordinary_decidable t); eauto.
+      * right. intros Hcontra. dependent destruction Hcontra. contradiction.
+      * right. intros Hcontra. dependent destruction Hcontra. contradiction.
+      * right. intros Hcontra. dependent destruction Hcontra. contradiction.
 Qed.
 
 Hint Resolve value_or_not_value : core.

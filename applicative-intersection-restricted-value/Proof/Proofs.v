@@ -5,7 +5,7 @@ Require Import Language LibTactics.
 Require Import SubAndTopLike Appsub.
 Require Import Ptype Disjoint Value.
 Require Import Consistent Tred Papp.
-
+Require Import Program.Tactics.
 Set Printing Parentheses.
 
 Theorem determinism:
@@ -17,14 +17,30 @@ Proof with eauto with determinism.
   gen e2 A.
   dependent induction Hstep1; intros.
   - dependent destruction Hstep2...
+  - dependent destruction Hstep2.
+    + eapply split_determinism in H; eauto.
+      destruct H. subst. reflexivity.
+    + inversion H0.
+    + destruct H0; eauto.
   - dependent destruction Hstep2...
+  - dependent destruction Htyp.
+    dependent destruction Htyp.
+    dependent destruction Hstep2.
+    + eapply split_determinism in H; eauto.
+      destruct H. subst. reflexivity.
+    + inversion H0.
+    + destruct H0; eauto.
   - dependent destruction Hstep2...
     eapply papp_determinism. eapply H. eapply H0. eapply H1. eapply H4. eapply Htyp.
   - dependent destruction Hstep2...
+    + inversion H.
+    + inversion H.
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
       eapply consistent_reflexivity; eauto 3.
   - dependent destruction Hstep2...
+    + destruct H; eauto.
+    + destruct H; eauto.
     + assert (Heq: e' = e'0).
       dependent destruction Htyp; eauto.
       congruence.
@@ -59,12 +75,6 @@ Proof.
   - dependent destruction Hred.
     + admit.
     + admit.
-  - dependent destruction Hred; eauto.
-    + admit.
-    + admit.
-    + admit.
-  - admit.
-  - admit.
 Abort.
 
 Theorem progress :
@@ -80,16 +90,21 @@ Proof.
       eapply tred_progress in Htyp; eauto.
       destruct Htyp.
       exists x. eapply step_anno_value; eauto.
-    + assert (value (trm_anno e A) \/ not (value (trm_anno e A))).
-      eapply value_or_not_value.
-      destruct H1; eauto.
-      right. destruct H0. exists (trm_anno x A); eauto.
+    + destruct (pvalue_or_not_pvalue e);
+        destruct (split_or_ord A); eauto.
+      * destruct H1.
+        ** right. destruct_conjs.
+           exists (trm_merge (trm_anno (trm_int n) H2) (trm_anno (trm_int n) H1)); eauto.
+        ** right. destruct_conjs.
+           exists (trm_merge (trm_anno (trm_abs e A0 B0) H2) (trm_anno (trm_abs e A0 B0) H1)); eauto.
+      * destruct H0.
+        right. exists (trm_anno x A); eauto.
+      * destruct H0.
+        right. exists (trm_anno x A); eauto.
   - right. destruct IHHtyp1; destruct IHHtyp2; eauto 3.
-    + assert (toplike B \/ not (toplike B)).
-      eapply toplike_or_not_toplike.
-      destruct H2.
-      * exists (trm_anno (trm_int 1) B); eauto.
-      * admit.
+    + eapply papp_progress in Htyp1; eauto.
+      destruct_conjs.
+      exists Htyp1. eapply step_papp; eauto.
     + destruct H1; eauto.
     + destruct H0; eauto.
     + destruct H1; eauto.
@@ -97,4 +112,4 @@ Proof.
     + destruct H1; eauto.
     + destruct H0; eauto.
     + destruct H0; eauto.
-Admitted.
+Qed.
