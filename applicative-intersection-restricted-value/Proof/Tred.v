@@ -132,6 +132,9 @@ Theorem tred_preservation:
     typedred v A v' ->
     (exists C, typing nil v' C /\ isomorphic C A).
 Proof.
+  introv Hv Htyp Hred.
+  gen B.
+  induction Hred.
 Abort.
 
 Theorem tred_progress :

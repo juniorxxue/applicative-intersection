@@ -60,6 +60,14 @@ Proof with eauto with determinism.
     congruence.
 Qed.
 
+Ltac indExpSize s :=
+  assert (SizeInd: exists i, s < i) by eauto;
+  destruct SizeInd as [i SizeInd];
+  repeat match goal with | [ h : trm |- _ ] => (gen h) end;
+  induction i as [|i IH]; [
+      intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H) end
+    | intros ].
+
 Theorem preservation :
   forall (e e' : trm) (A: typ),
     typing nil e A ->
@@ -67,15 +75,27 @@ Theorem preservation :
     (exists B, typing nil e' B /\ isomorphic B A).
 Proof.
   intros e e' A Htyp Hred.
+  gen e'.
   dependent induction Htyp; intros; try solve [inversion Hred].
   - dependent destruction Hred.
     exists typ_int. split; eauto.
   - dependent destruction Hred.
     exists (typ_arrow A B). split; eauto.
   - dependent destruction Hred.
-    + admit.
-    + admit.
+    + dependent destruction Htyp.
+      exists (typ_and A1 A2).
+      split; eauto.
+      dependent induction H1.
+      eapply typing_merge_value; eauto 3.
+      admit. admit.
+      eapply typing_anno; eauto.
+      eapply sub_inversion_split_r in H0; eauto.
+      destruct_conjs. assumption.
+      eapply typing_anno; eauto.
+      eapply sub_inversion_split_r in H0; eauto.
+      destruct_conjs. assumption.
 Abort.
+      
 
 Theorem progress :
   forall (e : trm) (A : typ),
