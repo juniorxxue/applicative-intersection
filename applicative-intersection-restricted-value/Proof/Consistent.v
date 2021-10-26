@@ -69,7 +69,6 @@ Proof.
   introv Htyp Hv.
   gen A.
   dependent induction Hv; eauto; intros.
-  - dependent destruction H; eauto.
   - dependent destruction Htyp.
     + assert (consistent v1 v2); eauto.
       eapply con_merge_l; eauto.

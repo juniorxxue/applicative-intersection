@@ -61,6 +61,7 @@ Proof.
   - dependent destruction Hv. intros Hm.
     dependent destruction Hm.
     + eapply IHv1; eauto.
+    + eapply IHv1; eauto.
     + eapply IHv2; eauto.
   - dependent destruction Hv.
     induction H; eauto.

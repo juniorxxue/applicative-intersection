@@ -4,7 +4,8 @@ Require Import Strings.String.
 Require Import Language LibTactics.
 Require Import SubAndTopLike Appsub.
 Require Import Ptype Disjoint Value.
-Require Import Consistent Tred Papp.
+Require Import Tred Consistent.
+Require Import Papp.
 Require Import Program.Tactics.
 Set Printing Parentheses.
 
@@ -51,6 +52,14 @@ Proof with eauto with determinism.
     + dependent destruction Htyp.
       assert (e2' = e2'0); eauto. congruence.
   - dependent destruction Hstep2...
+    + dependent destruction Htyp.
+      * assert (e1' = e1'0)...
+        assert (e2' = e2'0)...
+        congruence.
+      * assert (e1' = e1'0)...
+        assert (e2' = e2'0)...
+        congruence.
+  - dependent destruction Hstep2...
     + assert (e1' = e1'0).
       dependent destruction Htyp; eapply IHHstep1; eauto.
       congruence.
@@ -86,16 +95,17 @@ Proof.
       exists (typ_and A1 A2).
       split; eauto.
       dependent induction H1.
-      eapply typing_merge_value; eauto 3.
-      admit. admit.
-      eapply typing_anno; eauto.
-      eapply sub_inversion_split_r in H0; eauto.
-      destruct_conjs. assumption.
-      eapply typing_anno; eauto.
-      eapply sub_inversion_split_r in H0; eauto.
-      destruct_conjs. assumption.
-Abort.
-      
+      * eapply typing_merge_uvalue; eauto 3.
+        eapply typing_anno; eauto.
+        eapply sub_inversion_split_r in H0; eauto.
+        destruct_conjs. assumption.
+        eapply typing_anno; eauto.
+        eapply sub_inversion_split_r in H0; eauto.
+        destruct_conjs. assumption.
+      * dependent destruction H0.
+        dependent destruction H0.
+        exfalso. eapply split_and_ord; eauto.        
+Abort.      
 
 Theorem progress :
   forall (e : trm) (A : typ),
@@ -121,15 +131,10 @@ Proof.
         right. exists (trm_anno x A); eauto.
       * destruct H0.
         right. exists (trm_anno x A); eauto.
-  - right. destruct IHHtyp1; destruct IHHtyp2; eauto 3.
+  - right. destruct IHHtyp1; destruct IHHtyp2; try solve [eauto 3 | destruct_conjs; eauto 3].
     + eapply papp_progress in Htyp1; eauto.
       destruct_conjs.
       exists Htyp1. eapply step_papp; eauto.
-    + destruct H1; eauto.
-    + destruct H0; eauto.
-    + destruct H1; eauto.
-  - destruct IHHtyp1; destruct IHHtyp2; eauto.
-    + destruct H1; eauto.
-    + destruct H0; eauto.
-    + destruct H0; eauto.
+  - destruct IHHtyp1; destruct IHHtyp2; try solve [eauto | destruct_conjs; eauto].
+  - destruct IHHtyp1; destruct IHHtyp2; try solve [eauto | destruct_conjs; eauto].
 Qed.

@@ -84,8 +84,17 @@ Inductive value : trm -> Prop :=
 | value_merge : forall (v1 v2 : trm),
     value v1 -> value v2 -> value (trm_merge v1 v2).
 
+Inductive uvalue : trm -> Prop :=
+| uvalue_p : forall (p : trm),
+    pvalue p -> uvalue p
+| uvalue_anno : forall (e : trm) (A : typ),
+    uvalue (trm_anno e A)
+| uvalue_merge : forall (u1 u2 : trm),
+    uvalue u1 -> uvalue u2 -> uvalue (trm_merge u1 u2).
+
 Hint Constructors pvalue : core.
 Hint Constructors value : core.
+Hint Constructors uvalue : core.
 
 Inductive toplike : typ -> Prop :=
 | tl_top : toplike typ_top
@@ -248,6 +257,10 @@ Hint Constructors typedred : core.
 Notation "e ~->> A e'" := (typedred e A e') (at level 68).
 
 Inductive ptype : trm -> typ -> Prop :=
+| ptype_int : forall (n : nat),
+    ptype (trm_int n) typ_int
+| ptype_arrow : forall (e : trm) (A B : typ),
+    ptype (trm_abs e A B) (typ_arrow A B)
 | ptype_anno : forall (e : trm) (A : typ),
     ptype (trm_anno e A) A
 | ptype_merge : forall (e1 e2 : trm) (A B : typ),
@@ -261,21 +274,23 @@ Definition consistency_spec v1 v2 :=
   forall (A : typ) (v1' v2' : trm), ordinary A -> typedred v1 A v1' -> typedred v2 A v2' -> v1' = v2'.
 
 Inductive consistent : trm -> trm -> Prop :=
-| con_int : forall (n : nat) (A1 A2 : typ),
-    consistent (trm_anno (trm_int n) A1) (trm_anno (trm_int n) A2)
-| con_abs : forall (e : trm) (A B C1 C2 : typ),
-    consistent (trm_anno (trm_abs e A B) C1) (trm_anno (trm_abs e A B) C2)
-| con_disjoint : forall (v1 v2 : trm) (A B : typ),
-    ptype v1 A -> ptype v2 B -> disjoint A B ->
-    consistent v1 v2
-| con_merge_l : forall (v v1 v2 : trm),
-    consistent v1 v ->
-    consistent v2 v ->
-    consistent (trm_merge v1 v2) v
-| con_merge_r : forall (v v1 v2 : trm),
-    consistent v v1 ->
-    consistent v v2 ->
-    consistent v (trm_merge v1 v2).
+| con_int : forall (n : nat),
+    consistent (trm_int n) (trm_int n)
+| con_abs : forall (e : trm) (A B1 B2 : typ),
+    consistent (trm_abs e A B1) (trm_abs e A B2)
+| con_anno : forall (e : trm) (A B : typ),
+    consistent (trm_anno e A) (trm_anno e B)
+| con_disjoint : forall (u1 u2 : trm) (A B : typ),
+    ptype u1 A -> ptype u2 B -> disjoint A B ->
+    consistent u1 u2
+| con_merge_l : forall (u u1 u2 : trm),
+    consistent u1 u ->
+    consistent u2 u ->
+    consistent (trm_merge u1 u2) u
+| con_merge_r : forall (u u1 u2 : trm),
+    consistent u u1 ->
+    consistent u u2 ->
+    consistent u (trm_merge u1 u2).
 
 Hint Constructors consistent : core.
 
@@ -300,12 +315,12 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
     typing T e1 A ->
     typing T e2 B ->
     typing T (trm_merge e1 e2) (typ_and A B)
-| typing_merge_value : forall (T : ctx) (A B : typ) (v1 v2 : trm),
-    value v1 -> value v2 ->
-    consistent v1 v2 ->
-    typing nil v1 A ->
-    typing nil v2 B ->
-    typing T (trm_merge v1 v2) (typ_and A B).
+| typing_merge_uvalue : forall (T : ctx) (A B : typ) (u1 u2 : trm),
+    uvalue u1 -> uvalue u2 ->
+    consistent u1 u2 ->
+    typing nil u1 A ->
+    typing nil u2 B ->
+    typing T (trm_merge u1 u2) (typ_and A B).
 
 Hint Constructors typing : core.
 
@@ -372,9 +387,14 @@ Inductive step : trm -> trm -> Prop :=
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (v e2 e2' : trm),
     value v -> step e2 e2' -> step (trm_app v e2) (trm_app v e2')
-| step_merge_l : forall (e1 e2 e1' : trm),
+| step_merge_bcd : forall (e1 e1' e2 e2' : trm),
     step e1 e1' ->
-    step (trm_merge e1 e2) (trm_merge e1' e2)
+    step e2 e2' ->
+    step (trm_merge e1 e2) (trm_merge e1' e2')         
+| step_merge_l : forall (e1 v2 e1' : trm),
+    value v2 ->
+    step e1 e1' ->
+    step (trm_merge e1 v2) (trm_merge e1' v2)
 | step_merge_r : forall (v e2 e2' : trm),
     value v -> step e2 e2' ->
     step (trm_merge v e2) (trm_merge v e2').

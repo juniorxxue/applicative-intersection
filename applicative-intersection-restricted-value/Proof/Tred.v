@@ -51,22 +51,30 @@ Proof.
   gen A B v1 v2 v1' v2'.
   ind_typ_size (size_typ C).
   destruct (split_or_ord C).
-  - gen A B. induction Hcons; intros.
-    + dependent destruction Htyp1. dependent destruction Htyp1.
-      dependent destruction Htyp2. dependent destruction Htyp2.
-      dependent destruction Hr1; dependent destruction Hr2;
-        try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-      * inversion H0.
-      * inversion H.
-    + dependent destruction Htyp1. dependent destruction Htyp1.
-      dependent destruction Htyp2. dependent destruction Htyp2.
-      dependent destruction Hr1; dependent destruction Hr2;
-        try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-      * dependent destruction H. contradiction.
-      * dependent destruction H2. contradiction.
-    + assert (ptype v1 A0) by (now eapply typing_to_ptype in Htyp1).
+  - gen A B. induction Hcons; try solve [inversion Hv1 | inversion Hv2]; intros.
+    (* con anno *)
+    + dependent destruction Hv1. dependent destruction Hv2.
+      destruct H; destruct H1.
+      * dependent destruction Hr1; dependent destruction Hr2;
+          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+        ** inversion H1.
+        ** inversion H.
+      * dependent destruction Hr1; dependent destruction Hr2;
+          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+        ** dependent destruction H. contradiction.
+        ** dependent destruction H4. contradiction.
+      * dependent destruction Hr1; dependent destruction Hr2;
+          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+        ** inversion H1.
+        ** inversion H.
+      * dependent destruction Hr1; dependent destruction Hr2;
+          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
+        ** dependent destruction H. contradiction.
+        ** dependent destruction H4. contradiction.
+    (* con disjoint *)
+    + assert (ptype u1 A0) by (now eapply typing_to_ptype in Htyp1).
       eapply ptype_determinism in H0; eauto. subst.
-      assert (ptype v2 B0) by (now eapply typing_to_ptype in Htyp2).
+      assert (ptype u2 B0) by (now eapply typing_to_ptype in Htyp2).
       eapply ptype_determinism in H1; eauto. subst.
       eapply disjoint_complete in H2.
       assert (sub A C) by (eapply tred_sub in Hr1; eauto).
@@ -182,7 +190,7 @@ Proof.
       assert (exists v', typedred e1 C v'); eauto.
       destruct_conjs; eauto.
     + dependent destruction Hv.
-      assert (exists v', typedred v1 C v'); eauto.
+      assert (exists v', typedred u1 C v'); eauto.
       destruct_conjs; eauto.
   - dependent destruction Htyp; eauto; try solve [inversion Hv].
     + dependent destruction Hv.
@@ -191,6 +199,6 @@ Proof.
       assert (exists v', typedred e2 C v'); eauto.
       destruct_conjs; eauto.
     + dependent destruction Hv.
-      assert (exists v', typedred v2 C v'); eauto.
+      assert (exists v', typedred u2 C v'); eauto.
       destruct_conjs; eauto.
 Qed.

@@ -12,6 +12,8 @@ Proof.
   dependent induction H; eauto; intros * Hptyp.
   - dependent destruction Hptyp; eauto.
   - dependent destruction Hptyp; eauto.
+  - dependent destruction Hptyp; eauto.
+  - dependent destruction Hptyp; eauto.
     assert (A = A0); eauto.
     assert (B = B0); eauto.
     congruence.
