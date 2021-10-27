@@ -85,4 +85,41 @@ Proof.
   introv H.
   dependent induction H; eauto.
 Qed.
+
+Lemma iso_disjoint :
+  forall (A1 A2 B : typ),
+    isomorphic A1 A2 ->
+    (disjoint A1 B <-> disjoint A2 B).
+Proof.
+  introv Hiso.
+  gen B.
+  dependent induction Hiso; intros; try solve [split; eauto].
+  - gen B. induction H; try solve [split; eauto].
+    + split; eauto.
+      intros.
+      eapply disjoint_and_l.
+      eapply IHtoplike1. assumption.
+      eapply IHtoplike2. assumption.
+    + split; eauto.
+      intros.
+Abort.
+      
+
+Lemma disjoint_iso_l :
+  forall (A B C : typ),
+    disjoint A B -> isomorphic C A -> disjoint C B.
+Proof.
+  introv Hdisj Hiso.
+  gen C.
+  induction Hdisj; eauto; intros.
+  - dependent destruction Hiso; eauto.
+    inversion H.
+  - dependent destruction Hiso; eauto.
+    dependent destruction H; eauto.
+  - dependent destruction Hiso; eauto.
+    inversion H.
+  - dependent destruction Hiso; eauto.
+    dependent destruction H.
+Abort.
+    
   

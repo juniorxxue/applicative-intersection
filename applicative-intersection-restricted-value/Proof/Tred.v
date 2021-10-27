@@ -142,7 +142,29 @@ Theorem tred_preservation:
 Proof.
   introv Hv Htyp Hred.
   gen B.
-  induction Hred.
+  induction Hred; intros; eauto 3.
+  - exists typ_int; eauto.
+  - exists A; eauto.
+  - exists (typ_arrow C D). split; eauto 3.
+    dependent destruction Hv. dependent destruction Htyp.
+    dependent destruction Htyp.
+    assert (sub (typ_arrow A B) (typ_arrow C D)) by (eapply sub_transitivity; eauto).
+    eapply typing_anno; eauto.
+  - dependent destruction Hv.
+    dependent destruction Htyp.
+    + now pose proof (IHHred Hv1 A0 Htyp1).
+    + now pose proof (IHHred Hv1 A0 Htyp1).
+  - dependent destruction Hv.
+    dependent destruction Htyp.
+    + now pose proof (IHHred Hv2 B Htyp2).
+    + now pose proof (IHHred Hv2 B Htyp2).
+  - pose proof (IHHred1 Hv B0 Htyp).
+    pose proof (IHHred2 Hv B0 Htyp).
+    destruct_conjs.
+    exists (typ_and H0 H1).
+    split.
+    admit. (* consistent completeness *)
+    eapply iso_and; eauto.
 Abort.
 
 Theorem tred_progress :

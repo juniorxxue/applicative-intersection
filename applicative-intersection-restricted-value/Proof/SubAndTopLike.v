@@ -181,6 +181,19 @@ Proof.
   eapply tl_arrow. eapply IHHspl; eauto.
 Qed.
 
+Lemma split_toplike :
+  forall (A B C : typ),
+    splitable A B C -> toplike A -> toplike B /\ toplike C.
+Proof.
+  introv Hspl Htl.
+  induction Hspl.
+  - dependent destruction Htl; eauto.
+  - dependent destruction Htl.
+    pose proof (IHHspl Htl).
+    destruct_conjs.
+    auto.
+Qed.
+
 Lemma sub_toplike_preservation :
   forall (A B : typ),
     toplike A -> sub A B -> toplike B.
@@ -285,7 +298,7 @@ Proof.
     intuition.
 Qed.
 
-Theorem sub_int_form :
+Lemma sub_int_form :
   forall (A : typ),
     sub typ_int A -> not (toplike A) -> ordinary A -> A = typ_int.
 Proof.
@@ -296,4 +309,17 @@ Proof.
     + contradiction.
     + dependent destruction H.
       exfalso; eauto.
+Qed.
+
+Lemma sub_toplike :
+  forall (A : typ),
+    toplike A -> sub typ_top A.
+Proof.
+  introv H.
+  proper_ind A; eauto.
+  eapply split_toplike in H; eauto.
+  destruct_conjs.
+  pose proof (IHr1 H).
+  pose proof (IHr2 H1).
+  eapply sub_and; eauto.
 Qed.

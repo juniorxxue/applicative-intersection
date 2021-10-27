@@ -182,23 +182,22 @@ A & B <: C
 
 ```
 ----------
-iso A A
+A << A
 ----------
 
 ----------------------- Iso-Refl
-iso A A
+A << A
 
 
 Toplike A
------------------------ Iso-Top
-iso Top A
+------------------------- Iso-Top
+Top << A
 
 
 B1 <| B |> B2
-iso A1 B1
-iso A2 B2
+A1 << B1     A2 << B2
 ----------------------- Iso-And
-iso (A1 & A2) B
+A1 & A2 << B
 ```
 
 # Application Subtyping (Binary)

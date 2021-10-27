@@ -77,6 +77,17 @@ Ltac indExpSize s :=
       intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H) end
     | intros ].
 
+Lemma iso_to_sub :
+  forall (A B : typ),
+    isomorphic A B -> sub A B.
+Proof.
+  introv Hiso.
+  induction Hiso; eauto.  
+  induction H; eauto.
+  assert (toplike (typ_arrow A B)) by eauto.  
+  now eapply sub_toplike.
+Qed.
+
 Theorem preservation :
   forall (e e' : trm) (A: typ),
     typing nil e A ->
@@ -103,8 +114,32 @@ Proof.
         eapply sub_inversion_split_r in H0; eauto.
         destruct_conjs. assumption.
       * dependent destruction H0.
-        dependent destruction H0.
-        exfalso. eapply split_and_ord; eauto.        
+        ** dependent destruction H0.
+           exfalso. eapply split_and_ord; eauto.
+        ** admit.
+    + admit.
+    + admit.
+    + eapply IHHtyp in Hred; eauto.
+      destruct Hred.
+      exists A. split; eauto 3.
+      destruct_conjs.
+      eapply iso_to_sub in H2.
+      assert (sub x A) by (eapply sub_transitivity; eauto).
+      eapply typing_anno with (C:=x); eauto.
+  - dependent destruction Hred.
+    + admit.
+    + admit.
+    + admit.
+  - dependent destruction Hred.
+    + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
+      assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
+      destruct_conjs.
+      exists (typ_and H0 H1).
+      split. eapply typing_merge; eauto. admit. (* disjoint *)
+      eauto.
+    + admit.
+    + admit.
+  - admit. 
 Abort.      
 
 Theorem progress :
