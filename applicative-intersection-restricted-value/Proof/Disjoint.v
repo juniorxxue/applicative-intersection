@@ -86,6 +86,26 @@ Proof.
   dependent induction H; eauto.
 Qed.
 
+Lemma disjoint_soundness :
+  forall (A B : typ),
+    disjoint_spec A B -> disjoint A B.
+Proof.
+  introv. unfold disjoint_spec.
+  gen B. induction A; introv H; induction B; eauto.
+  - assert (sub typ_int typ_int) by eauto.
+    pose proof (H typ_int H0 H0).
+    inversion H1.
+  - eapply disjoint_and_r; eauto.
+  - eapply disjoint_arr_arr.
+    eapply IHA2. intros.
+    assert (toplike (typ_arrow (typ_and A1 B1) C)) by (eapply H; eauto).
+    now dependent destruction H2.
+  - eapply disjoint_and_r; eauto.
+  - eapply disjoint_and_l; eauto.
+  - eapply disjoint_and_l; eauto.
+  - eapply disjoint_and_l; eauto.
+Qed.
+
 Lemma iso_disjoint :
   forall (A1 A2 B : typ),
     isomorphic A1 A2 ->
@@ -102,8 +122,7 @@ Proof.
       eapply IHtoplike2. assumption.
     + split; eauto.
       intros.
-Abort.
-      
+Abort.      
 
 Lemma disjoint_iso_l :
   forall (A B C : typ),
@@ -121,5 +140,38 @@ Proof.
   - dependent destruction Hiso; eauto.
     dependent destruction H.
 Abort.
+
+Lemma disjoint_spec_toplike :
+  forall (A B : typ),
+    toplike A -> disjoint_spec A B.
+Proof.
+  introv Htl.
+  unfold disjoint_spec.
+  introv Hsub1 Hsub2.
+  eapply sub_toplike_preservation; eauto.
+Qed.
+
+Lemma disjoint_toplike :
+  forall (A B : typ),
+    toplike A -> disjoint A B.
+Proof.
+  introv Htl.
+  assert (disjoint_spec A B) by (eapply disjoint_spec_toplike; eauto).
+  now eapply disjoint_soundness in H.
+Qed.
+
+Lemma disjoint_sub :
+  forall (A B C : typ),
+    disjoint A B -> sub A C -> disjoint C B.
+Proof.
+  introv Hdisj Hsub.
+  eapply disjoint_complete in Hdisj.
+  eapply disjoint_soundness.
+  unfold disjoint_spec in *. intros.
+  eapply Hdisj; eauto.
+  eapply sub_transitivity; eauto.
+Qed.
+
+
     
   
