@@ -124,48 +124,44 @@ Qed.
 
 Hint Resolve tred_value_preservation : core.
 
-Lemma tred_transitivity :
-  forall (v1 v2 v3 : trm) (A B : typ),
-    value v1 ->
-    typedred v1 A v2 ->
-    typedred v2 B v3 ->
-    typedred v1 B v3.
+Lemma sub_toplike_int_false :
+  forall (A : typ),
+    toplike A -> sub A typ_int -> False.
 Proof.
-Abort.
+  introv Htl Hsub.
+  induction Htl; eauto.
+  - dependent destruction Hsub; eauto.
+    inversion H0.
+  - dependent destruction Hsub; eauto.
+  - dependent destruction Hsub.
+    + inversion H0.
+    + inversion H.
+Qed.
 
-Theorem tred_preservation:
-  forall (v v': trm) (A B: typ),
+Hint Resolve sub_toplike_int_false : obvious.
+
+Lemma tred_transitivity :
+  forall (v v1 v2 : trm) (A B : typ),
     value v ->
-    typing nil v B ->
-    typedred v A v' ->
-    (exists C, typing nil v' C /\ isomorphic C A).
+    typedred v A v1 ->
+    typedred v1 B v2 ->
+    typedred v B v2.
 Proof.
-  introv Hv Htyp Hred.
-  gen B.
-  induction Hred; intros; eauto 3.
-  - exists typ_int; eauto.
-  - exists A; eauto.
-  - exists (typ_arrow C D). split; eauto 3.
-    dependent destruction Hv. dependent destruction Htyp.
-    dependent destruction Htyp.
-    assert (sub (typ_arrow A B) (typ_arrow C D)) by (eapply sub_transitivity; eauto).
-    eapply typing_anno; eauto.
+  introv Hv Hred1 Hred2.
+  gen B v2.
+  induction Hred1; intros.
+  - dependent induction Hred2; eauto.
+  - dependent induction Hred2; eauto.
+    exfalso. eapply sub_toplike_int_false; eauto.
+  - dependent induction Hred2; eauto.
+    eapply tred_arrow_anno; eauto.
+    eapply sub_transitivity; eauto.
   - dependent destruction Hv.
-    dependent destruction Htyp.
-    + now pose proof (IHHred Hv1 A0 Htyp1).
-    + now pose proof (IHHred Hv1 A0 Htyp1).
+    dependent induction Hred2; eauto.
   - dependent destruction Hv.
-    dependent destruction Htyp.
-    + now pose proof (IHHred Hv2 B Htyp2).
-    + now pose proof (IHHred Hv2 B Htyp2).
-  - pose proof (IHHred1 Hv B0 Htyp).
-    pose proof (IHHred2 Hv B0 Htyp).
-    destruct_conjs.
-    exists (typ_and H0 H1).
-    split.
-    admit. (* consistent completeness *)
-    eapply iso_and; eauto.
-Abort.
+    dependent induction Hred2; eauto.
+  - dependent induction Hred2; eauto.
+Qed.
 
 Theorem tred_progress :
   forall (v : trm) (A B : typ),
@@ -181,7 +177,7 @@ Proof.
     + dependent destruction Hv.
       dependent induction H; eauto.
       dependent destruction Htyp.
-      exfalso; eauto.
+      exfalso; eauto with obvious.
     + inversion Hv.
   - dependent destruction Htyp.
     + inversion H1.

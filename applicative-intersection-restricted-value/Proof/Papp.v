@@ -78,7 +78,6 @@ Proof.
     + dependent destruction Htyp.
       assert (v' = v'0).
       eapply tred_determinism; eauto 3.
-      eapply consistent_reflexivity; eauto.
       congruence.
   - dependent destruction Hp2.
     + dependent destruction H5.
@@ -276,6 +275,3 @@ Proof.
            eapply appsub_to_auxas; eauto.
            eapply appsub_to_auxas; eauto.
 Qed.
-      
-      
-      

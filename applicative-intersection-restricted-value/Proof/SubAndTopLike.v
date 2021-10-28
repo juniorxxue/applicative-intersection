@@ -244,7 +244,7 @@ Proof.
   inversion H0.
 Qed.
 
-Hint Resolve sub_arrow_int_false : core.
+Hint Resolve sub_arrow_int_false : obvious.
 
 Lemma toplike_or_not_toplike :
   forall (A : typ),
@@ -297,6 +297,8 @@ Proof.
     eapply split_and_not_toplike in H; eauto.
     intuition.
 Qed.
+
+Hint Resolve sub_int_arrow_false : obvious.
 
 Lemma sub_int_form :
   forall (A : typ),

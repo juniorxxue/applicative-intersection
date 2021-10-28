@@ -81,7 +81,7 @@ Proof.
       right. exists (typ_arrow (typ_and A1 B1) H).
       split.
       * intros Hcontra. dependent destruction Hcontra. contradiction.
-      * split; eauto. split; eauto.
+      * repeat split; eauto.
     + destruct IHB1; destruct IHB2;
         try solve [right; destruct_conjs; eexists; eauto | eauto].
   - pose proof (IHA1 B) as H1.
@@ -123,11 +123,6 @@ Proof.
   destruct_conjs. subst.
   unfold consistency_spec in Hcons.
   destruct (disjoint_spec_decidability H7 H5); eauto.
-  (* - left. *)
-  (*   assert (disjoint (typ_arrow A1 B1) (typ_arrow A2 B2)) by eauto. *)
-  (*   assert (disjoint C1 (typ_arrow A2 B2)) by (eapply disjoint_sub; eauto). *)
-  (*   eapply disjoint_symmetry in H5. *)
-  (*   eapply disjoint_symmetry; eauto. eapply disjoint_sub; eauto. *)
   - right.
     destruct_conjs.
     assert (Htyp1': typing nil (trm_anno (trm_abs e1 A1 B1)
@@ -261,6 +256,70 @@ Proof.
         eapply H4; eauto. simpl. lia.
       * pose proof (IH v0 (trm_merge v2 v3)).
         eapply H4; eauto. simpl. lia.
+Qed.
+
+Lemma value_is_uvalue :
+  forall (v : trm),
+    value v -> uvalue v.
+Proof.
+  introv Hv.
+  induction Hv; eauto.
+Qed.
+
+Hint Resolve value_is_uvalue : core.
+
+Lemma tred_consistent_preservation :
+  forall (v v1 v2 : trm) (A B C : typ),
+    value v ->
+    typing nil v A ->
+    typedred v B v1 ->
+    typedred v C v2 ->
+    consistency_spec v1 v2.
+Proof.
+  introv Hv Htyp Hred1 Hred2.
+  unfold consistency_spec.
+  introv Hord Hred1' Hred2'.
+  Check tred_transitivity.
+  pose proof (tred_transitivity v v1 v1' B A0 Hv Hred1 Hred1').
+  pose proof (tred_transitivity v v2 v2' C A0 Hv Hred2 Hred2').
+  eapply tred_determinism; eauto.
+Qed.
+
+(* sorry for put it here *)
+Theorem tred_preservation:
+  forall (v v': trm) (A B: typ),
+    value v ->
+    typing nil v B ->
+    typedred v A v' ->
+    (exists C, typing nil v' C /\ isomorphic C A).
+Proof.
+  introv Hv Htyp Hred.
+  gen B.
+  induction Hred; intros; eauto 3.
+  - exists typ_int; eauto.
+  - exists A; eauto.
+  - exists (typ_arrow C D). split; eauto 3.
+    dependent destruction Hv. dependent destruction Htyp.
+    dependent destruction Htyp.
+    assert (sub (typ_arrow A B) (typ_arrow C D)) by (eapply sub_transitivity; eauto).
+    eapply typing_anno; eauto.
+  - dependent destruction Hv.
+    dependent destruction Htyp.
+    + now pose proof (IHHred Hv1 A0 Htyp1).
+    + now pose proof (IHHred Hv1 A0 Htyp1).
+  - dependent destruction Hv.
+    dependent destruction Htyp.
+    + now pose proof (IHHred Hv2 B Htyp2).
+    + now pose proof (IHHred Hv2 B Htyp2).
+  - pose proof (IHHred1 Hv B0 Htyp).
+    pose proof (IHHred2 Hv B0 Htyp).
+    destruct_conjs.
+    exists (typ_and H0 H1).
+    split.
+    eapply typing_merge_uvalue; eauto.
+    eapply consistent_completeness; eauto.
+    eapply tred_consistent_preservation; eauto.
+    eapply iso_and; eauto.
 Qed.
 
 Lemma consistent_merge_l :

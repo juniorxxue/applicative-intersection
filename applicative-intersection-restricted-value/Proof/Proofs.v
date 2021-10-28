@@ -38,7 +38,6 @@ Proof with eauto with determinism.
     + inversion H.
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
-      eapply consistent_reflexivity; eauto 3.
   - dependent destruction Hstep2...
     + destruct H; eauto.
     + destruct H; eauto.
