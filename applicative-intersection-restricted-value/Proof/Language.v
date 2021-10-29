@@ -327,9 +327,13 @@ Hint Constructors typing : core.
 Notation "T ⊢ e ⇒ A" := (typing T e A) (at level 50).
 
 Inductive papp : trm -> trm -> trm -> Prop :=
-| papp_toplike : forall (A : typ) (v vl : trm),
-    ptype v A -> toplike A ->
-    papp v vl (trm_anno (trm_int 1) A)
+| papp_int_toplike : forall (A B : typ) (v vl : trm) (n : nat),
+    toplike B ->
+    papp (trm_anno (trm_int n) (typ_arrow A B)) vl (trm_anno (trm_int 1) B)
+| papp_abs_toplike : forall (A B C D : typ) (e v v' : trm),
+    toplike D ->
+    papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
+         (trm_anno (trm_int 1) D)         
 | papp_abs_anno : forall (A B C D : typ) (e v v' : trm),
     typedred v A v' ->
     not (toplike D) ->
@@ -337,21 +341,18 @@ Inductive papp : trm -> trm -> trm -> Prop :=
          (trm_anno (open e v') D)
 | papp_merge_l : forall (A B C : typ) (v1 v2 vl e: trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    not (toplike (typ_and A B)) ->
     auxas (Some C) A ->
     not (auxas (Some C) B) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 vl e : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    not (toplike (typ_and A B)) ->
     not (auxas (Some C) A) ->
     auxas (Some C) B ->
     papp v2 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2 : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    not (toplike (typ_and A B)) ->
     auxas (Some C) A ->
     auxas (Some C) B ->
     papp v1 vl e1 ->

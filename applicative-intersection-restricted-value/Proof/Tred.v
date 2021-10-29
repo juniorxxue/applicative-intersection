@@ -15,7 +15,7 @@ Proof.
   induction 3; eauto.
   - inversion H0.
   - dependent destruction H0. contradiction.
-  - exfalso; eauto.
+  - exfalso. eapply split_and_ord; eauto.
 Qed.
 
 Hint Resolve tred_ord_toplike : core.
@@ -88,13 +88,13 @@ Proof.
       * symmetry. eapply tred_ord_toplike; eauto.
       * dependent destruction Htyp1; eapply IHHcons1; eauto.
       * dependent destruction Htyp1; eapply IHHcons2; eauto.
-      * exfalso; eauto.
+      * exfalso. eapply split_and_ord; eauto.
     + dependent destruction Hv2.
       dependent destruction Hr2.
       * eapply tred_ord_toplike; eauto.
       * dependent destruction Htyp2; eapply IHHcons1; eauto.
       * dependent destruction Htyp2; eapply IHHcons2; eauto.
-      * exfalso; eauto.
+      * exfalso. eapply split_and_ord; eauto.
   - destruct_conjs.
     dependent destruction Hr1; try solve [exfalso; eauto 3].
     dependent destruction Hr2; try solve [exfalso; eauto 3].
@@ -130,7 +130,7 @@ Lemma sub_toplike_int_false :
 Proof.
   introv Htl Hsub.
   induction Htl; eauto.
-  - dependent destruction Hsub; eauto.
+  - dependent destruction Hsub; info_eauto.
     inversion H0.
   - dependent destruction Hsub; eauto.
   - dependent destruction Hsub.

@@ -24,7 +24,7 @@ Proof.
   contradiction.
 Qed.
 
-Hint Resolve auxas_false : core.
+Hint Resolve auxas_false : obvious.
 
 Lemma appsub_determinism :
   forall (A : typ) (B1 B2 : typ) (S : arg),
@@ -35,7 +35,7 @@ Proof.
   intros A B1 B2 C Has1 Has2.
   generalize dependent B2.
   dependent induction Has1; intros;
-    dependent destruction Has2; try solve [eauto | exfalso; eauto].
+    dependent destruction Has2; try solve [eauto | exfalso; eauto with obvious].
   assert (D1 = D0); eauto.
   assert (D2 = D3); eauto.
   congruence.

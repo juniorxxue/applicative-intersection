@@ -414,13 +414,19 @@ ptype e1,,e2 => A & B
 v ● vl --> e
 ----------------
 
-toplike (ptype v)
----------------------------------- PApp-Toplike
-v ● vl --> 1 : (ptype v)
+toplike B
+---------------------------------- PApp-Int-Toplike
+(n : A -> B) ● vl --> 1 : B
 
 
 v -->A v'
-not toplike D
+toplike D
+--------------------------------------------------- PApp-Abs-Toplike
+(\x. e : A -> B) : C -> D ● v --> 1 : D
+
+
+v -->A v'
+not (toplike D)
 ------------------------------------------------- PApp-Abs-Anno
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
@@ -428,7 +434,6 @@ not toplike D
 appsub? ptype(vl) ptype(v1)
 not (appsub? ptype(vl) ptype(v2))
 v1 ● vl --> e
-not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-L
 v1 ,, v2 ● vl --> e
 
@@ -436,7 +441,6 @@ v1 ,, v2 ● vl --> e
 appsub? ptype(vl) ptype(v2)
 not (appsub? ptype(vl) ptype(v1))
 v2 ● vl --> e
-not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-R
 v1 ,, v2 ● vl --> e
 
@@ -445,7 +449,6 @@ appsub? ptype(vl) ptype(v1)
 appsub? ptype(vl) ptype(v2)
 v1 ● vl --> e1
 v2 ● vl --> e2
-not toplike (ptype v1,,v2)
 -------------------------------------------- PApp-Merge-Parallel
 v1 ,, v2 ● vl --> e1 ,, e2
 ```

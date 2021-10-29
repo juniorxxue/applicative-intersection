@@ -3,7 +3,7 @@ Require Import Coq.Program.Equality.
 Require Import Language LibTactics.
 Require Import Strings.String.
 Require Import Program.Tactics.
-Require Import SubAndTopLike.
+Require Import SubAndTopLike Appsub.
 Require Import Psatz. (* lia *)
 
 Ltac ind_typ_size s :=
@@ -141,6 +141,40 @@ Proof.
     dependent destruction H.
 Abort.
 
+Lemma disjoint_appsub :
+  forall (A B C D1 D2 : typ),
+    disjoint A B ->
+    appsub (Some C) A D1 ->
+    appsub (Some C) B D2 ->
+    disjoint D1 D2.
+Proof.
+  introv Hdisj Has1 Has2.
+  gen C D1 D2.
+  induction Hdisj; intros.
+  - inversion Has1.
+  - inversion Has2.
+  - dependent destruction Has1; eauto.
+  - dependent destruction Has2; eauto.
+  - inversion Has1.
+  - inversion Has2.
+  - dependent destruction Has1. dependent destruction Has2.
+    eauto.
+Qed.
+
+Lemma disjoint_iso :
+  forall (A B C1 C2 : typ),
+    disjoint A B ->
+    isomorphic A C1 ->
+    isomorphic B C1 ->
+    disjoint C1 C2.
+Proof.
+  introv Hdisj Hiso1 Hiso2.
+  gen C1 C2.
+  induction Hdisj; intros;
+    try solve [dependent destruction Hiso1; dependent destruction Hiso2; eauto].
+  - dependent destruction Hiso1.
+Abort.
+
 Lemma disjoint_spec_toplike :
   forall (A B : typ),
     toplike A -> disjoint_spec A B.
@@ -171,7 +205,3 @@ Proof.
   eapply Hdisj; eauto.
   eapply sub_transitivity; eauto.
 Qed.
-
-
-    
-  
