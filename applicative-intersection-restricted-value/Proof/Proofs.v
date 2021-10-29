@@ -117,7 +117,7 @@ Proof.
            exfalso. eapply split_and_ord; eauto.
         ** admit.
     + admit.
-    + admit.
+    + eapply tred_preservation; eauto.
     + eapply IHHtyp in Hred; eauto.
       destruct Hred.
       exists A. split; eauto 3.
@@ -126,7 +126,8 @@ Proof.
       assert (sub x A) by (eapply sub_transitivity; eauto).
       eapply typing_anno with (C:=x); eauto.
   - dependent destruction Hred.
-    + admit.
+    + pose proof (papp_preservation e1 e2 e) as Hp.
+      eapply Hp; eauto.
     + admit.
     + admit.
   - dependent destruction Hred.
@@ -139,7 +140,7 @@ Proof.
     + admit.
     + admit.
   - admit. 
-Abort.      
+Abort.
 
 Theorem progress :
   forall (e : trm) (A : typ),

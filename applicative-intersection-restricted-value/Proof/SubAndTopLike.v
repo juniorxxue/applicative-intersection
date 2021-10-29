@@ -314,14 +314,12 @@ Proof.
 Qed.
 
 Lemma sub_toplike :
-  forall (A : typ),
-    toplike A -> sub typ_top A.
+  forall (A B : typ),
+    toplike A -> sub B A.
 Proof.
-  introv H.
+  introv Htl.
   proper_ind A; eauto.
-  eapply split_toplike in H; eauto.
+  pose proof (split_toplike A B0 C H Htl).
   destruct_conjs.
-  pose proof (IHr1 H).
-  pose proof (IHr2 H1).
   eapply sub_and; eauto.
 Qed.

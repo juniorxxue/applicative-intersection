@@ -122,17 +122,24 @@ Qed.
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
     value v1 -> value v2 ->
-    typing nil v1 A ->
-    typing nil v2 B ->
-    appsub (Some B) A C ->
+    typing nil v1 B ->
+    typing nil v2 A ->
+    appsub (Some A) B C ->
     papp v1 v2 e ->
     (exists D, typing nil e D /\ isomorphic D C).
 Proof.
   introv Hv1 Hv2 Htyp1 Htyp2 Has Hp.
   gen A B C.
   dependent induction Hp; intros.
-  - dependent destruction Htyp1.
-Abort.
+  - exists A. split.
+    + eapply typing_anno; eauto.
+      eapply sub_toplike; eauto.
+    + assert (B = A). admit. subst.
+      induction H0; eauto.
+      * inversion Has.
+      * admit.
+      * dependent destruction Has. 
+Admitted.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),
