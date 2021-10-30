@@ -106,40 +106,35 @@ Proof.
   - eapply disjoint_and_l; eauto.
 Qed.
 
-Lemma iso_disjoint :
-  forall (A1 A2 B : typ),
-    isomorphic A1 A2 ->
-    (disjoint A1 B <-> disjoint A2 B).
+Lemma disjoint_sub :
+  forall (A B C : typ),
+    disjoint A B -> sub A C -> disjoint C B.
+Proof.
+  introv Hdisj Hsub.
+  eapply disjoint_complete in Hdisj.
+  eapply disjoint_soundness.
+  unfold disjoint_spec in *. intros.
+  eapply Hdisj; eauto.
+  eapply sub_transitivity; eauto.
+Qed.
+
+
+Lemma iso_to_sub :
+  forall (A B : typ),
+    isomorphic A B -> sub A B.
 Proof.
   introv Hiso.
-  gen B.
-  dependent induction Hiso; intros; try solve [split; eauto].
-  - gen B. induction H; try solve [split; eauto].
-    + split; eauto.
-      intros.
-      eapply disjoint_and_l.
-      eapply IHtoplike1. assumption.
-      eapply IHtoplike2. assumption.
-    + split; eauto.
-      intros.
-Abort.      
+  induction Hiso; eauto.  
+Qed.
 
-Lemma disjoint_iso_l :
+Lemma disjoint_iso_transitivity :
   forall (A B C : typ),
-    disjoint A B -> isomorphic C A -> disjoint C B.
+    disjoint A B -> isomorphic A C -> disjoint C B.
 Proof.
   introv Hdisj Hiso.
-  gen C.
-  induction Hdisj; eauto; intros.
-  - dependent destruction Hiso; eauto.
-    inversion H.
-  - dependent destruction Hiso; eauto.
-    dependent destruction H; eauto.
-  - dependent destruction Hiso; eauto.
-    inversion H.
-  - dependent destruction Hiso; eauto.
-    dependent destruction H.
-Abort.
+  eapply iso_to_sub in Hiso.
+  eapply disjoint_sub; eauto.
+Qed.
 
 Lemma disjoint_appsub :
   forall (A B C D1 D2 : typ),
@@ -161,19 +156,34 @@ Proof.
     eauto.
 Qed.
 
-Lemma disjoint_iso :
+Lemma disjoint_iso_l :
+  forall (A B C1 C2 : typ),
+    disjoint C1 C2 ->
+    isomorphic A C1 ->
+    isomorphic B C2 ->
+    disjoint A B.
+Proof.
+  introv Hdisj Hiso1 Hiso2.
+  eapply disjoint_complete in Hdisj.
+  eapply disjoint_soundness.
+  unfold disjoint_spec in *.
+  introv Hsub1 Hsub2.
+Abort.
+
+Lemma disjoint_iso_r :
   forall (A B C1 C2 : typ),
     disjoint A B ->
     isomorphic A C1 ->
-    isomorphic B C1 ->
+    isomorphic B C2 ->
     disjoint C1 C2.
 Proof.
   introv Hdisj Hiso1 Hiso2.
-  gen C1 C2.
-  induction Hdisj; intros;
-    try solve [dependent destruction Hiso1; dependent destruction Hiso2; eauto].
-  - dependent destruction Hiso1.
-Abort.
+  assert (disjoint C1 B).
+  eapply disjoint_iso_transitivity; eauto.
+  eapply disjoint_symmetry.
+  eapply disjoint_symmetry in H.
+  eapply disjoint_iso_transitivity; eauto.
+Qed.
 
 Lemma disjoint_spec_toplike :
   forall (A B : typ),
@@ -192,16 +202,4 @@ Proof.
   introv Htl.
   assert (disjoint_spec A B) by (eapply disjoint_spec_toplike; eauto).
   now eapply disjoint_soundness in H.
-Qed.
-
-Lemma disjoint_sub :
-  forall (A B C : typ),
-    disjoint A B -> sub A C -> disjoint C B.
-Proof.
-  introv Hdisj Hsub.
-  eapply disjoint_complete in Hdisj.
-  eapply disjoint_soundness.
-  unfold disjoint_spec in *. intros.
-  eapply Hdisj; eauto.
-  eapply sub_transitivity; eauto.
 Qed.

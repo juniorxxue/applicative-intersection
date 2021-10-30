@@ -2,7 +2,7 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Language LibTactics.
 Require Import Coq.Program.Tactics.
-Require Import SubAndTopLike Ptype Appsub Tred Consistent.
+Require Import SubAndTopLike Ptype Appsub Tred Consistent Disjoint.
 
 Set Printing Parentheses.
 
@@ -102,6 +102,116 @@ Proof.
       congruence.
 Qed.
 
+Lemma papp_uvalue :
+  forall (v vl e : trm) (A B: typ),
+    value v -> value vl ->
+    typing nil v A ->
+    typing nil vl B ->
+    papp v vl e ->
+    uvalue e.
+Proof.
+  introv Hv1 Hv2 Htyp1 Htyp2 Hpapp.
+  gen A B.
+  induction Hpapp; intros; eauto.
+  - dependent destruction Hv1.
+    dependent destruction Htyp1; eauto.
+  - dependent destruction Hv1.
+    dependent destruction Htyp1; eauto.
+  - dependent destruction Hv1.
+    dependent destruction Htyp1; eauto.
+Qed.
+
+Lemma papp_consistent :
+  forall (v1 v2 vl e1 e2 : trm) (A B C : typ),
+    value v1 -> value v2 -> value vl ->
+    typing nil v1 A ->
+    typing nil v2 B ->
+    typing nil vl C ->
+    papp v1 vl e1 ->
+    papp v2 vl e2 ->
+    consistent v1 v2 ->
+    consistent e1 e2.
+Proof.
+  introv Hv1 Hv2 Hvl Htyp1 Htyp2 Htyp Hp1 Hp2 Hcons.
+  gen A B C.
+  dependent induction Hp1.
+  - dependent induction Hp2; intros; eauto. (* all solved by consistent -> disjoint -> toplike *)
+    + eapply con_disjoint; eauto.
+      eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      eapply con_merge_r.
+      * dependent destruction Htyp2.
+        ** eapply IHHp2_1; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+        ** eapply IHHp2_1; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+      * dependent destruction Htyp2.
+        ** eapply IHHp2_2; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+        ** eapply IHHp2_2; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+  - dependent induction Hp2; intros; eauto. (* all solved by consistent -> disjoint -> toplike *)
+      + eapply con_disjoint; eauto.
+      eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+      * eapply IHHp2; eauto.
+        eapply con_disjoint; eauto.
+        eapply disjoint_toplike; eauto.
+    + dependent destruction Hv2.
+      eapply con_merge_r.
+      * dependent destruction Htyp2.
+        ** eapply IHHp2_1; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+        ** eapply IHHp2_1; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+      * dependent destruction Htyp2.
+        ** eapply IHHp2_2; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+        ** eapply IHHp2_2; eauto.
+           eapply con_disjoint; eauto.
+           eapply disjoint_toplike; eauto.
+  - admit.
+  - dependent induction Hp2; intros; eauto.
+    + (* toplike *) admit.
+    + (* toplike *) admit.
+    + (* correct *) admit.
+Admitted.
+
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
     value v1 -> value v2 ->
@@ -198,8 +308,36 @@ Proof.
         destruct_conjs.
         exists (typ_and H H0).
         split; eauto.
-        eapply typing_merge; eauto.
-Admitted.
+        pose proof (papp_uvalue v1 vl e1 A C Hv1_1 Hv2 Htyp1_1 Htyp2 Hp1).
+        pose proof (papp_uvalue v2 vl e2 B C Hv1_2 Hv2 Htyp1_2 Htyp2 Hp2).
+        eapply typing_merge_uvalue; eauto.
+        pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
+        eapply H13; eauto.
+    + dependent destruction Has; eauto.
+      * assert (ptype v1 A1); eauto.
+        assert (ptype v2 B0); eauto.
+        assert (ptype vl A0); eauto.
+        simpl_deter. contradiction.
+      * assert (ptype v1 A1); eauto.
+        assert (ptype v2 B0); eauto.
+        assert (ptype vl A0); eauto.
+        simpl_deter.
+        eapply appsub_to_auxas in Has. contradiction.
+      * assert (ptype v1 A1); eauto.
+        assert (ptype v2 B0); eauto.
+        assert (ptype vl A0); eauto.
+        simpl_deter.
+        pose proof (IHHp1 Hv1_1 Hv2 _ Htyp2 _ Htyp1_1 _ Has1).
+        pose proof (IHHp2 Hv1_2 Hv2 _ Htyp2 _ Htyp1_2 _ Has2).
+        destruct_conjs.
+        exists (typ_and H H0).
+        split; eauto.
+        pose proof (papp_uvalue v1 vl e1 A C Hv1_1 Hv2 Htyp1_1 Htyp2 Hp1).
+        pose proof (papp_uvalue v2 vl e2 B C Hv1_2 Hv2 Htyp1_2 Htyp2 Hp2).
+        eapply typing_merge_uvalue; eauto.
+        pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
+        eapply H15; eauto.
+Abort.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),

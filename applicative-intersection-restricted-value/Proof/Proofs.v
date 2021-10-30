@@ -82,9 +82,6 @@ Lemma iso_to_sub :
 Proof.
   introv Hiso.
   induction Hiso; eauto.  
-  induction H; eauto.
-  assert (toplike (typ_arrow A B)) by eauto.  
-  now eapply sub_toplike.
 Qed.
 
 Theorem preservation :

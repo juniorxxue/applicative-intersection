@@ -406,9 +406,6 @@ Notation "e ~-> e'" := (step e e') (at level 68).
 Inductive isomorphic : typ -> typ -> Prop :=
 | iso_refl : forall (A : typ),
     isomorphic A A
-| iso_top : forall (A : typ),
-    toplike A ->
-    isomorphic typ_top A
 | iso_and : forall (A1 A2 B B1 B2 : typ),
     splitable B B1 B2 ->
     isomorphic A1 B1 ->
