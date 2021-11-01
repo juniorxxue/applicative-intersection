@@ -1,4 +1,4 @@
-import Prelude hiding (and,or)
+import Prelude hiding (and, or)
 
 data Type = TInt | TTop | TArrow Type Type | TAnd Type Type
    deriving (Eq, Show)
@@ -12,7 +12,10 @@ split (TArrow a b)
    = Just (TArrow a b1, TArrow a b2)
 split _ = Nothing
 
-data Result = Fail | Pass | Result Type deriving (Show,Eq)
+-- normal subtyping: Fail or Pass
+-- computable subtyping: Fail or (Result _)
+
+data Result = Fail | Pass | Result Type deriving (Show, Eq)
 
 and :: Result -> Result -> Result
 and Pass Pass = Pass
@@ -44,6 +47,10 @@ checkSub (TArrow a1 a2) (TPar b)
    | otherwise                 = Fail
 checkSub _ _ = Fail
 
+
+-- Given (Int -> ?)
+-- (Int -> Int) & (Int -> (Int -> Int))
+-- (Int -> Int) & ((Int -> Int) -> (Int -> Int))
 t1 = TAnd (TArrow TInt TInt) (TArrow TInt (TArrow TInt TInt))
 
 t2 = TAnd (TArrow TInt TInt) (TArrow (TArrow TInt TInt) (TArrow TInt TInt))
@@ -53,5 +60,3 @@ p1 = TPar TInt
 test1 = checkSub t1 p1
 
 test2 = checkSub t2 p1
-
-
