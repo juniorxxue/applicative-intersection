@@ -164,11 +164,10 @@ Lemma disjoint_iso_l :
     disjoint A B.
 Proof.
   introv Hdisj Hiso1 Hiso2.
-  eapply disjoint_complete in Hdisj.
-  eapply disjoint_soundness.
-  unfold disjoint_spec in *.
-  introv Hsub1 Hsub2.
+  gen B C2.
+  dependent induction Hiso1; intros.
 Abort.
+
 
 Lemma disjoint_iso_r :
   forall (A B C1 C2 : typ),
@@ -202,4 +201,41 @@ Proof.
   introv Htl.
   assert (disjoint_spec A B) by (eapply disjoint_spec_toplike; eauto).
   now eapply disjoint_soundness in H.
+Qed.
+
+Lemma disjoint_split_l :
+  forall (A A1 A2 B : typ),
+    splitable A A1 A2 ->
+    disjoint A B ->
+    disjoint A1 B /\ disjoint A2 B.
+Proof.
+  introv Hspl Hdisj.
+  gen A1 A2. dependent induction Hdisj; intros; try solve [inversion Hspl | eauto 3].
+  - dependent destruction Hspl.
+    split; eauto.
+  - pose proof (IHHdisj1 _ _ Hspl).
+    pose proof (IHHdisj2 _ _ Hspl).
+    destruct_conjs. eauto.
+  - dependent destruction Hspl; eauto.
+  - dependent destruction Hspl; eauto.
+    pose proof (IHHdisj _ _ Hspl).
+    destruct H; eauto.
+Qed.
+
+Lemma disjoint_split_r :
+  forall (A A1 A2 B : typ),
+    splitable A A1 A2 ->
+    disjoint B A ->
+    disjoint B A1 /\ disjoint B A2.
+Proof.
+  introv Hspl Hdisj.
+  gen A1 A2. dependent induction Hdisj; intros; try solve [inversion Hspl | eauto 3].
+  - pose proof (IHHdisj1 _ _ Hspl).
+    pose proof (IHHdisj2 _ _ Hspl).
+    destruct_conjs. eauto.
+  - dependent destruction Hspl; eauto.
+  - dependent destruction Hspl; eauto.
+  - dependent destruction Hspl.
+    pose proof (IHHdisj _ _ Hspl).
+    destruct_conjs; eauto.
 Qed.

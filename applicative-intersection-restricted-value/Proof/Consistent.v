@@ -323,9 +323,32 @@ Proof.
 Qed.
 
 Lemma consistent_merge_l :
-  forall v1 v2 v,
+  forall (v1 v2 v : trm),
     consistent (trm_merge v1 v2) v ->
     consistent v1 v /\ consistent v2 v.
 Proof.
   introv Hcons.
-Abort.
+  dependent induction Hcons; eauto.
+  - dependent destruction H.
+    eapply disjoint_split_l in H2; eauto.
+    destruct_conjs; eauto.
+  - pose proof (IHHcons1 v1 v2).
+    pose proof (IHHcons2 v1 v2).
+    destruct H; eauto.
+    destruct H0; eauto.
+Qed.
+
+Lemma consistent_merge_r :
+  forall (v1 v2 v : trm),
+    consistent v (trm_merge v1 v2) ->
+    consistent v v1 /\ consistent v v2.
+Proof.
+  introv Hcons.
+  dependent induction Hcons; eauto.
+  - dependent destruction H0; eauto.
+    eapply disjoint_split_r in H1; eauto.
+    destruct_conjs; eauto.
+  - pose proof (IHHcons1 v1 v2).
+    pose proof (IHHcons2 v1 v2).
+    destruct H; destruct H0; eauto.
+Qed.

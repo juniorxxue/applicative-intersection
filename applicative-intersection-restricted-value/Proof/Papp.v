@@ -121,6 +121,17 @@ Proof.
     dependent destruction Htyp1; eauto.
 Qed.
 
+Lemma uvalue_ptype :
+  forall (u : trm),
+    uvalue u ->
+    (exists A, ptype u A).
+Proof.
+  introv Hu.
+  dependent induction Hu; eauto.
+  - dependent destruction H; eauto.
+  - destruct_conjs; eauto.
+Qed.
+
 Lemma papp_consistent :
   forall (v1 v2 vl e1 e2 : trm) (A B C : typ),
     value v1 -> value v2 -> value vl ->
@@ -205,12 +216,215 @@ Proof.
         ** eapply IHHp2_2; eauto.
            eapply con_disjoint; eauto.
            eapply disjoint_toplike; eauto.
-  - admit.
   - dependent induction Hp2; intros; eauto.
-    + (* toplike *) admit.
-    + (* toplike *) admit.
-    + (* correct *) admit.
-Admitted.
+    + eapply con_disjoint; eauto.
+      eapply disjoint_symmetry; eauto.
+      eapply disjoint_toplike; eauto.
+    + eapply con_disjoint; eauto.
+      eapply disjoint_symmetry; eauto.
+      eapply disjoint_toplike; eauto.
+    + dependent destruction Hcons.
+      * (* same e *)
+        assert (v' = v'0). eapply tred_determinism; eauto.
+        rewrite H3. eauto.
+      * dependent destruction H3. dependent destruction H4.
+        dependent destruction H5.
+        eapply con_disjoint; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply IHHp2; eauto.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply IHHp2; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply IHHp2; eauto.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply IHHp2; eauto.
+    + dependent destruction Hv2.
+      dependent destruction Htyp2.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply con_merge_r.
+        ** eapply IHHp2_1; eauto.
+        ** eapply IHHp2_2; eauto.
+      * eapply consistent_merge_r in Hcons.
+        destruct Hcons.
+        eapply con_merge_r.
+        ** eapply IHHp2_1; eauto.
+        ** eapply IHHp2_2; eauto.
+  - dependent induction Hp2; intros; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
+        eapply uvalue_ptype in H6. destruct H6.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
+        eapply uvalue_ptype in H8. destruct H8.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
+        eapply uvalue_ptype in H6. destruct H6.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
+        eapply uvalue_ptype in H8. destruct H8.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+    + (* abs *)
+      dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1.
+      * eapply IHHp1; eauto.
+      * eapply IHHp1; eauto.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1; eauto 3.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1; eauto 3.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1; eauto 3.
+  - dependent induction Hp2; intros; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
+        eapply uvalue_ptype in H6. destruct H6.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
+        eapply uvalue_ptype in H8. destruct H8.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
+        eapply uvalue_ptype in H6. destruct H6.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
+        eapply uvalue_ptype in H8. destruct H8.
+        eapply con_disjoint; eauto.
+        eapply disjoint_symmetry.
+        eapply disjoint_toplike; eauto.
+    + (* abs *)
+      dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1.
+      * eapply IHHp1; eauto.
+      * eapply IHHp1; eauto.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1; eauto 3.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1; eauto 3.
+    +  dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+       dependent destruction Htyp1; eauto 3.
+  - dependent induction Hp2; intros; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * eapply con_merge_l.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
+           eapply uvalue_ptype in H6. destruct H6.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
+           eapply uvalue_ptype in H6. destruct H6.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+      * eapply con_merge_l.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
+           eapply uvalue_ptype in H8. destruct H8.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
+           eapply uvalue_ptype in H8. destruct H8.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+    + (* find a ptype for e *)
+      dependent destruction Hv1.
+      dependent destruction Htyp1.
+      * eapply con_merge_l.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
+           eapply uvalue_ptype in H6. destruct H6.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
+           eapply uvalue_ptype in H6. destruct H6.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+      * eapply con_merge_l.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
+           eapply uvalue_ptype in H8. destruct H8.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
+           eapply uvalue_ptype in H8. destruct H8.
+           eapply con_disjoint; eauto.
+           eapply disjoint_symmetry.
+           eapply disjoint_toplike; eauto.
+    + (* abs *)
+      dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      dependent destruction Htyp1.
+      * eapply con_merge_l.
+        eapply IHHp1_1; eauto.
+        eapply IHHp1_2; eauto.
+      * eapply con_merge_l.
+        eapply IHHp1_1; eauto.
+        eapply IHHp1_2; eauto.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      assert (consistent e1 e); dependent destruction Htyp1; eauto.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      assert (consistent e1 e); dependent destruction Htyp1; eauto.
+    + dependent destruction Hv1.
+      eapply consistent_merge_l in Hcons.
+      destruct Hcons.
+      assert (consistent e1 (trm_merge e2 e3)); dependent destruction Htyp1; eauto.
+Qed.
 
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
@@ -240,6 +454,8 @@ Proof.
     dependent destruction H2.
     + dependent destruction H3. contradiction.
     + (* correct *)
+      exists D. split; eauto 3.
+      eapply typing_anno; eauto.
       admit.
     + dependent destruction Hv1.
       exfalso. eapply split_and_ord; eauto.
@@ -337,7 +553,7 @@ Proof.
         eapply typing_merge_uvalue; eauto.
         pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
         eapply H15; eauto.
-Abort.
+Admitted.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),
