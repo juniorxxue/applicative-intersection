@@ -62,7 +62,7 @@ Proof.
   - dependent destruction Hp2; eauto.
   - dependent destruction Hp2; eauto.
     contradiction.
-  - dependent destruction Hp2.    
+  - dependent destruction Hp2.
     + contradiction.
     + dependent destruction Htyp.
       assert (v' = v'0).
@@ -426,6 +426,76 @@ Proof.
       assert (consistent e1 (trm_merge e2 e3)); dependent destruction Htyp1; eauto.
 Qed.
 
+Lemma typing_weakening_gen :
+  forall G E F e A,
+    typing (E ++ G) e A ->
+    uniq (E ++ F ++ G) ->
+    typing (E ++ F ++ G) e A.
+Proof.
+  introv Htyp.
+  gen F.
+  dependent induction Htyp; introv Henv; eauto.
+  pick fresh x and apply typing_lam.
+  rewrite_env (([(x,A)] ++ E) ++ F ++ G).
+  apply H0; eauto.
+  solve_uniq.
+Qed.
+
+Lemma typing_weakening :
+  forall E F e A,
+    typing E e A ->
+    uniq (F ++ E) ->
+    typing (F ++ E) e A.
+Proof.
+  intros.
+  rewrite_env (nil ++ F ++ E).
+  eapply typing_weakening_gen; eauto.
+Qed.
+
+Lemma iso_absurd :
+  forall (e : trm) (A B : typ) T,
+    typing T e A -> isomorphic A B ->
+    typing T e B.
+Proof.
+  intros.
+  gen B. dependent induction H; intros; eauto.
+  - dependent destruction H0; eauto.
+  - admit.
+  - dependent destruction H1; eauto.
+Abort.
+
+Lemma substitution_preservation :
+  forall F E x v e A B C,
+    typing (F ++ [(x, A)] ++ E) e B ->
+    typing nil v C -> isomorphic C A ->
+    (exists D, typing (F ++ E) (subst_exp x v e) D /\ isomorphic D B).
+Proof.
+  introv Htyp Htypv Hiso.
+  remember (F ++ [(x, A)] ++ E) as E'.
+  gen F.
+  induction Htyp; intros; simpl; subst; eauto.
+  - destruct (x0 == x); eauto.
+    subst. eapply binds_mid_eq in H0; eauto. subst.
+    exists C. split; eauto.
+    eapply typing_weakening; eauto.
+    rewrite_env (E ++ nil).
+    eapply typing_weakening; eauto.
+    solve_uniq.
+  - exists (typ_arrow A0 B).
+    split.
+    + apply (typing_lam (union L (singleton x))).
+      intros.
+      assert (x0 `notin` L) by eauto.
+      pose proof (H0 x0 H2 ([(x0, A0)] ++ F)).
+      assert (([(x0, A0)] ++ (F ++ ([(x, A)] ++ E))) = (([(x0, A0)] ++ F) ++ ([(x, A)] ++ E))).
+      rewrite_env (([(x0, A0)] ++ F) ++ [(x, A)] ++ E). eauto.
+      pose proof (H3 H4).
+      destruct H5. destruct H5.
+      admit.
+    + auto.
+  -
+Admitted.
+
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
     value v1 -> value v2 ->
@@ -455,8 +525,18 @@ Proof.
     + dependent destruction H3. contradiction.
     + (* correct *)
       exists D. split; eauto 3.
+      eapply tred_preservation in H; eauto 3.
+      destruct H. destruct H.
+      pick fresh y.
+      rewrite (subst_intro y); eauto 3.
+      assert (Fr': y `notin` L) by eauto.
+      pose proof (H1 y Fr').
+      rewrite_env (nil ++ [(y, A)] ++ nil) in H5.
+      pose proof (substitution_preservation _ _ _ _ _ _ _ _ H5 H H4).
+      destruct_conjs.
       eapply typing_anno; eauto.
-      admit.
+      eapply iso_to_sub in H8.
+      eapply sub_transitivity; eauto.
     + dependent destruction Hv1.
       exfalso. eapply split_and_ord; eauto.
   - dependent destruction Hv1.
@@ -553,7 +633,7 @@ Proof.
         eapply typing_merge_uvalue; eauto.
         pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
         eapply H15; eauto.
-Admitted.
+Qed.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),

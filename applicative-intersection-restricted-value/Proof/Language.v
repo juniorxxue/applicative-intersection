@@ -1,5 +1,7 @@
 Require Import Metalib.Metatheory.
+Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
+Require Import Coq.Strings.String.
 
 Import ListNotations.
 
@@ -51,6 +53,57 @@ Notation "ƛ. e ∷ A → B" := (trm_abs e A B) (at level 20).
 
 Coercion trm_fvar : atom >-> trm.
 
+Fixpoint subst_exp (z : atom) (u : trm) (e : trm) {struct e} : trm :=
+  match e with
+  | trm_int n => trm_int n
+  | trm_bvar i => trm_bvar i
+  | trm_fvar x => if x == z then u else (trm_fvar x)
+  | trm_abs e1 A B => trm_abs (subst_exp z u e1) A B
+  | trm_app e1 e2 => trm_app (subst_exp z u e1) (subst_exp z u e2)
+  | trm_merge e1 e2 => trm_merge (subst_exp z u e1) (subst_exp z u e2)
+  | trm_anno e1 A => trm_anno (subst_exp z u e1) A
+  end.
+
+Notation "{ z ↦ u } e" := (subst_exp z u e) (at level 69).
+
+Fixpoint fv (e : trm) {struct e} : atoms :=
+  match e with
+  | trm_int n => empty
+  | trm_bvar i => empty
+  | trm_fvar x => singleton x
+  | trm_abs e1 A B => fv e1
+  | trm_app e1 e2 => (fv e1) `union` (fv e2)
+  | trm_merge e1 e2 => (fv e1) `union` (fv e2)
+  | trm_anno e1 A => (fv e1)
+  end.
+
+Lemma subst_fresh : forall (x : atom) e u,
+    x `notin` fv e -> subst_exp x u e = e.
+Proof.
+  intros.
+  induction e; eauto.
+  - Case "fvar".
+    simpl.
+    destruct (a == x).
+    + SCase "a = x".
+      subst. simpl fv in H. fsetdec.
+    + SCase "a <> x".
+      auto.
+  - Case "abs".
+    simpl.
+    f_equal.
+    auto.
+  - Case "app".
+    simpl in *.
+    f_equal; auto.
+  - Case "merge".
+    simpl in *.
+    f_equal; auto.
+  - Case "anno".
+    simpl in *.
+    f_equal; auto.
+Qed.
+
 Definition ctx : Set := list (var * typ).
 
 Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
@@ -65,6 +118,55 @@ Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
   end.
 
 Definition open t u := open_rec 0 u t.
+
+Lemma subst_eq_var:
+  forall (x : atom) u,
+    subst_exp x u x = u.
+Proof.
+  intros.
+  simpl.
+  destruct (x == x); eauto.
+  destruct n; eauto.
+Qed.
+
+Lemma subst_intro :
+  forall (x : atom) u e,
+    x `notin` (fv e) ->
+    open e u = subst_exp x u (open e x).
+Proof.
+  intros.
+  unfold open.
+  generalize 0.
+  induction e; intros n0; simpl; eauto.
+  - destruct (n0 == n).
+    + now rewrite subst_eq_var.
+    + simpl. auto.
+  - destruct (a == x); eauto.
+    simpl in H. fsetdec.
+  - f_equal. simpl in H.
+    now eapply IHe.
+  - simpl in H.
+    f_equal; eauto.
+  - simpl in H.
+    f_equal; eauto.
+  - simpl in H.
+    f_equal; eauto.
+Qed.
+    
+Inductive lc : trm -> Prop :=
+| lc_int : forall (n : nat),
+    lc (trm_int n)
+| lc_var : forall (x : atom),
+    lc (trm_fvar x)
+| lc_abs : forall (x : atom) (e : trm) (A B : typ),
+    x `notin` fv e -> lc (open e x) ->
+    lc (trm_abs e A B)
+| lc_app : forall (e1 e2 : trm),
+    lc e1 -> lc e2 ->
+    lc (trm_app e1 e2)
+| lc_merge : forall (e1 e2 : trm),
+    lc e1 -> lc e2 ->
+    lc (trm_merge e1 e2).
 
 Inductive ordinary : typ -> Prop :=
 | ord_top : ordinary typ_top
@@ -415,3 +517,10 @@ Inductive isomorphic : typ -> typ -> Prop :=
 Hint Constructors isomorphic : core.
 
 Notation "A << B" := (isomorphic A B) (at level 40).
+
+Ltac gather_atoms ::=
+  let A := gather_atoms_with (fun x : atoms => x) in
+  let B := gather_atoms_with (fun x : atom => singleton x) in
+  let C := gather_atoms_with (fun x : list (atom * typ) => dom x) in
+  let D := gather_atoms_with (fun x : trm => fv x) in
+  constr:(A `union` B `union` C `union` D).
