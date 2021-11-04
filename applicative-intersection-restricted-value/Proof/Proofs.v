@@ -132,7 +132,8 @@ Proof.
       assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
       destruct_conjs.
       exists (typ_and H0 H1).
-      split. eapply typing_merge; eauto. admit. (* disjoint *)
+      split.
+      eapply typing_merge; eauto. admit. (* disjoint *)
       eauto.
     + admit.
     + admit.
