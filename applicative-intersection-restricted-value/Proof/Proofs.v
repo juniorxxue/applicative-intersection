@@ -84,6 +84,20 @@ Proof.
   induction Hiso; eauto.  
 Qed.
 
+Lemma appsub_iso_preservation :
+  forall A B C D,
+    appsub (Some A) B C ->
+    isomorphic D B ->
+    appsub (Some A) D C.
+Proof.
+  introv Has Hiso.
+  gen D.
+  dependent induction Has; intros; eauto.
+  - dependent destruction Hiso; eauto.
+    dependent destruction H0.
+    admit.
+Abort. 
+
 Theorem preservation :
   forall (e e' : trm) (A: typ),
     typing nil e A ->
@@ -125,7 +139,12 @@ Proof.
   - dependent destruction Hred.
     + pose proof (papp_preservation e1 e2 e) as Hp.
       eapply Hp; eauto.
-    + admit.
+    + assert (exists B0, typing nil e1' B0 /\ isomorphic B0 B) by eauto.
+      destruct H0.
+      destruct H0.
+      exists C. split; eauto.
+      eapply typing_app; eauto.
+      admit.
     + admit.
   - dependent destruction Hred.
     + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.

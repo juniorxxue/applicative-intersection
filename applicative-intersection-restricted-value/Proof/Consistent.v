@@ -122,26 +122,27 @@ Proof.
   assert (exists D E, C2 = (typ_arrow D E)) by (eapply sub_arrow_form; eauto).
   destruct_conjs. subst.
   unfold consistency_spec in Hcons.
-  destruct (disjoint_spec_decidability H7 H5); eauto.
+  destruct (disjoint_spec_decidability H9 H7); eauto.
   - right.
     destruct_conjs.
     assert (Htyp1': typing nil (trm_anno (trm_abs e1 A1 B1)
-                                         (typ_arrow H3 H7)) (typ_arrow H3 H7)) by eauto.
+                                         (typ_arrow H5 H9)) (typ_arrow H5 H9)) by eauto.
     assert (exists v', typedred (trm_anno (trm_abs e1 A1 B1)
-                                     (typ_arrow H3 H7)) (typ_arrow (typ_and H3 H4) H6) v').
+                                     (typ_arrow H5 H9)) (typ_arrow (typ_and H5 H6) H8) v').
     eapply tred_progress; eauto.
     assert (Htyp2': typing nil (trm_anno (trm_abs e2 A2 B2)
-                                         (typ_arrow H4 H5)) (typ_arrow H4 H5)) by eauto.
+                                         (typ_arrow H6 H7)) (typ_arrow H6 H7)) by eauto.
     assert (exists v', typedred (trm_anno (trm_abs e2 A2 B2)
-                                     (typ_arrow H4 H5)) (typ_arrow (typ_and H3 H4) H6) v').
+                                     (typ_arrow H6 H7)) (typ_arrow (typ_and H5 H6) H8) v').
     eapply tred_progress; eauto.
     destruct_conjs.
-    pose proof (Hcons (typ_arrow (typ_and H3 H4) H6)).
-    assert (H12 = H13). eapply H16; eauto. subst.
-    dependent destruction H15.
-    + dependent destruction H12. contradiction.
-    + dependent destruction H15; eauto.
-    + dependent destruction H12. exfalso; eauto.
+    pose proof (Hcons (typ_arrow (typ_and H5 H6) H8)).
+    assert (H14 = H15). eapply H18; eauto.
+    subst.
+    dependent destruction H17.
+    + dependent destruction H14. contradiction.
+    + dependent destruction H17; eauto.
+    + dependent destruction H16. exfalso; eauto.
 Qed.
 
 Lemma consistency_spec_merge_l :

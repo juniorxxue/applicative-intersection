@@ -438,7 +438,7 @@ Proof.
   pick fresh x and apply typing_lam.
   rewrite_env (([(x,A)] ++ E) ++ F ++ G).
   apply H0; eauto.
-  solve_uniq.
+  solve_uniq. assumption.
 Qed.
 
 Lemma typing_weakening :
@@ -473,6 +473,21 @@ Proof.
 Qed.
 
 
+Lemma substitution :
+ forall F E x v e A B,
+    typing (F ++ [(x, A)] ++ E) e B ->
+    typing nil v A ->
+    typing (F ++ E) (subst_exp x v e) B.
+Proof.
+Admitted.
+
+Lemma typing_rename : forall (x y : atom) E e T1 T2,
+  x `notin` fv e -> y `notin` (dom E `union` fv e) ->
+  typing ((x ~ T1) ++ E) (open e x) T2 ->
+  typing ((y ~ T1) ++ E) (open e y) T2.
+Proof.
+Admitted.
+
 Lemma substitution_preservation :
   forall F E x v e A B C,
     typing (F ++ [(x, A)] ++ E) e B ->
@@ -491,19 +506,20 @@ Proof.
     eapply typing_weakening; eauto.
     solve_uniq.
   - exists (typ_arrow A0 B).
-    split.
-    + apply (typing_lam (union L (singleton x))).
-      intros.
-      assert (x0 `notin` L) by eauto.
-      pose proof (H0 x0 H2 ([(x0, A0)] ++ F)).
-      assert (([(x0, A0)] ++ (F ++ ([(x, A)] ++ E))) = (([(x0, A0)] ++ F) ++ ([(x, A)] ++ E))).
-      rewrite_env (([(x0, A0)] ++ F) ++ [(x, A)] ++ E). eauto.
-      pose proof (H3 H4).
-      destruct H5.
-      destruct H5.
-      admit.
-    + auto.
-  -
+    split; eauto.
+    pick fresh y.
+    assert (y `notin` L) by eauto.
+    assert ((([(y, A0)] ++ (F ++ ([(x, A)] ++ E))) = (([(y, A0)] ++ F) ++ ([(x, A)] ++ E)))).
+    rewrite_env (([(y, A0)] ++ F) ++ ([(x, A)] ++ E)). auto.
+    pose proof (H0 y H2 ([(y, A0)] ++ F) H3).
+    destruct H4. destruct H4.
+    eapply (typing_lam (union L (singleton x))  (F ++ E) A0 B x0); eauto.
+    intros.
+    assert ((subst_exp x v (open e y)) = (open (subst_exp x v e) y)). admit.
+    rewrite H7 in H4.
+    rewrite_env (([(x1, A0)] ++ F) ++ E).
+    eapply (typing_rename y x1); eauto 3.
+    simpl.
 Admitted.
 
 Lemma substitution_preservation' :
@@ -525,15 +541,6 @@ Proof.
     solve_uniq.
   - exists (typ_arrow A0 B).
     split.
-    + apply (typing_lam (union L (singleton x))).
-      intros.
-      assert (x0 `notin` L) by eauto.
-      pose proof (H0 x0 H2 ([(x0, A0)] ++ F)).
-      assert (([(x0, A0)] ++ (F ++ ([(x, A)] ++ E))) = (([(x0, A0)] ++ F) ++ ([(x, A)] ++ E))).
-      rewrite_env (([(x0, A0)] ++ F) ++ [(x, A)] ++ E). eauto.
-      pose proof (H3 H4).
-      destruct H5.
-      destruct H5.
 Admitted.
 
 Theorem papp_preservation :
@@ -561,8 +568,8 @@ Proof.
   - dependent destruction Htyp1.
     dependent destruction Has.
     dependent destruction Htyp1.
-    dependent destruction H2.
-    + dependent destruction H3. contradiction.
+    dependent destruction H3.
+    + dependent destruction H4. contradiction.
     + (* correct *)
       exists D. split; eauto 3.
       eapply tred_preservation in H; eauto 3.
@@ -571,12 +578,9 @@ Proof.
       rewrite (subst_intro y); eauto 3.
       assert (Fr': y `notin` L) by eauto.
       pose proof (H1 y Fr').
-      rewrite_env (nil ++ [(y, A)] ++ nil) in H5.
-      eapply iso_to_sub in H4.
-      pose proof (substitution_preservation' _ _ _ _  _ _ _ _ H5 H H4).
-      destruct_conjs.
+      rewrite_env (nil ++ [(y, A)] ++ nil) in H6.
       eapply typing_anno; eauto.
-      eapply sub_transitivity; eauto.
+      admit.
     + dependent destruction Hv1.
       exfalso. eapply split_and_ord; eauto.
   - dependent destruction Hv1.
@@ -673,7 +677,7 @@ Proof.
         eapply typing_merge_uvalue; eauto.
         pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
         eapply H15; eauto.
-Qed.
+Admitted.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),
@@ -783,11 +787,11 @@ Proof.
         eapply tred_progress; eauto.
         eapply sub_transitivity; eauto.
         destruct_conjs.
-        exists (trm_anno (open e H7) H2).
+        exists (trm_anno (open e H8) H3).
         eapply papp_abs_anno; eauto.
       * eapply appsub_ord_form in Has; eauto.
         destruct_conjs. subst.
-        exists (trm_anno (trm_int 1) H2).
+        exists (trm_anno (trm_int 1) H3).
         dependent destruction H0.
         eapply papp_abs_toplike; eauto.
   - dependent destruction Has.

@@ -401,8 +401,9 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
     uniq T -> typing T (trm_int n) typ_int
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T (trm_fvar x) A
-| typing_lam : forall (L : vars) (T : ctx) (A B : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) (open e (trm_fvar x)) B) ->
+| typing_lam : forall (L : vars) (T : ctx) (A B C : typ) (e : trm),
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) (open e (trm_fvar x)) C) ->
+    sub C B ->
     typing T (trm_abs e A B) (typ_arrow A B)
 | typing_anno : forall (T : ctx) (A B C : typ) (e : trm),
     typing T e C -> sub C A ->
@@ -516,7 +517,7 @@ Inductive isomorphic : typ -> typ -> Prop :=
 
 Hint Constructors isomorphic : core.
 
-Notation "A << B" := (isomorphic A B) (at level 40).
+Notation "A ≈ B" := (isomorphic A B) (at level 40).
 
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun x : atoms => x) in
