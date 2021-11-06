@@ -452,41 +452,23 @@ Proof.
   eapply typing_weakening_gen; eauto.
 Qed.
 
-Lemma iso_to_sub_each_other :
-  forall (A B : typ),
-    isomorphic A B -> sub A B /\ sub B A.
-Proof.
-  introv Hiso.
-  induction Hiso; eauto.
-  destruct IHHiso1. destruct IHHiso2.
-  split; eauto.
-  eapply sub_and; eauto.
-  - 
-Admitted.
-
-Lemma typing_subsumption :
-  forall (e : trm) (A B : typ) T,
-    typing T e A -> sub A B ->
-    typing T (trm_anno e B) B.
-Proof.
-  intros. eauto.
-Qed.
-
-
-Lemma substitution :
- forall F E x v e A B,
-    typing (F ++ [(x, A)] ++ E) e B ->
-    typing nil v A ->
-    typing (F ++ E) (subst_exp x v e) B.
-Proof.
-Admitted.
-
 Lemma typing_rename : forall (x y : atom) E e T1 T2,
   x `notin` fv e -> y `notin` (dom E `union` fv e) ->
   typing ((x ~ T1) ++ E) (open e x) T2 ->
   typing ((y ~ T1) ++ E) (open e y) T2.
 Proof.
 Admitted.
+
+Lemma subst_notin_fv : forall x y u e,
+   x `notin` fv e -> x `notin` fv u ->
+   x `notin` fv (subst_exp y u e).
+Proof.
+Admitted.
+
+Lemma subst_open_var_c : forall (x y : atom) u e,
+    open (subst_exp x u e) y = subst_exp x u (open e y).
+Proof.
+  Admitted.
 
 Lemma substitution_preservation :
   forall F E x v e A B C,
@@ -513,13 +495,48 @@ Proof.
     rewrite_env (([(y, A0)] ++ F) ++ ([(x, A)] ++ E)). auto.
     pose proof (H0 y H2 ([(y, A0)] ++ F) H3).
     destruct H4. destruct H4.
-    eapply (typing_lam (union L (singleton x))  (F ++ E) A0 B x0); eauto.
+    eapply (typing_lam  (union L
+                  (union (singleton x)
+                     (union (dom E)
+                        (union (dom F)
+                           (union (singleton x) (union (fv v) (fv e)))))))  (F ++ E) A0 B x0); eauto.
     intros.
-    assert ((subst_exp x v (open e y)) = (open (subst_exp x v e) y)). admit.
-    rewrite H7 in H4.
-    rewrite_env (([(x1, A0)] ++ F) ++ E).
+    assert ((subst_exp x v (open e y)) = (open (subst_exp x v e) y)).
+    symmetry.
+    eapply subst_open_var_c.
+    rewrite H7 in H4.    
+    rewrite_env ([(y, A0)] ++ (F ++ E)) in H4.
     eapply (typing_rename y x1); eauto 3.
-    simpl.
+    eapply subst_notin_fv; eauto.
+    eapply notin_union; eauto.
+    eapply subst_notin_fv; eauto.
+    eapply iso_to_sub in H5.
+    eapply sub_transitivity; eauto.
+  - exists A0. split; eauto 3.
+    pose proof (IHHtyp F).
+    assert ( ((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))).
+    rewrite_env (F ++ ([(x, A)] ++ E)). reflexivity.
+    pose proof (H0 H1). destruct H2. destruct H2.
+    eapply typing_anno; eauto. eapply iso_to_sub in H3.
+    eapply sub_transitivity; eauto.
+  - exists C0. split; eauto.
+    assert (((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
+    pose proof (IHHtyp1 F H0).
+    pose proof (IHHtyp2 F H0).
+    destruct_conjs.
+    eapply typing_app; eauto.
+    admit.
+  - assert ( ((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
+    pose proof (IHHtyp1 F H0).
+    pose proof (IHHtyp2 F H0).
+    destruct H1. destruct H2.
+    destruct_conjs.
+    exists (typ_and x0 x1). split; eauto.
+    eapply typing_merge; eauto.
+    eapply disjoint_iso_r.
+    
+    
+
 Admitted.
 
 Lemma substitution_preservation' :

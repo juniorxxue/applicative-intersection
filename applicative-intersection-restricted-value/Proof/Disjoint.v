@@ -164,10 +164,19 @@ Lemma disjoint_iso_l :
     disjoint A B.
 Proof.
   introv Hdisj Hiso1 Hiso2.
-  gen B C2.
-  dependent induction Hiso1; intros.
-Abort.
-
+  gen A B.
+  dependent induction Hdisj; intros.
+  - dependent destruction Hiso1; eauto.
+    inversion H.
+  - dependent destruction Hiso2; eauto.
+    inversion H.
+  - dependent destruction Hiso1; eauto.
+    dependent destruction H; eauto.
+  - dependent destruction Hiso2; eauto.
+    dependent destruction H; eauto.
+  - admit.
+  - admit.
+Admitted.
 
 Lemma disjoint_iso_r :
   forall (A B C1 C2 : typ),
