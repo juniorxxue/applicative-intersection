@@ -1,7 +1,7 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
-Require Import Language LibTactics.
+Require Import Language LN LibTactics.
 Require Import SubAndTopLike Appsub. (* Hint Base: subtyping *)
 Require Import Ptype Disjoint Value. (* Hint Base: ptype, value, lc *)
 Require Import Tred Consistent. (* Hint Base: tred, con *)
@@ -75,6 +75,88 @@ Ltac indExpSize s :=
       intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H) end
     | intros ].
 
+Lemma step_consistent_preservation_l :
+  forall e1 e2 e1' A B,
+    typing nil e1 A -> typing nil e2 B ->
+    consistent e1 e2 ->
+    step e1 e1' ->
+    consistent e1' e2.
+Proof.
+Admitted.
+
+Lemma step_consistent_preservation_r :
+  forall e1 e2 e2' A B,
+    typing nil e1 A -> typing nil e2 B ->
+    consistent e1 e2 ->
+    step e2 e2' ->
+    consistent e1 e2'.
+Proof.
+Admitted.
+
+Lemma step_consistent_preservation :
+  forall e1 e2 e1' e2' A B,
+    typing nil e1 A -> typing nil e2 B ->
+    consistent e1 e2 ->
+    step e1 e1' -> step e2 e2' ->
+    consistent e1' e2'.
+Proof.
+Admitted.
+
+Lemma tred_lc_preservation :
+  forall v v' A,
+    lc v ->
+    typedred v A v' ->
+    lc v'.
+Proof.
+  introv Lc Htred.
+  dependent induction Htred; eauto with lc.
+Qed.
+
+Hint Resolve tred_lc_preservation : lc.
+
+Lemma papp_lc_preservation :
+  forall e1 e2 e,
+    lc e1 -> lc e2 -> papp e1 e2 e -> lc e.
+Proof.
+  introv Lc1 Lc2 Hp.
+  dependent induction Hp; eauto 3 with lc.
+  - eapply lc_anno. eapply open_abs; eauto with lc.
+  - dependent destruction Lc1; eauto.
+Qed.
+
+Hint Resolve papp_lc_preservation : lc.                                       
+
+Lemma step_lc_preservation :
+  forall e e',
+    lc e -> step e e' -> lc e'.
+Proof.
+  introv Hlc Hstep. gen e'.
+  induction Hlc; intros;
+    try solve [dependent destruction Hstep; eauto].
+  - dependent destruction Hstep; eauto 3 with lc.
+  - dependent destruction Hstep; eauto 3 with lc.
+    + eapply lc_merge; eauto.
+    + eapply lc_merge; eauto.
+Qed.
+
+Hint Resolve step_lc_preservation : lc.
+
+Lemma step_uvalue_preservation :
+  forall u u',
+    uvalue u -> step u u' -> uvalue u'.
+Proof.
+  introv Hu Hstep. gen u'.
+  induction Hu; intros.
+  - dependent destruction H.
+    + dependent destruction Hstep; eauto.
+    + dependent destruction Hstep; eauto.
+  - dependent destruction Hstep; eauto.
+    + assert (value v') by eauto with value.
+      eapply value_is_uvalue; assumption.
+    + eapply uvalue_anno; eauto with lc.
+  - dependent destruction Hstep; eauto with lc.
+Qed.
+
 Theorem preservation :
   forall (e e' : trm) (A: typ),
     typing nil e A ->
@@ -100,11 +182,28 @@ Proof.
         eapply typing_anno; eauto.
         eapply sub_inversion_split_r in H0; eauto.
         destruct_conjs. assumption.
-      * dependent destruction H0.
-        ** dependent destruction H0.
-           eauto with subtyping.
-        ** admit.
-    + admit.
+      * destruct (toplike_decidability B0).
+        ** eapply split_toplike in H1; eauto.
+           destruct H1.
+           eapply typing_merge_uvalue; eauto 3.
+           *** eapply typing_anno; eauto.
+               assert (toplike (typ_arrow A C)) by eauto.
+               now eapply sub_toplike.
+           *** eapply typing_anno; eauto.
+               assert (toplike (typ_arrow A D)) by eauto.
+               now eapply sub_toplike.
+        ** eauto with subtyping.
+    + dependent destruction Htyp.
+      exists (typ_and C1 C2).
+      split; eauto.
+      eapply sub_inversion_split_r in H1; eauto.
+      destruct H1.
+      eapply typing_merge_uvalue; eauto 3.
+      eapply uvalue_anno.
+      assert (typing nil (trm_abs e0 A0 B0) (typ_arrow A0 B0)); eauto.
+      eapply uvalue_anno.
+      assert (typing nil (trm_abs e0 A0 B0) (typ_arrow A0 B0)); eauto.
+      eapply con_anno; eauto.
     + eapply tred_preservation; eauto.
     + eapply IHHtyp in Hred; eauto.
       destruct Hred.
@@ -122,19 +221,64 @@ Proof.
       exists C. split; eauto.
       eapply typing_app; eauto.
       eapply appsub_iso2; eauto.
-    + admit.
+    + assert (exists B0, typing nil e2' B0 /\ isomorphic B0 A) by eauto.
+      destruct H1. destruct H1.
+      exists C. split; eauto.
+      eapply typing_app; eauto.
+      eapply appsub_iso1; eauto.
   - dependent destruction Hred.
     + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
       assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
       destruct_conjs.
       exists (typ_and H0 H1).
       split.
-      eapply typing_merge; eauto. admit. (* disjoint *)
+      eapply typing_merge; eauto.
+      eapply disjoint_iso_l; eauto.
       eauto.
-    + admit.
-    + admit.
-  - admit. 
-Abort.
+    + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
+      assert (exists C, (typing nil e2 C) /\ (isomorphic C B)) by eauto.
+      destruct_conjs.
+      exists (typ_and H1 H2).
+      split.
+      eapply typing_merge; eauto.
+      eapply disjoint_iso_l; eauto.
+      eauto.
+    + assert (exists C, (typing nil e1 C) /\ (isomorphic C A)) by eauto.
+      assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
+      destruct_conjs.
+      exists (typ_and H1 H2).
+      split.
+      eapply typing_merge; eauto.
+      eapply disjoint_iso_l; eauto.
+      eauto.
+  - dependent destruction Hred.
+    + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
+      assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
+      destruct_conjs.
+      exists (typ_and H3 H4).
+      pose proof (step_uvalue_preservation _ _ H0 Hred1).
+      pose proof (step_uvalue_preservation _ _ H1 Hred2).
+      split; eauto.
+      eapply typing_merge_uvalue; eauto.
+      pose proof (step_consistent_preservation u1 u2 e1' e2' A B Htyp1 Htyp2 H2 Hred1 Hred2).
+      assumption.
+    + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
+      destruct_conjs.
+      exists (typ_and H4 B).
+      pose proof (step_uvalue_preservation _ _ H0 Hred).
+      split; eauto.
+      eapply typing_merge_uvalue; eauto.
+      pose proof (step_consistent_preservation_l u1 u2 e1' A B Htyp1 Htyp2 H2 Hred).
+      assumption.
+    + assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.
+      destruct_conjs.
+      exists (typ_and A H4).
+      pose proof (step_uvalue_preservation _ _ H1 Hred).
+      split; eauto.
+      eapply typing_merge_uvalue; eauto.
+      pose proof (step_consistent_preservation_r u1 u2 e2' A B Htyp1 Htyp2 H2 Hred).
+      assumption.
+Qed.
 
 Theorem progress :
   forall (e : trm) (A : typ),
