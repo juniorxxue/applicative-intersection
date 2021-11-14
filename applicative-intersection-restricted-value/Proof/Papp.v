@@ -506,11 +506,60 @@ Proof.
   - eapply typing_var; eauto.
 Qed.
 
+Lemma fv_open_lower :
+  forall e1 e2 k,
+    fv e1 [<=] fv (open_rec k e2 e1).
+Proof with auto.
+  intros.
+  generalize dependent k.
+  induction e1; intros; simpl; try fsetdec...
+  - specialize (IHe1_1 k).
+    specialize (IHe1_2 k).
+    fsetdec...
+  - specialize (IHe1_1 k).
+    specialize (IHe1_2 k).
+    fsetdec...
+Qed.
+
+Lemma add_notin_context :
+  forall x T1 T2,
+    T1 [<=] add x T2 ->
+    x \notin T1 ->
+    T1 [<=] T2.
+Proof with auto.
+  intros.
+  fsetdec...
+Qed.
+
+Lemma fv_in_dom :
+  forall T e A,
+    typing T e A -> fv e [<=] dom T.
+Proof.
+  introv Htyp.
+  dependent induction Htyp; simpl; try fsetdec; eauto.
+  - apply binds_In in H0.
+    fsetdec.
+  - pick fresh x.
+    assert ((fv (open e x)) [<=] (dom ([(x, A)] ++ T))); eauto.
+    simpl in H2.
+    assert (fv e [<=] fv (open e x)).
+    eapply fv_open_lower.
+    assert (fv e [<=] add x (dom T)).
+    fsetdec.
+    eapply add_notin_context; eauto.
+Qed.
+    
+
 Lemma subst_value :
   forall e z u A ,
     typing nil e A -> subst_exp z u e = e.
-Proof.
-  Admitted.
+Proof with auto.
+  intros.
+  apply fv_in_dom in H...
+  simpl in H...
+  eapply subst_fresh; eauto.
+  fsetdec.
+Qed.
 
 Lemma typing_subst:
   forall E F e u S T (z : atom),
