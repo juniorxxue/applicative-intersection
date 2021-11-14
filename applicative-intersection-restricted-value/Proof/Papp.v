@@ -1,8 +1,8 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language LibTactics.
+Require Import Language LibTactics LN.
 Require Import Coq.Program.Tactics.
-Require Import SubAndTopLike Ptype Appsub Tred Consistent Disjoint.
+Require Import SubAndTopLike Ptype Appsub Tred Consistent Disjoint Value.
 
 Set Printing Parentheses.
 
@@ -21,7 +21,7 @@ Proof.
     eapply typing_to_ptype in Htyp2_1; eauto.
     eapply typing_to_ptype in Htyp1; eauto.
     simpl_deter. contradiction.
-  - dependent destruction H2; eauto.
+  - dependent destruction H3; eauto.
     eapply typing_to_ptype in Htyp2_1; eauto.
     eapply typing_to_ptype in Htyp1; eauto.
     simpl_deter. contradiction.
@@ -42,7 +42,7 @@ Proof.
     eapply typing_to_ptype in Htyp2_2; eauto.
     eapply typing_to_ptype in Htyp1; eauto.
     simpl_deter. contradiction.
-  - dependent destruction H2; eauto.
+  - dependent destruction H3; eauto.
     eapply typing_to_ptype in Htyp2_2; eauto.
     eapply typing_to_ptype in Htyp1; eauto.
     simpl_deter. contradiction.
@@ -66,7 +66,7 @@ Proof.
     + contradiction.
     + dependent destruction Htyp.
       assert (v' = v'0).
-      eapply tred_determinism; eauto 3.
+      eapply tred_determinism; eauto with con.
       congruence.
   - dependent destruction Hp2.
     + (* correct *)
@@ -115,6 +115,11 @@ Proof.
   induction Hpapp; intros; eauto.
   - dependent destruction Hv1.
     dependent destruction Htyp1; eauto.
+    assert (value v') by eauto with value.
+    eapply uvalue_anno.
+    eapply open_abs; eauto with lc.
+  - dependent destruction Hv1.
+    dependent destruction Htyp1; eauto.
   - dependent destruction Hv1.
     dependent destruction Htyp1; eauto.
   - dependent destruction Hv1.
@@ -132,6 +137,21 @@ Proof.
   - destruct_conjs; eauto.
 Qed.
 
+Lemma open_abs_auto :
+  forall e v v' A B C,
+    value v ->
+    typedred v A v' ->
+    lc (trm_abs e B C) ->
+    lc (open e v').
+Proof.
+  introv Hv H LC.
+  eapply tred_value_preservation in H.
+  eapply open_abs; eauto.
+  eapply value_lc. assumption. assumption.
+Qed.
+
+Hint Resolve open_abs_auto : lc.
+
 Lemma papp_consistent :
   forall (v1 v2 vl e1 e2 : trm) (A B C : typ),
     value v1 -> value v2 -> value vl ->
@@ -147,7 +167,7 @@ Proof.
   gen A B C.
   dependent induction Hp1.
   - dependent induction Hp2; intros; eauto. (* all solved by consistent -> disjoint -> toplike *)
-    + eapply con_disjoint; eauto.
+    + eapply con_disjoint; eauto with lc.
       eapply disjoint_toplike; eauto.
     + dependent destruction Hv2.
       dependent destruction Htyp2.
@@ -182,7 +202,10 @@ Proof.
            eapply con_disjoint; eauto.
            eapply disjoint_toplike; eauto.
   - dependent induction Hp2; intros; eauto. (* all solved by consistent -> disjoint -> toplike *)
-      + eapply con_disjoint; eauto.
+    + eapply con_disjoint.
+      eapply ptype_anno. eapply lc_int.
+      eapply ptype_anno. eapply open_abs; eauto.
+      assert (value v'0) by eauto with value. eauto with lc.
       eapply disjoint_toplike; eauto.
     + dependent destruction Hv2.
       dependent destruction Htyp2.
@@ -217,19 +240,23 @@ Proof.
            eapply con_disjoint; eauto.
            eapply disjoint_toplike; eauto.
   - dependent induction Hp2; intros; eauto.
-    + eapply con_disjoint; eauto.
+    + eapply con_disjoint.
+      eapply ptype_anno.
+      eapply open_abs; eauto.
+      assert (value v') by eauto with value. eauto with lc.
+      eapply ptype_anno. eapply lc_int.
       eapply disjoint_symmetry; eauto.
       eapply disjoint_toplike; eauto.
-    + eapply con_disjoint; eauto.
+    + eapply con_disjoint; eauto with lc.
       eapply disjoint_symmetry; eauto.
       eapply disjoint_toplike; eauto.
     + dependent destruction Hcons.
       * (* same e *)
-        assert (v' = v'0). eapply tred_determinism; eauto.
-        rewrite H3. eauto.
-      * dependent destruction H3. dependent destruction H4.
-        dependent destruction H5.
-        eapply con_disjoint; eauto.
+        assert (v' = v'0). eapply tred_determinism; eauto with con.
+        rewrite H6. eapply con_anno. eauto with lc.
+      * dependent destruction H5. dependent destruction H6.
+        dependent destruction H7.
+        eapply con_disjoint; eauto with lc.
     + dependent destruction Hv2.
       dependent destruction Htyp2.
       * eapply consistent_merge_r in Hcons.
@@ -268,7 +295,7 @@ Proof.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        eapply uvalue_ptype in H8. destruct H8.
+        eapply uvalue_ptype in H9. destruct H9.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -276,12 +303,12 @@ Proof.
       dependent destruction Hv1.
       dependent destruction Htyp1.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        eapply uvalue_ptype in H6. destruct H6.
+        pose proof (uvalue_ptype e H7). destruct_conjs.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        eapply uvalue_ptype in H8. destruct H8.
+        pose proof (uvalue_ptype e H10). destruct_conjs.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -314,7 +341,7 @@ Proof.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H8. destruct H8.
+        eapply uvalue_ptype in H9. destruct H9.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -322,12 +349,12 @@ Proof.
       dependent destruction Hv1.
       dependent destruction Htyp1.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H6. destruct H6.
+        eapply uvalue_ptype in H7. destruct H7.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
       * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H8. destruct H8.
+        eapply uvalue_ptype in H10. destruct H10.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -367,12 +394,12 @@ Proof.
            eapply disjoint_toplike; eauto.
       * eapply con_merge_l.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H8. destruct H8.
+           eapply uvalue_ptype in H9. destruct H9.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H8. destruct H8.
+           eapply uvalue_ptype in H9. destruct H9.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
@@ -381,23 +408,23 @@ Proof.
       dependent destruction Htyp1.
       * eapply con_merge_l.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H6. destruct H6.
+           eapply uvalue_ptype in H7. destruct H7.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H6. destruct H6.
+           eapply uvalue_ptype in H7. destruct H7.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
       * eapply con_merge_l.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H8. destruct H8.
+           eapply uvalue_ptype in H10. destruct H10.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
         ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H8. destruct H8.
+           eapply uvalue_ptype in H10. destruct H10.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
@@ -452,23 +479,90 @@ Proof.
   eapply typing_weakening_gen; eauto.
 Qed.
 
+Lemma typing_uniq :
+  forall E e T,
+    typing E e T -> uniq E.
+Proof.
+  introv H.
+  induction H; eauto.
+  - pick fresh x.
+    assert (J: uniq ((x ~ A) ++ T)); eauto.
+    dependent destruction J; eauto.
+Qed.
+
+Lemma typing_subst_var_case :
+  forall E F u S T (z x : atom),
+    binds x T (F ++ (z ~ S) ++ E) ->
+    uniq (F ++ (z ~ S) ++ E) ->
+    typing E u S ->
+    typing (F ++ E) (subst_exp z u x) T.
+Proof.
+  introv H J K.
+  simpl.
+  destruct (x == z).
+  - subst. assert (T = S).
+    eapply binds_mid_eq; eauto. subst.
+    eapply typing_weakening; eauto.
+  - eapply typing_var; eauto.
+Qed.
+
+Lemma subst_value :
+  forall e z u A ,
+    typing nil e A -> subst_exp z u e = e.
+Proof.
+  Admitted.
+
+Lemma typing_subst:
+  forall E F e u S T (z : atom),
+    typing (F ++ (z ~ S) ++ E) e T ->
+    typing E u S ->
+    typing (F ++ E) (subst_exp z u e) T.
+Proof.
+  introv He Hu.
+  remember (F ++ (z ~ S) ++ E) as E'.
+  gen F.
+  induction He; intros.
+  - subst. eapply typing_int; eauto.
+  - subst. eapply typing_subst_var_case; eauto.
+  - subst. simpl.
+    pick fresh y and apply typing_lam; eauto.
+    rewrite subst_open_var; eauto.
+    rewrite_env (([(y, A)] ++ F) ++ E).
+    eapply H0; eauto.
+  - subst. simpl.
+    eapply typing_anno; eauto.
+  - subst. simpl.
+    eapply typing_app; eauto.
+  - subst. simpl.
+    eapply typing_merge; eauto.
+  - subst. simpl.
+    pose proof (subst_value u1 z u _ He1).
+    pose proof (subst_value u2 z u _ He2).
+    rewrite H3. rewrite H4.
+    eapply typing_merge_uvalue; eauto.
+Qed.
+
 Lemma typing_rename : forall (x y : atom) E e T1 T2,
   x `notin` fv e -> y `notin` (dom E `union` fv e) ->
   typing ((x ~ T1) ++ E) (open e x) T2 ->
   typing ((y ~ T1) ++ E) (open e y) T2.
 Proof.
-Admitted.
+  introv Fr1 Fr2 Htyp.
+  destruct (x == y).
+  - subst. eauto.
+  - assert (J : uniq ((x ~ T1) ++ E)).
+    eapply typing_uniq; eauto.
+    assert (J': uniq E).
+    inversion J; eauto.
+    rewrite (@subst_intro x); eauto.
+    rewrite_env (nil ++ (y ~ T1) ++ E).
+    eapply typing_subst with (S := T1).
+    simpl_env.
+    eapply typing_weakening_gen; eauto.
+    eapply typing_var; eauto.
+Qed.
 
-Lemma subst_notin_fv : forall x y u e,
-   x `notin` fv e -> x `notin` fv u ->
-   x `notin` fv (subst_exp y u e).
-Proof.
-Admitted.
-
-Lemma subst_open_var_c : forall (x y : atom) u e,
-    open (subst_exp x u e) y = subst_exp x u (open e y).
-Proof.
-  Admitted.
+(* we can't prove it without substitution lemma *)
 
 Lemma substitution_preservation :
   forall F E x v e A B C,
@@ -503,7 +597,7 @@ Proof.
     intros.
     assert ((subst_exp x v (open e y)) = (open (subst_exp x v e) y)).
     symmetry.
-    eapply subst_open_var_c.
+    eapply subst_open_var; eauto.
     rewrite H7 in H4.    
     rewrite_env ([(y, A0)] ++ (F ++ E)) in H4.
     eapply (typing_rename y x1); eauto 3.
@@ -525,7 +619,7 @@ Proof.
     pose proof (IHHtyp2 F H0).
     destruct_conjs.
     eapply typing_app; eauto.
-    admit.
+    eapply appsub_iso; eauto.
   - assert ( ((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
     pose proof (IHHtyp1 F H0).
     pose proof (IHHtyp2 F H0).
@@ -533,32 +627,15 @@ Proof.
     destruct_conjs.
     exists (typ_and x0 x1). split; eauto.
     eapply typing_merge; eauto.
-    eapply disjoint_iso_r.
-    
-    
-
-Admitted.
-
-Lemma substitution_preservation' :
-  forall F E x v e A B C,
-    typing (F ++ [(x, A)] ++ E) e B ->
-    typing nil v C -> sub C A ->
-    (exists D, typing (F ++ E) (subst_exp x v e) D /\ sub D B).
-Proof.
-  introv Htyp Htypv Hsub.
-  remember (F ++ [(x, A)] ++ E) as E'.
-  gen F.
-  induction Htyp; intros; simpl; subst; eauto.
-  - destruct (x0 == x); eauto.
-    subst. eapply binds_mid_eq in H0; eauto. subst.
-    exists C. split; eauto.
-    eapply typing_weakening; eauto.
-    rewrite_env (E ++ nil).
-    eapply typing_weakening; eauto.
-    solve_uniq.
-  - exists (typ_arrow A0 B).
-    split.
-Admitted.
+    eapply disjoint_iso_l; eauto.
+  - assert ( ((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
+    exists (typ_and A0 B).
+    split; eauto.
+    pose proof (subst_value u1 x v _ Htyp1).
+    pose proof (subst_value u2 x v _ Htyp2).    
+    rewrite H4. rewrite H5.
+    eapply typing_merge_uvalue; eauto.
+Qed.
 
 Theorem papp_preservation :
   forall (v1 v2 e : trm) (A B C : typ),
@@ -585,19 +662,22 @@ Proof.
   - dependent destruction Htyp1.
     dependent destruction Has.
     dependent destruction Htyp1.
-    dependent destruction H3.
-    + dependent destruction H4. contradiction.
+    dependent destruction H4; eauto with subtyping.
     + (* correct *)
       exists D. split; eauto 3.
-      eapply tred_preservation in H; eauto 3.
-      destruct H. destruct H.
+      eapply tred_preservation in H0; eauto 3.
+      destruct H0. destruct H0.
       pick fresh y.
       rewrite (subst_intro y); eauto 3.
       assert (Fr': y `notin` L) by eauto.
-      pose proof (H1 y Fr').
-      rewrite_env (nil ++ [(y, A)] ++ nil) in H6.
+      pose proof (H2 y Fr').
+      rewrite_env (nil ++ [(y, A)] ++ nil) in H7.
+      pose proof (substitution_preservation nil nil y v' (open e y) A C0 x H7 H0 H6).
+      destruct H8. destruct H8.
       eapply typing_anno; eauto.
-      admit.
+      eapply iso_to_sub in H9.
+      eapply sub_transitivity; eauto with subtyping.
+      eapply sub_transitivity; eauto with subtyping.
     + dependent destruction Hv1.
       exfalso. eapply split_and_ord; eauto.
   - dependent destruction Hv1.
@@ -693,8 +773,8 @@ Proof.
         pose proof (papp_uvalue v2 vl e2 B C Hv1_2 Hv2 Htyp1_2 Htyp2 Hp2).
         eapply typing_merge_uvalue; eauto.
         pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
-        eapply H15; eauto.
-Admitted.
+        eapply H16; eauto.
+Qed.
 
 Inductive applicable : typ -> Prop :=
 | applicable_arrow : forall (A B : typ),
@@ -748,7 +828,7 @@ Proof.
   induction Hord; eauto.
   dependent destruction Hsub; eauto.
   - inversion H.
-  - destruct (toplike_or_not_toplike B0); eauto.
+  - destruct (toplike_decidability B0); eauto.
     dependent destruction Hsub; eauto.
     + left. exists A0. exists B0.
       eauto.
@@ -804,12 +884,12 @@ Proof.
         eapply tred_progress; eauto.
         eapply sub_transitivity; eauto.
         destruct_conjs.
-        exists (trm_anno (open e H8) H3).
+        eexists.
         eapply papp_abs_anno; eauto.
       * eapply appsub_ord_form in Has; eauto.
         destruct_conjs. subst.
-        exists (trm_anno (trm_int 1) H3).
         dependent destruction H0.
+        eexists.
         eapply papp_abs_toplike; eauto.
   - dependent destruction Has.
     + inversion Htyp1.
@@ -820,7 +900,7 @@ Proof.
         eapply appsub_to_auxas; eauto.
       * assert (exists e, papp v1 v0 e). (* from appsub *)
         eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
-        destruct H3. exists x. eapply papp_merge_l; eauto.
+        destruct H4. exists x. eapply papp_merge_l; eauto.
         eapply appsub_to_auxas; eauto.
     + dependent destruction Htyp1.
       * assert (exists e, papp v2 v0 e). (* from appsub *)
@@ -829,7 +909,7 @@ Proof.
         eapply appsub_to_auxas; eauto. 
       *  assert (exists e, papp v2 v0 e). (* from appsub *)
          eapply IHHv1_2. eapply Htyp1_2. eapply Has. eapply Hv2. eapply Htyp2.
-         destruct H3. exists x. eapply papp_merge_r; eauto.
+         destruct H4. exists x. eapply papp_merge_r; eauto.
          eapply appsub_to_auxas; eauto.
     + dependent destruction Htyp1.
       * assert (exists e, papp v1 v0 e). (* from appsub *)
@@ -845,7 +925,7 @@ Proof.
         assert (exists e, papp v2 v0 e).
         eapply IHHv1_2. eapply Htyp1_2. eapply Has2. eapply Hv2. eapply Htyp2.
         destruct_conjs.
-        exists (trm_merge H2 H3). eapply papp_merge_p; eauto.
+        eexists. eapply papp_merge_p; eauto.
         eapply appsub_to_auxas; eauto.
         eapply appsub_to_auxas; eauto.
 Qed.

@@ -1,6 +1,6 @@
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
-Require Import Language LibTactics.
+Require Import Language LN LibTactics.
 Require Import Strings.String.
 Require Import Program.Tactics.
 
@@ -19,7 +19,7 @@ Proof.
     congruence.
 Qed.
 
-Hint Resolve ptype_determinism : core.
+Hint Resolve ptype_determinism : ptype.
 
 Ltac simpl_deter :=
   repeat
@@ -40,4 +40,20 @@ Proof.
   - dependent destruction Htyp; eauto.
 Qed.
 
-Hint Resolve typing_to_ptype : core.
+Hint Resolve typing_to_ptype : ptype core.
+
+Lemma typing_and_ptype :
+  forall A B u,
+    value u ->
+    ptype u A ->
+    typing nil u B ->
+    A = B.
+Proof.
+  introv Hv Hp Htyp.
+  eapply typing_to_ptype in Htyp; eauto.
+  eapply ptype_determinism; eauto.
+Qed.
+
+Hint Resolve typing_and_ptype : ptype.
+    
+    

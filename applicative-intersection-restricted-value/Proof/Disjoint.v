@@ -95,15 +95,15 @@ Proof.
   - assert (sub typ_int typ_int) by eauto.
     pose proof (H typ_int H0 H0).
     inversion H1.
-  - eapply disjoint_and_r; eauto.
+  - eapply disjoint_and_r; eauto with subtyping.
   - eapply disjoint_arr_arr.
     eapply IHA2. intros.
-    assert (toplike (typ_arrow (typ_and A1 B1) C)) by (eapply H; eauto).
+    assert (toplike (typ_arrow (typ_and A1 B1) C)) by (eapply H; eauto with subtyping).
     now dependent destruction H2.
-  - eapply disjoint_and_r; eauto.
-  - eapply disjoint_and_l; eauto.
-  - eapply disjoint_and_l; eauto.
-  - eapply disjoint_and_l; eauto.
+  - eapply disjoint_and_r; eauto with subtyping.
+  - eapply disjoint_and_l; eauto with subtyping.
+  - eapply disjoint_and_l; eauto with subtyping.
+  - eapply disjoint_and_l; eauto with subtyping.
 Qed.
 
 Lemma disjoint_sub :
@@ -116,15 +116,6 @@ Proof.
   unfold disjoint_spec in *. intros.
   eapply Hdisj; eauto.
   eapply sub_transitivity; eauto.
-Qed.
-
-
-Lemma iso_to_sub :
-  forall (A B : typ),
-    isomorphic A B -> sub A B.
-Proof.
-  introv Hiso.
-  induction Hiso; eauto.  
 Qed.
 
 Lemma disjoint_iso_transitivity :

@@ -49,7 +49,7 @@ Fixpoint size_trm (e : trm) {struct e} : nat :=
   end.
 
 Notation "e ∷ A" := (trm_anno e A) (at level 20).
-Notation "ƛ. e ∷ A → B" := (trm_abs e A B) (at level 20).
+Notation "ƛ. e A → B" := (trm_abs e A B) (at level 20).
 
 Coercion trm_fvar : atom >-> trm.
 
@@ -77,33 +77,6 @@ Fixpoint fv (e : trm) {struct e} : atoms :=
   | trm_anno e1 A => (fv e1)
   end.
 
-Lemma subst_fresh : forall (x : atom) e u,
-    x `notin` fv e -> subst_exp x u e = e.
-Proof.
-  intros.
-  induction e; eauto.
-  - Case "fvar".
-    simpl.
-    destruct (a == x).
-    + SCase "a = x".
-      subst. simpl fv in H. fsetdec.
-    + SCase "a <> x".
-      auto.
-  - Case "abs".
-    simpl.
-    f_equal.
-    auto.
-  - Case "app".
-    simpl in *.
-    f_equal; auto.
-  - Case "merge".
-    simpl in *.
-    f_equal; auto.
-  - Case "anno".
-    simpl in *.
-    f_equal; auto.
-Qed.
-
 Definition ctx : Set := list (var * typ).
 
 Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
@@ -118,55 +91,26 @@ Fixpoint open_rec (k : nat) (u : trm) (t : trm) {struct t} : trm :=
   end.
 
 Definition open t u := open_rec 0 u t.
-
-Lemma subst_eq_var:
-  forall (x : atom) u,
-    subst_exp x u x = u.
-Proof.
-  intros.
-  simpl.
-  destruct (x == x); eauto.
-  destruct n; eauto.
-Qed.
-
-Lemma subst_intro :
-  forall (x : atom) u e,
-    x `notin` (fv e) ->
-    open e u = subst_exp x u (open e x).
-Proof.
-  intros.
-  unfold open.
-  generalize 0.
-  induction e; intros n0; simpl; eauto.
-  - destruct (n0 == n).
-    + now rewrite subst_eq_var.
-    + simpl. auto.
-  - destruct (a == x); eauto.
-    simpl in H. fsetdec.
-  - f_equal. simpl in H.
-    now eapply IHe.
-  - simpl in H.
-    f_equal; eauto.
-  - simpl in H.
-    f_equal; eauto.
-  - simpl in H.
-    f_equal; eauto.
-Qed.
     
 Inductive lc : trm -> Prop :=
 | lc_int : forall (n : nat),
     lc (trm_int n)
 | lc_var : forall (x : atom),
     lc (trm_fvar x)
-| lc_abs : forall (x : atom) (e : trm) (A B : typ),
-    x `notin` fv e -> lc (open e x) ->
+| lc_abs : forall (e : trm) (A B : typ) (L : atoms),
+    (forall x : atom, x `notin` L -> lc (open e x)) ->
     lc (trm_abs e A B)
 | lc_app : forall (e1 e2 : trm),
     lc e1 -> lc e2 ->
     lc (trm_app e1 e2)
 | lc_merge : forall (e1 e2 : trm),
     lc e1 -> lc e2 ->
-    lc (trm_merge e1 e2).
+    lc (trm_merge e1 e2)
+| lc_anno : forall (e : trm) (A : typ),
+    lc e ->
+    lc (trm_anno e A).
+
+Hint Constructors lc : core.
 
 Inductive ordinary : typ -> Prop :=
 | ord_top : ordinary typ_top
@@ -178,7 +122,8 @@ Hint Constructors ordinary : core.
 
 Inductive pvalue : trm -> Prop :=
 | pvalue_nat : forall (n : nat), pvalue (trm_int n)
-| pvalue_abs : forall (e : trm) (A B : typ), pvalue (trm_abs e A B).
+| pvalue_abs : forall (e : trm) (A B : typ),
+    lc (trm_abs e A B) -> pvalue (trm_abs e A B).
 
 Inductive value : trm -> Prop :=
 | value_anno : forall (A : typ) (e : trm),
@@ -190,6 +135,7 @@ Inductive uvalue : trm -> Prop :=
 | uvalue_p : forall (p : trm),
     pvalue p -> uvalue p
 | uvalue_anno : forall (e : trm) (A : typ),
+    lc e ->
     uvalue (trm_anno e A)
 | uvalue_merge : forall (u1 u2 : trm),
     uvalue u1 -> uvalue u2 -> uvalue (trm_merge u1 u2).
@@ -334,9 +280,11 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     sub A typ_int ->
     typedred (trm_anno (trm_int n) A) typ_int (trm_anno (trm_int n) typ_int)
 | tred_top : forall (A : typ) (v : trm),
+    lc v ->
     toplike A -> ordinary A ->
     typedred v A (trm_anno (trm_int 1) A)
 | tred_arrow_anno : forall (A B C D E : typ) (e : trm),
+    lc (trm_abs e A B) ->
     not (toplike D) -> sub E (typ_arrow C D) ->
     ordinary D ->
     typedred (trm_anno (trm_abs e A B) E)
@@ -362,8 +310,10 @@ Inductive ptype : trm -> typ -> Prop :=
 | ptype_int : forall (n : nat),
     ptype (trm_int n) typ_int
 | ptype_arrow : forall (e : trm) (A B : typ),
+    lc (trm_abs e A B) ->
     ptype (trm_abs e A B) (typ_arrow A B)
 | ptype_anno : forall (e : trm) (A : typ),
+    lc e ->
     ptype (trm_anno e A) A
 | ptype_merge : forall (e1 e2 : trm) (A B : typ),
     ptype e1 A ->
@@ -379,8 +329,10 @@ Inductive consistent : trm -> trm -> Prop :=
 | con_int : forall (n : nat),
     consistent (trm_int n) (trm_int n)
 | con_abs : forall (e : trm) (A B1 B2 : typ),
+    lc (trm_abs e A B1) ->
     consistent (trm_abs e A B1) (trm_abs e A B2)
 | con_anno : forall (e : trm) (A B : typ),
+    lc e ->
     consistent (trm_anno e A) (trm_anno e B)
 | con_disjoint : forall (u1 u2 : trm) (A B : typ),
     ptype u1 A -> ptype u2 B -> disjoint A B ->
@@ -419,6 +371,7 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
     typing T e2 B ->
     typing T (trm_merge e1 e2) (typ_and A B)
 | typing_merge_uvalue : forall (T : ctx) (A B : typ) (u1 u2 : trm),
+    uniq T ->
     uvalue u1 -> uvalue u2 ->
     consistent u1 u2 ->
     typing nil u1 A ->
@@ -434,10 +387,12 @@ Inductive papp : trm -> trm -> trm -> Prop :=
     toplike B ->
     papp (trm_anno (trm_int n) (typ_arrow A B)) vl (trm_anno (trm_int 1) B)
 | papp_abs_toplike : forall (A B C D : typ) (e v v' : trm),
+    lc (trm_abs e A B) ->
     toplike D ->
     papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
          (trm_anno (trm_int 1) D)         
 | papp_abs_anno : forall (A B C D : typ) (e v v' : trm),
+    lc (trm_abs e A B) ->
     typedred v A v' ->
     not (toplike D) ->
     papp (trm_anno (trm_abs e A B) (typ_arrow C D)) v
@@ -488,6 +443,7 @@ Inductive step : trm -> trm -> Prop :=
     not (pvalue e) ->
     step e e' -> step (trm_anno e A) (trm_anno e' A)
 | step_app_l : forall (e1 e2 e1' : trm),
+    lc e2 ->
     step e1 e1' -> step (trm_app e1 e2) (trm_app e1' e2)
 | step_app_r : forall (v e2 e2' : trm),
     value v -> step e2 e2' -> step (trm_app v e2) (trm_app v e2')

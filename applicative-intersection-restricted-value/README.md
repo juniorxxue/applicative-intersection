@@ -580,7 +580,7 @@ v ,, e2 --> v ,, e2'
 # Typing
 
 ```
-T |- e => A
+T |- e => A (no subsumption lemma)
 
 
 ---------------- T-Int

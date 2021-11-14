@@ -1,12 +1,12 @@
 Require Import Metalib.Metatheory.
+Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
-Require Import Language LibTactics.
+Require Import Language LN LibTactics.
 Require Import Strings.String.
 Require Import SubAndTopLike Value Disjoint Ptype.
 Require Import Psatz. (* lia *)
 
-(* aux lemma for tred_determinism *)
 Lemma tred_ord_toplike :
   forall (v v' : trm) (A : typ),
     ordinary A -> toplike A -> typedred v A v' ->
@@ -18,9 +18,8 @@ Proof.
   - exfalso. eapply split_and_ord; eauto.
 Qed.
 
-Hint Resolve tred_ord_toplike : core.
+Hint Resolve tred_ord_toplike : tred.
 
-(* aux lemma for disjoint_value_consistent *)
 Lemma tred_sub :
   forall (A : typ) (v v' : trm),
     value v -> typedred v A v' -> forall (B : typ),
@@ -40,6 +39,8 @@ Proof.
     eapply sub_and_r; eauto.
 Qed.
 
+Hint Resolve tred_sub : tred.
+
 Theorem tred_determinism :
   forall (v1 v2 v1' v2' : trm) (A B C : typ),
     value v1 -> value v2 ->
@@ -51,53 +52,33 @@ Proof.
   gen A B v1 v2 v1' v2'.
   ind_typ_size (size_typ C).
   destruct (split_or_ord C).
-  - gen A B. induction Hcons; try solve [inversion Hv1 | inversion Hv2]; intros.
-    (* con anno *)
-    + dependent destruction Hv1. dependent destruction Hv2.
-      destruct H; destruct H1.
-      * dependent destruction Hr1; dependent destruction Hr2;
-          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-        ** inversion H1.
-        ** inversion H.
-      * dependent destruction Hr1; dependent destruction Hr2;
-          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-        ** dependent destruction H. contradiction.
-        ** dependent destruction H4. contradiction.
-      * dependent destruction Hr1; dependent destruction Hr2;
-          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-        ** inversion H1.
-        ** inversion H.
-      * dependent destruction Hr1; dependent destruction Hr2;
-          try solve [exfalso; eapply split_and_ord; eauto | reflexivity].
-        ** dependent destruction H. contradiction.
-        ** dependent destruction H4. contradiction.
-    (* con disjoint *)
-    + assert (ptype u1 A0) by (now eapply typing_to_ptype in Htyp1).
-      eapply ptype_determinism in H0; eauto. subst.
-      assert (ptype u2 B0) by (now eapply typing_to_ptype in Htyp2).
-      eapply ptype_determinism in H1; eauto. subst.
+  - gen A B. induction Hcons; eauto with value; intros.
+    + Case "anno".
+      dependent destruction Hv1. dependent destruction Hv2.
+      destruct H; destruct H1;
+        try solve [dependent destruction Hr1; dependent destruction Hr2; eauto with subtyping].
+    + Case "disjoint".
+      assert (A0 = A) by eauto with ptype. subst.
+      assert (B0 = B) by eauto with ptype. subst.
       eapply disjoint_complete in H2.
-      assert (sub A C) by (eapply tred_sub in Hr1; eauto).
-      assert (sub B C) by (eapply tred_sub in Hr2; eauto).
-      assert (toplike C) by (now eapply H2).
+      assert (sub A C) by eauto with tred.
+      assert (sub B C) by eauto with tred.
+      assert (toplike C) by eauto.
       eapply tred_ord_toplike in Hr1; eauto.
       eapply tred_ord_toplike in Hr2; eauto.
       now subst.
-    + dependent destruction Hv1.
-      dependent destruction Hr1.
+    + Case "merge".
+      dependent destruction Hr1; eauto with subtyping.
       * symmetry. eapply tred_ord_toplike; eauto.
-      * dependent destruction Htyp1; eapply IHHcons1; eauto.
-      * dependent destruction Htyp1; eapply IHHcons2; eauto.
-      * exfalso. eapply split_and_ord; eauto.
-    + dependent destruction Hv2.
-      dependent destruction Hr2.
+      * dependent destruction Htyp1; eapply IHHcons1; eauto with value.
+      * dependent destruction Htyp1; eapply IHHcons2; eauto with value.
+    + Case "merge".
+      dependent destruction Hr2; eauto with subtyping.
       * eapply tred_ord_toplike; eauto.
-      * dependent destruction Htyp2; eapply IHHcons1; eauto.
-      * dependent destruction Htyp2; eapply IHHcons2; eauto.
-      * exfalso. eapply split_and_ord; eauto.
+      * dependent destruction Htyp2; eapply IHHcons1; eauto with value.
+      * dependent destruction Htyp2; eapply IHHcons2; eauto with value.
   - destruct_conjs.
-    dependent destruction Hr1; try solve [exfalso; eauto 3].
-    dependent destruction Hr2; try solve [exfalso; eauto 3].
+    dependent destruction Hr1; dependent destruction Hr2; eauto with subtyping.
     eapply split_determinism in H0; eauto.
     destruct_conjs. subst.
     eapply split_determinism in H; eauto.
@@ -117,28 +98,11 @@ Lemma tred_value_preservation :
   forall (v v' : trm) (A : typ),
     value v -> typedred v A v' -> value v'.
 Proof.
-  intros.
-  dependent induction H0;
-    try solve [eauto | dependent destruction H; eauto].
+  introv Hv Htred.
+  dependent induction Htred; eauto with value.
 Qed.
 
-Hint Resolve tred_value_preservation : core.
-
-Lemma sub_toplike_int_false :
-  forall (A : typ),
-    toplike A -> sub A typ_int -> False.
-Proof.
-  introv Htl Hsub.
-  induction Htl; eauto.
-  - dependent destruction Hsub; info_eauto.
-    inversion H0.
-  - dependent destruction Hsub; eauto.
-  - dependent destruction Hsub.
-    + inversion H0.
-    + inversion H.
-Qed.
-
-Hint Resolve sub_toplike_int_false : obvious.
+Hint Resolve tred_value_preservation : value.
 
 Lemma tred_transitivity :
   forall (v v1 v2 : trm) (A B : typ),
@@ -149,10 +113,8 @@ Lemma tred_transitivity :
 Proof.
   introv Hv Hred1 Hred2.
   gen B v2.
-  induction Hred1; intros.
-  - dependent induction Hred2; eauto.
-  - dependent induction Hred2; eauto.
-    exfalso. eapply sub_toplike_int_false; eauto.
+  induction Hred1; intros;
+    try solve [dependent induction Hred2; eauto; eauto with lc; eauto with subtyping].
   - dependent induction Hred2; eauto.
     eapply tred_arrow_anno; eauto.
     eapply sub_transitivity; eauto.
@@ -160,7 +122,6 @@ Proof.
     dependent induction Hred2; eauto.
   - dependent destruction Hv.
     dependent induction Hred2; eauto.
-  - dependent induction Hred2; eauto.
 Qed.
 
 Theorem tred_progress :
@@ -172,47 +133,33 @@ Proof.
   introv Hv Htyp Hsub.
   gen v.
   dependent induction Hsub; intros; eauto.
-  - dependent destruction Htyp;
-      try solve [exfalso; eauto].
-    + dependent destruction Hv.
-      dependent induction H; eauto.
-      dependent destruction Htyp.
-      exfalso; eauto with obvious.
-    + inversion Hv.
-  - dependent destruction Htyp.
-    + inversion H1.
-    + inversion Hv.
-    + assert (toplike D \/ not (toplike D)).
-      eapply toplike_or_not_toplike.
-      destruct H1.
-      (* case top *)
-      exists (trm_anno (trm_int 1) (typ_arrow B D)); eauto.
-      (* case not top *)
+  - dependent destruction Htyp; eauto with value.
+    dependent destruction Hv.
+    dependent induction H; eauto.
+    dependent destruction Htyp.
+    eauto with subtyping.
+  - dependent destruction Htyp; eauto with value.
+    destruct (toplike_decidability D); try solve [eexists; eauto].
+    + Case "top".
+      exists (trm_anno (trm_int 1) (typ_arrow B D)).
+      eapply tred_top; eauto.
+    + Case "arrow".
       dependent destruction Hv.
-      dependent destruction H0.
-      (* case int *)
+      dependent destruction H0; eauto.      
       dependent destruction Htyp.
-      eapply sub_int_arrow_false in H2; eauto. contradiction.
-      intro Hcontra. eapply sub_toplike_preservation in Hsub2; eauto.
-      (* case arrow *)
-      dependent destruction Htyp.
-      exists (trm_anno (trm_abs e A0 B0) (typ_arrow B D)); eauto.
-    + inversion Hv.
+      assert (not (toplike C)) by eauto with subtyping.
+      eauto with subtyping.
   - assert (exists v', typedred v B v'); eauto.
     assert (exists v', typedred v C v'); eauto.
     destruct_conjs; eauto.
-  - dependent destruction Htyp; eauto; try solve [inversion Hv].
-    + dependent destruction Hv.
-      inversion H1.
+  - dependent destruction Htyp; eauto; eauto with value.
     + dependent destruction Hv.
       assert (exists v', typedred e1 C v'); eauto.
       destruct_conjs; eauto.
     + dependent destruction Hv.
       assert (exists v', typedred u1 C v'); eauto.
       destruct_conjs; eauto.
-  - dependent destruction Htyp; eauto; try solve [inversion Hv].
-    + dependent destruction Hv.
-      inversion H1.
+  - dependent destruction Htyp; eauto with value.
     + dependent destruction Hv.
       assert (exists v', typedred e2 C v'); eauto.
       destruct_conjs; eauto.
@@ -220,3 +167,5 @@ Proof.
       assert (exists v', typedred u2 C v'); eauto.
       destruct_conjs; eauto.
 Qed.
+
+Hint Resolve tred_progress : tred.
