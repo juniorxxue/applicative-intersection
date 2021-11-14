@@ -147,42 +147,7 @@ Proof.
     eauto.
 Qed.
 
-Lemma disjoint_iso_l :
-  forall (A B C1 C2 : typ),
-    disjoint C1 C2 ->
-    isomorphic A C1 ->
-    isomorphic B C2 ->
-    disjoint A B.
-Proof.
-  introv Hdisj Hiso1 Hiso2.
-  gen A B.
-  dependent induction Hdisj; intros.
-  - dependent destruction Hiso1; eauto.
-    inversion H.
-  - dependent destruction Hiso2; eauto.
-    inversion H.
-  - dependent destruction Hiso1; eauto.
-    dependent destruction H; eauto.
-  - dependent destruction Hiso2; eauto.
-    dependent destruction H; eauto.
-  - admit.
-  - admit.
-Admitted.
 
-Lemma disjoint_iso_r :
-  forall (A B C1 C2 : typ),
-    disjoint A B ->
-    isomorphic A C1 ->
-    isomorphic B C2 ->
-    disjoint C1 C2.
-Proof.
-  introv Hdisj Hiso1 Hiso2.
-  assert (disjoint C1 B).
-  eapply disjoint_iso_transitivity; eauto.
-  eapply disjoint_symmetry.
-  eapply disjoint_symmetry in H.
-  eapply disjoint_iso_transitivity; eauto.
-Qed.
 
 Lemma disjoint_spec_toplike :
   forall (A B : typ),
@@ -238,4 +203,56 @@ Proof.
   - dependent destruction Hspl.
     pose proof (IHHdisj _ _ Hspl).
     destruct_conjs; eauto.
+Qed.
+
+Lemma disjoint_iso_l1 :
+  forall (A C1 C2: typ),
+    disjoint C1 C2 ->
+    isomorphic A C1 ->
+    disjoint A C2.
+Proof.
+  introv Hdisj Hiso.
+  gen C2. dependent induction Hiso; intros; eauto.
+  eapply disjoint_split_l in Hdisj; eauto.
+  destruct Hdisj; eauto.
+Qed.
+
+Lemma disjoint_iso_l2 :
+  forall (B C1 C2: typ),
+    disjoint C1 C2 ->
+    isomorphic B C2 ->
+    disjoint C1 B.
+Proof.
+  introv Hdisj Hiso.
+  gen C1. dependent induction Hiso; intros; eauto.
+  eapply disjoint_split_r in Hdisj; eauto.
+  destruct Hdisj; eauto.
+Qed.
+
+Lemma disjoint_iso_l :
+  forall (A B C1 C2 : typ),
+    disjoint C1 C2 ->
+    isomorphic A C1 ->
+    isomorphic B C2 ->
+    disjoint A B.
+Proof.
+  introv Hdisj Hiso1 Hiso2.
+  assert (disjoint A C2).
+  eapply disjoint_iso_l1; eauto.
+  eapply disjoint_iso_l2; eauto.
+Qed.
+
+Lemma disjoint_iso_r :
+  forall (A B C1 C2 : typ),
+    disjoint A B ->
+    isomorphic A C1 ->
+    isomorphic B C2 ->
+    disjoint C1 C2.
+Proof.
+  introv Hdisj Hiso1 Hiso2.
+  assert (disjoint C1 B).
+  eapply disjoint_iso_transitivity; eauto.
+  eapply disjoint_symmetry.
+  eapply disjoint_symmetry in H.
+  eapply disjoint_iso_transitivity; eauto.
 Qed.
