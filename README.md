@@ -27,3 +27,5 @@
 [applicative-intersection-no-typing-stack](applicative-intersection-no-typing-stack): system with bcd distributivity, but without stack on typing
 
 [applicative-intersection-restricted-value](applicative-intersection-restricted-value): followed, but anno in value cannot be and type
+
+[applicative-intersection-split-appsub](applicative-intersection-split-appsub): followed, but appsub on splittable types
