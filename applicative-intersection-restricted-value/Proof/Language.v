@@ -240,7 +240,7 @@ Inductive appsub : arg -> typ -> typ -> Prop :=
     appsub (Some C) B D ->
     not (auxas (Some C) A) ->
     appsub (Some C) (typ_and A B) D
-| as_and_both : forall (A B C D1 D2: typ) (S : arg),
+| as_and_both : forall (A B C D1 D2: typ),
     appsub (Some C) A D1 ->
     appsub (Some C) B D2 ->
     appsub (Some C) (typ_and A B) (typ_and D1 D2).
@@ -326,8 +326,6 @@ Definition consistency_spec v1 v2 :=
   forall (A : typ) (v1' v2' : trm), ordinary A -> typedred v1 A v1' -> typedred v2 A v2' -> v1' = v2'.
 
 Inductive consistent : trm -> trm -> Prop :=
-| con_int : forall (n : nat),
-    consistent (trm_int n) (trm_int n)
 | con_abs : forall (e : trm) (A B1 B2 : typ),
     lc (trm_abs e A B1) ->
     consistent (trm_abs e A B1) (trm_abs e A B2)
@@ -473,7 +471,7 @@ Inductive isomorphic : typ -> typ -> Prop :=
 
 Hint Constructors isomorphic : core.
 
-Notation "A ≈ B" := (isomorphic A B) (at level 40).
+Notation "A ≋ B" := (isomorphic A B) (at level 40).
 
 Ltac gather_atoms ::=
   let A := gather_atoms_with (fun x : atoms => x) in

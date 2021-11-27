@@ -75,6 +75,29 @@ Ltac indExpSize s :=
       intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H) end
     | intros ].
 
+Inductive step_or_value : trm -> trm -> Prop :=
+| sov_v : forall v, value v -> step_or_value v v
+| sov_s : forall e1 e2, step e1 e2 -> step_or_value e1 e2.
+
+Hint Constructors step_or_value : core.
+
+Lemma step_consistent_preservation :
+  forall e1 e2 e1' e2' A B,
+    typing nil e1 A -> typing nil e2 B ->
+    consistent e1 e2 ->
+    step_or_value e1 e1' -> step_or_value e2 e2' ->
+    consistent e1' e2'.
+Proof.
+  introv Ht1 Ht2 Hc Hs1 Hs2.
+  gen A B e1' e2'.
+  dependent induction Hc; intros; eauto with con.
+  - dependent destruction Hs1; dependent destruction Hs2; eauto with value.
+    dependent destruction H0. dependent destruction H1.
+    admit.
+  - dependent destruction Hs1; dependent destruction Hs2; eauto with value.
+    + dependent destruction H1; eauto.
+Abort.
+
 Lemma step_consistent_preservation_l :
   forall e1 e2 e1' A B,
     typing nil e1 A -> typing nil e2 B ->
@@ -101,7 +124,7 @@ Lemma step_consistent_preservation :
     consistent e1' e2'.
 Proof.
 Admitted.
-
+ 
 Lemma tred_lc_preservation :
   forall v v' A,
     lc v ->
@@ -218,14 +241,14 @@ Proof.
     + assert (exists B0, typing nil e1' B0 /\ isomorphic B0 B) by eauto.
       destruct H1.
       destruct H1.
-      exists C. split; eauto.
-      eapply typing_app; eauto.
-      eapply appsub_iso2; eauto.
+      eapply appsub_iso2 in H; eauto.
+      destruct H. destruct H.
+      exists x0. split; eauto.
     + assert (exists B0, typing nil e2' B0 /\ isomorphic B0 A) by eauto.
       destruct H1. destruct H1.
-      exists C. split; eauto.
-      eapply typing_app; eauto.
-      eapply appsub_iso1; eauto.
+      eapply appsub_iso1 in H; eauto.
+      destruct H. destruct H.
+      exists x0. split; eauto.
   - dependent destruction Hred.
     + assert (exists C, (typing nil e1' C) /\ (isomorphic C A)) by eauto.
       assert (exists C, (typing nil e2' C) /\ (isomorphic C B)) by eauto.

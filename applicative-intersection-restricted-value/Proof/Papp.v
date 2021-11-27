@@ -662,13 +662,13 @@ Proof.
     pose proof (H0 H1). destruct H2. destruct H2.
     eapply typing_anno; eauto. eapply iso_to_sub in H3.
     eapply sub_transitivity; eauto.
-  - exists C0. split; eauto.
-    assert (((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
+  - assert (((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
     pose proof (IHHtyp1 F H0).
     pose proof (IHHtyp2 F H0).
     destruct_conjs.
-    eapply typing_app; eauto.
-    eapply appsub_iso; eauto.
+    eapply appsub_iso in H; eauto.
+    destruct H. destruct H.
+    exists x0. split; eauto.
   - assert ( ((F ++ ([(x, A)] ++ E)) = (F ++ ([(x, A)] ++ E)))) by reflexivity.
     pose proof (IHHtyp1 F H0).
     pose proof (IHHtyp2 F H0).
