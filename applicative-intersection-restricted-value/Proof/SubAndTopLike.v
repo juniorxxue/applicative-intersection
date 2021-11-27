@@ -385,6 +385,21 @@ Proof.
   induction Hiso; eauto with subtyping.
 Qed.
 
+Lemma iso_to_sub' :
+  forall (A B : typ),
+    isomorphic A B -> sub B A.
+Proof.
+  introv Hiso.
+  induction Hiso; eauto with subtyping.
+  eapply sub_and; eauto.
+  - assert (sub (typ_and B1 B2) A1) by eauto with subtyping.
+    eapply splitable_iso in H. destruct H.
+    eapply sub_transitivity; eauto.
+  - assert (sub (typ_and B1 B2) A2) by eauto with subtyping.
+    eapply splitable_iso in H. destruct H.
+    eapply sub_transitivity; eauto.
+Qed.
+
 Hint Resolve iso_to_sub : subtyping.
 
 Lemma sub_not_toplike :
