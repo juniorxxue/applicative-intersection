@@ -251,9 +251,11 @@ Proof.
       eapply disjoint_symmetry; eauto.
       eapply disjoint_toplike; eauto.
     + dependent destruction Hcons.
+      * assert (v' = v'0). eapply tred_determinism; eauto with con.
+        subst. eapply con_anno. eauto with lc.
       * (* same e *)
         assert (v' = v'0). eapply tred_determinism; eauto with con.
-        rewrite H6. eapply con_anno. eauto with lc.
+        subst. eapply con_anno. eauto with lc.
       * dependent destruction H5. dependent destruction H6.
         dependent destruction H7.
         eapply con_disjoint; eauto with lc.

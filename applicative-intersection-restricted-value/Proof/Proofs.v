@@ -161,8 +161,18 @@ Proof.
   gen A B e1' e2'.
   dependent induction Hc; intros; eauto with con.
   - dependent destruction Hs1; dependent destruction Hs2; eauto with value.
-    dependent destruction H0. dependent destruction H1.
-    admit.
+    dependent destruction H0. dependent destruction H1; eauto.
+  - dependent destruction Hs1; dependent destruction Hs2; eauto.
+    + dependent destruction H1; eauto with value.
+      assert (pvalue (trm_abs e A B2)) by eauto with lc. contradiction.
+    + dependent destruction H0; eauto with value.
+      assert (pvalue (trm_abs e A B1)) by eauto with lc. contradiction.
+    + dependent destruction Htyp1. dependent destruction Htyp2.
+      dependent destruction H2; eauto with value.
+      * dependent destruction H3; eauto with value.
+        ** eapply con_merge_l; eauto.
+        ** assert (pvalue (trm_abs e A B2)) by eauto with lc. contradiction.
+      * assert (pvalue (trm_abs e A B1)) by eauto with lc. contradiction.
   - dependent destruction Hs1; dependent destruction Hs2; eauto.
     + dependent destruction H0. dependent destruction H0.
       ** dependent destruction H2; eauto with con value.
@@ -295,7 +305,7 @@ Proof.
         ** eapply con_merge_r; eauto with value.
            *** eapply IHHc1; eauto. intros. eapply IH; eauto. simpl; lia.
            *** eapply IHHc2; eauto. intros. eapply IH; eauto. simpl; lia.
-Admitted.
+Qed.
 
 Theorem preservation' :
   forall (e e' : trm) (A: typ),

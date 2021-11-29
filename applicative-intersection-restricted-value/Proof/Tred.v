@@ -53,6 +53,9 @@ Proof.
   ind_typ_size (size_typ C).
   destruct (split_or_ord C).
   - gen A B. induction Hcons; eauto with value; intros.
+    + Case "abs anno".
+      dependent destruction Hv1. dependent destruction Hv2.
+      dependent destruction Hr1; dependent destruction Hr2; eauto with subtyping.
     + Case "anno".
       dependent destruction Hv1. dependent destruction Hv2.
       destruct H; destruct H1;
@@ -99,7 +102,7 @@ Lemma tred_value_preservation :
     value v -> typedred v A v' -> value v'.
 Proof.
   introv Hv Htred.
-  dependent induction Htred; eauto with value.
+  dependent induction Htred; eauto with value lc.
 Qed.
 
 Hint Resolve tred_value_preservation : value.

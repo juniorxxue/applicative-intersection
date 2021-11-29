@@ -99,7 +99,7 @@ Lemma consistency_spec_abs_inversion :
     typing nil (trm_anno (trm_abs e1 A1 B1) C1) T1 ->
     typing nil (trm_anno (trm_abs e2 A2 B2) C2) T2 ->
     consistency_spec (trm_anno (trm_abs e1 A1 B1) C1) (trm_anno (trm_abs e2 A2 B2) C2) ->
-    disjoint C1 C2 \/ (e1 = e2 /\ A1 = A2 /\ B1 = B2).
+    disjoint C1 C2 \/ (e1 = e2 /\ A1 = A2).
 Proof.
   introv Hord1 Hord2 nHtl1 nHtl2 Htyp1 Htyp2 Hcons.
   dependent destruction Htyp1. dependent destruction Htyp2.
@@ -127,7 +127,7 @@ Proof.
     subst.
     dependent destruction H17.
     + dependent destruction H15. contradiction.
-    + dependent destruction H18; eauto.
+    + dependent destruction H18; eauto. 
     + dependent destruction H16. eauto with subtyping.
 Qed.
 
@@ -279,8 +279,15 @@ Proof.
   - exists (typ_arrow C D). split; eauto 3.
     dependent destruction Hv. dependent destruction Htyp.
     dependent destruction Htyp.
-    assert (sub (typ_arrow A B) (typ_arrow C D)) by (eapply sub_transitivity; eauto).
-    eapply typing_anno; eauto.
+    assert (sub (typ_arrow A B) (typ_arrow C D)).
+    eapply sub_transitivity; eauto.
+    dependent destruction H8.
+    + dependent destruction H9. contradiction.
+    + assert (sub (typ_arrow A D) (typ_arrow C D)) by eauto.
+      eapply typing_anno; eauto with lc.
+      eapply typing_lam; eauto. eapply sub_transitivity; eauto.
+    + dependent destruction H8.
+      pose proof (split_and_ord _ _ _ H8 H4). contradiction.
   - dependent destruction Hv.
     dependent destruction Htyp.
     + now pose proof (IHHred Hv1 A0 Htyp1).

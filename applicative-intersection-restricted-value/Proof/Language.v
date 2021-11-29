@@ -289,7 +289,7 @@ Inductive typedred : trm -> typ -> trm -> Prop :=
     ordinary D ->
     typedred (trm_anno (trm_abs e A B) E)
              (typ_arrow C D)
-             (trm_anno (trm_abs e A B) (typ_arrow C D))
+             (trm_anno (trm_abs e A D) (typ_arrow C D))
 | tred_merge_l : forall (v1 v2 v1': trm) (A : typ),
     typedred v1 A v1' -> ordinary A ->
     typedred (trm_merge v1 v2) A v1'
@@ -329,6 +329,9 @@ Inductive consistent : trm -> trm -> Prop :=
 | con_abs : forall (e : trm) (A B1 B2 : typ),
     lc (trm_abs e A B1) ->
     consistent (trm_abs e A B1) (trm_abs e A B2)
+| con_abs_anno : forall (e : trm) (A B1 B2 C D : typ),
+    lc (trm_abs e A B1) ->
+    consistent (trm_anno (trm_abs e A B1) C) (trm_anno (trm_abs e A B2) D)
 | con_anno : forall (e : trm) (A B : typ),
     lc e ->
     consistent (trm_anno e A) (trm_anno e B)
