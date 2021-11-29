@@ -49,18 +49,6 @@ Proof.
   congruence.
 Qed.
 
-Lemma appsub_sound :
-  forall A B D,
-    sub A (typ_arrow B D) ->
-    exists C, appsub (Some B) A C /\ sub C D.
-Proof.
-  introv Hsub.
-  gen B D.
-  proper_ind A; intros.
-  - dependent destruction Hsub.
-    + dependent destruction H0.
-Abort. (* not sound for toplike type *)
-
 Lemma appsub_complete :
   forall A B C,
     appsub (Some B) A C -> sub A (typ_arrow B C).
@@ -127,27 +115,7 @@ Lemma appsub_split_inversion :
     splitable B B1 B2 ->
     (appsub (Some A) B1 C) /\ (not (auxas (Some A) B2)) \/
       (appsub (Some A) B2 C) /\ (not (auxas (Some A) B1)) \/
-      (exists C1 C2, (appsub (Some A) B1 C1) /\ (appsub (Some A) B2 C2) /\ (C = (typ_and C1 C2))).
-Proof.
-  introv Has Hspl.
-  dependent destruction Hspl.
-  - dependent destruction Has; eauto.
-    right. right. exists D1. exists D2.
-    split; eauto.
-  - dependent destruction Has.
-    right. right. exists C0. exists D0.
-    split; eauto.
-    (* oops, we can't say B is exactly C0 & D0 *)
-    (* we need a induction here *)
-Abort.
-
-Lemma appsub_split_inversion :
-  forall A B C B1 B2,
-    appsub (Some A) B C ->
-    splitable B B1 B2 ->
-    (appsub (Some A) B1 C) /\ (not (auxas (Some A) B2)) \/
-      (appsub (Some A) B2 C) /\ (not (auxas (Some A) B1)) \/
-      (exists C1 C2, (appsub (Some A) B1 C1) /\ (appsub (Some A) B2 C2) /\ (C = (typ_and C1 C2))).
+      (exists C1 C2, (appsub (Some A) B1 C1) /\ (appsub (Some A) B2 C2) /\ (isomorphic (typ_and C1 C2) C)).
 Proof.
   introv Has Hspl.
   gen A C B1 B2.
@@ -168,33 +136,11 @@ Proof.
       pose proof (IHr1 _ _ Has1).
       assert (Has2: appsub (Some A0) (typ_arrow A D) D) by eauto.
       pose proof (IHr2 _ _ Has2).
-      destruct (split_or_ord C); destruct (split_or_ord D).
-      * clear H0. clear H1. clear IHr1. clear IHr2.
-        clear Has1. clear Has2.
-        dependent destruction Hspl.
-        ** exists A1. exists B. split; eauto.
-        ** admit. (* looks like we do something wrong *)
-Admitted.
-
-Lemma appsub_split_inversion_abort :
-  forall A B C B1 B2,
-    appsub (Some A) B C ->
-    splitable B B1 B2 ->
-    (appsub (Some A) B1 C) /\ (not (auxas (Some A) B2)) \/
-      (appsub (Some A) B2 C) /\ (not (auxas (Some A) B1)) \/
-      (exists C1 C2, (appsub (Some A) B1 C1) /\ (appsub (Some A) B2 C2) /\ (C = (typ_and C1 C2))).
-Proof.
-  introv Has Hspl.
-  gen B1 B2.
-  dependent induction Has; intros.
-  - dependent destruction Hspl.
-    admit. (* no IH here *)
-  - dependent destruction Hspl; eauto.
-  - dependent destruction Hspl; eauto.
-  - dependent destruction Hspl; eauto.
-    right. right. exists D1. exists D2.
-    split; eauto.
-Abort.
+      dependent destruction Hspl.
+      * exists A1. exists B. split; eauto.
+      * exists (typ_arrow A1 C). exists (typ_arrow A1 D).
+           split; eauto.
+Qed.
 
 Lemma auxas_iso :
   forall A B H,
@@ -218,9 +164,24 @@ Proof.
            *** pose proof (IHr1 _ Has _ Hiso1). eauto.
            *** pose proof (IHr2 _ Has _ Hiso2). eauto.
         ** eapply aas_fun; eauto.
-           admit.
-    + dependent destruction Hiso. auto.
-Admitted.
+           dependent destruction Has.
+           *** pose proof (IHr1 _ Has _ Hiso1).
+               dependent destruction H0; eauto.
+           *** pose proof (IHr2 _ Has _ Hiso2).
+               dependent destruction H0; eauto.
+    + dependent destruction Hiso; eauto.
+Qed.
+  
+Lemma isomorphic_transitivity :
+  forall A B C,
+    isomorphic A B -> isomorphic B C ->
+    isomorphic A C.
+Proof.
+  introv H1 H2.
+  gen A. dependent induction H2; intros; eauto.
+  dependent destruction H1; eauto.
+  dependent destruction H0; eauto.
+Qed.
      
 Lemma appsub_iso2 :
   forall A B C H,
@@ -261,40 +222,10 @@ Proof.
         destruct H2. destruct H2. destruct H3. destruct H3.
         exists (typ_and x1 x2). split.
         ** eapply as_and_both; eauto.
-        ** subst. eauto.
+        ** assert (isomorphic (typ_and x1 x2) (typ_and x x0)) by eauto.
+           eapply isomorphic_transitivity; eauto.
 Qed.
-  
-Lemma appsub_iso2_abort :
-  forall A B C H,
-    appsub (Some A) B C ->
-    isomorphic H B ->
-    (exists D, appsub (Some A) H D /\ isomorphic D C).
-Proof.
-  introv Has Hiso.
-  gen A C H.
-  proper_ind B; intros; eauto.
-  - inversion Has.
-  - inversion Has.
-  - dependent destruction Has.
-    dependent destruction Hiso; eauto.
-    dependent destruction H1. eauto with subtyping.
-  - dependent destruction H.
-    + dependent destruction Hiso; eauto.
-      dependent destruction H.
-      admit.
-    + pose proof (IHr1 A0 B).
-Abort.
-    
-Lemma isomorphic_transitivity :
-  forall A B C,
-    isomorphic A B -> isomorphic B C ->
-    isomorphic A C.
-Proof.
-  introv H1 H2.
-  gen A. dependent induction H2; intros; eauto.
-  dependent destruction H1; eauto.
-  dependent destruction H0; eauto.
-Qed.
+
 
 Lemma appsub_iso :
   forall A B C H1 H2,

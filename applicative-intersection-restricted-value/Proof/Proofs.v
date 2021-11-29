@@ -241,12 +241,12 @@ Proof.
     + assert (exists B0, typing nil e1' B0 /\ isomorphic B0 B) by eauto.
       destruct H1.
       destruct H1.
-      eapply appsub_iso2 in H; eauto.
+      eapply appsub_iso in H; eauto.
       destruct H. destruct H.
       exists x0. split; eauto.
     + assert (exists B0, typing nil e2' B0 /\ isomorphic B0 A) by eauto.
       destruct H1. destruct H1.
-      eapply appsub_iso1 in H; eauto.
+      eapply appsub_iso in H; eauto.
       destruct H. destruct H.
       exists x0. split; eauto.
   - dependent destruction Hred.
