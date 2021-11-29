@@ -40,7 +40,23 @@ Proof.
   - dependent destruction Htyp; eauto.
 Qed.
 
+Lemma typing_to_ptype_uvalue :
+  forall (A : typ) (u : trm),
+    uvalue u ->
+    typing nil u A ->
+    ptype u A.
+Proof.
+  introv Hu Htyp.
+  gen A.
+  dependent induction Hu; eauto; intros.
+  - dependent destruction Htyp; eauto.
+    inversion H. inversion H. inversion H.
+  - dependent destruction Htyp; eauto.
+  - dependent destruction Htyp; eauto.
+Qed.    
+
 Hint Resolve typing_to_ptype : ptype core.
+Hint Resolve typing_to_ptype_uvalue : ptype core.
 
 Lemma typing_and_ptype :
   forall A B u,

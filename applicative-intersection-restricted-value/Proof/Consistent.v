@@ -245,7 +245,7 @@ Proof.
         eapply H5; eauto. simpl. lia.
 Qed.
 
-Lemma tred_consistent_preservation :
+Lemma tred_consistent_preservation' :
   forall (v v1 v2 : trm) (A B C : typ),
     value v ->
     typing nil v A ->
@@ -261,6 +261,7 @@ Proof.
   pose proof (tred_transitivity v v2 v2' C A0 Hv Hred2 Hred2').
   eapply tred_determinism; eauto with con.
 Qed.
+
 
 (* sorry for put it here *)
 Theorem tred_preservation:
@@ -295,8 +296,25 @@ Proof.
     split.
     eapply typing_merge_uvalue; eauto with value.
     eapply consistent_completeness; eauto with value.
-    eapply tred_consistent_preservation; eauto.
+    eapply tred_consistent_preservation'; eauto.
     eapply iso_and; eauto.
+Qed.
+
+
+Lemma tred_consistent_preservation :
+  forall (v v1 v2 : trm) (A B C : typ),
+    value v ->
+    typing nil v A ->
+    typedred v B v1 ->
+    typedred v C v2 ->
+    consistent v1 v2.
+Proof.
+  introv Hv Htyp Hred1 Hred2.
+  pose proof (tred_preservation _ _ _ _ Hv Htyp Hred1).
+  pose proof (tred_preservation _ _ _ _ Hv Htyp Hred2).
+  destruct_conjs.
+  eapply consistent_completeness; eauto with value tred.
+  eapply tred_consistent_preservation'; eauto.
 Qed.
 
 Lemma consistent_merge_l :
