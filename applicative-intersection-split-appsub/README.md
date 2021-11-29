@@ -233,26 +233,30 @@ S |- A <: B
 
 
 C <: A
+ordinary B
 ------------------------ AS-Fun
 C |- A -> B <: B
 
 
-S, C |- A <: D
-not (appsub? (S, C) B)
+A1 <| A |> A2
+S, C |- A1 <: D
+not (appsub? (C A2)
 ------------------------ AS-And-L
-C |- A & B <: D
+C |- A <: D
 
 
-C |- B <: D
-not (appsub? (S, C) A)
+A1 <| A |> A2
+C |- A2 <: D
+not (appsub? C A1)
 ------------------------ AS-And-R
-C |- A & B <: D
+C |- A <: D
 
 
-C |- A <: D1
-C |- B <: D2
+A1 <| A |> A2
+C |- A1 <: D1
+C |- B2 <: D2
 ------------------------ AS-And-Both
-C |- A & B <: D1 & D2
+C |- A <: D1 & D2
 ```
 
 # Application Subtyping (Unified)
