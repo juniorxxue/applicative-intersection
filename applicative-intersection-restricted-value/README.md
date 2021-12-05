@@ -178,7 +178,7 @@ B <: C     ordinary C
 A & B <: C
 ```
 
-# Isomorphic
+# Isomorphic Subtyping
 
 ```
 ----------
@@ -237,14 +237,14 @@ C <: A
 C |- A -> B <: B
 
 
-S, C |- A <: D
-not (appsub? (S, C) B)
+C |- A <: D
+not (appsub? C B)
 ------------------------ AS-And-L
 C |- A & B <: D
 
 
 C |- B <: D
-not (appsub? (S, C) A)
+not (appsub? C A)
 ------------------------ AS-And-R
 C |- A & B <: D
 
@@ -477,7 +477,6 @@ toplike B
 (n : A -> B) ● vl --> 1 : B
 
 
-v -->A v'
 toplike D
 --------------------------------------------------- PApp-Abs-Toplike
 (\x. e : A -> B) : C -> D ● v --> 1 : D
