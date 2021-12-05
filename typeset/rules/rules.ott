@@ -174,11 +174,6 @@ value v2
 value v1 ,, v2
 
 
-value v
------------------------ :: rcd
-value {l=v}
-
-
 defns
 Pvalues :: '' ::=
 
@@ -224,7 +219,7 @@ SplitType :: '' ::=
 defn
 split A B C :: :: spl :: Sp_
 {{ com Splitable Types }}
-{{ tex [[split]]~~[[A]]~~[[B]]~~[[C]] }}
+{{ tex [[B]] \hookleftarrow [[A]] \hookrightarrow [[C]] }}
 by
 
 
@@ -513,11 +508,6 @@ C |- B
 C |- A&B
 
 
-C |- A
-C |- B
---------------------- :: andBoth
-C |- A&B
-
 defns
 Appsub :: '' ::=
 
@@ -780,7 +770,7 @@ by
 
 
 ----------------------------------- :: absAnno
-(\x:A.e:B1):C ~~ (\x:A.e:B2):C
+(\x:A.e:B1):C ~~ (\x:A.e:B2):D
 
 
 -------------------------- :: anno
