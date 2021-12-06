@@ -29,3 +29,9 @@
 [applicative-intersection-restricted-value](applicative-intersection-restricted-value): followed, but anno in value cannot be and type (sound)
 
 [applicative-intersection-split-appsub](applicative-intersection-split-appsub): followed, but appsub on splittable types
+
+[typeset](typeset): typesetting files
+
+[BCD.hs](BCD.hs): Haskell implementation of Subtyping and Appsub algos
+
+[BCD2.hs](BCD2.hs): another Haskell implementation of Subtyping and Appsub algos

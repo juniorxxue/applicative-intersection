@@ -6,6 +6,8 @@
 *.vok
 *.aux
 out.*
+*.log
+*.mng
 
 .evc
 .lia.cache
