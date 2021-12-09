@@ -9,7 +9,7 @@ O    ::= Int | Top | A -> O
 p    ::= n | \x. e : A -> B
 v    ::= p : O | v1,,v2
 
-u    ::= p | e : A | u1,,u2
+u    ::= e : A | u1,,u2
 
 T    ::= . | T, x : A
 S    ::= . | A

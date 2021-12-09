@@ -133,8 +133,7 @@ Lemma uvalue_ptype :
 Proof.
   introv Hu.
   dependent induction Hu; eauto.
-  - dependent destruction H; eauto.
-  - destruct_conjs; eauto.
+  destruct_conjs; eauto.
 Qed.
 
 Lemma open_abs_auto :

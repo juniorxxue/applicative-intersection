@@ -132,8 +132,6 @@ Inductive value : trm -> Prop :=
     value v1 -> value v2 -> value (trm_merge v1 v2).
 
 Inductive uvalue : trm -> Prop :=
-| uvalue_p : forall (p : trm),
-    pvalue p -> uvalue p
 | uvalue_anno : forall (e : trm) (A : typ),
     lc e ->
     uvalue (trm_anno e A)

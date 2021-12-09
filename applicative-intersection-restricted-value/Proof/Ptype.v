@@ -50,8 +50,6 @@ Proof.
   gen A.
   dependent induction Hu; eauto; intros.
   - dependent destruction Htyp; eauto.
-    inversion H. inversion H. inversion H.
-  - dependent destruction Htyp; eauto.
   - dependent destruction Htyp; eauto.
 Qed.    
 

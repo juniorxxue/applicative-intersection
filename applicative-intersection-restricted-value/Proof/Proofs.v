@@ -114,9 +114,6 @@ Lemma step_uvalue_preservation :
 Proof.
   introv Hu Hstep. gen u'.
   induction Hu; intros.
-  - dependent destruction H.
-    + dependent destruction Hstep; eauto.
-    + dependent destruction Hstep; eauto.
   - dependent destruction Hstep; eauto.
     + assert (value v') by eauto with value.
       eapply value_is_uvalue; assumption.
