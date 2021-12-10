@@ -485,14 +485,12 @@ not (toplike D)
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
-appsub? ptype(vl) ptype(v1)
 not (appsub? ptype(vl) ptype(v2))
 v1 ● vl --> e
 -------------------------------------------- PApp-Merge-L
 v1 ,, v2 ● vl --> e
 
 
-appsub? ptype(vl) ptype(v2)
 not (appsub? ptype(vl) ptype(v1))
 v2 ● vl --> e
 -------------------------------------------- PApp-Merge-R

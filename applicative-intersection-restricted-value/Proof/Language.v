@@ -356,7 +356,7 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
 | typing_anno : forall (T : ctx) (A B C : typ) (e : trm),
     typing T e C -> sub C A ->
     typing T (trm_anno e A) A
-| typing_app : forall (S : arg) (T : ctx) (A B C : typ) (e1 e2 : trm),
+| typing_app : forall (T : ctx) (A B C : typ) (e1 e2 : trm),
     typing T e2 A ->
     typing T e1 B ->
     appsub (Some A) B C ->
@@ -395,14 +395,12 @@ Inductive papp : trm -> trm -> trm -> Prop :=
          (trm_anno (open e v') D)
 | papp_merge_l : forall (A B C : typ) (v1 v2 vl e: trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    auxas (Some C) A ->
     not (auxas (Some C) B) ->
     papp v1 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_r : forall (A B C : typ) (v1 v2 vl e : trm),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
     not (auxas (Some C) A) ->
-    auxas (Some C) B ->
     papp v2 vl e ->
     papp (trm_merge v1 v2) vl e
 | papp_merge_p : forall (A B C : typ) (v1 v2 vl e1 e2 : trm),

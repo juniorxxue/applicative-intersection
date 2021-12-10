@@ -48,6 +48,71 @@ Proof.
     simpl_deter. contradiction.
 Qed.
 
+(* typing is only accouting for checking merges *)
+Lemma papp_to_auxas_l :
+  forall v1 v2 vl e A B C D,
+    value v1 -> value v2 -> value vl ->
+    ptype v1 A ->
+    ptype v2 B ->
+    ptype vl C ->
+    typing nil (trm_app (trm_merge v1 v2) vl) D ->
+    papp v1 vl e ->
+    not (auxas (Some C) B) ->
+    auxas (Some C) A.
+Proof.
+  introv Val1 Val2 Val Ptyp1 Ptyp2 Ptyp Typ Papp nAux.
+  dependent destruction Typ.
+  dependent destruction Typ2.
+  - pose proof (typing_to_ptype _ _ Val1 Typ2_1).
+    pose proof (typing_to_ptype _ _ Val2 Typ2_2).
+    pose proof (typing_to_ptype _ _ Val Typ1).
+    simpl_deter.
+    dependent destruction H0.
+    + eapply appsub_to_auxas; eauto.
+    + eapply appsub_to_auxas in H0; eauto. contradiction.
+    + eapply appsub_to_auxas in H0_0; eauto. contradiction.
+  - pose proof (typing_to_ptype _ _ Val1 Typ2_1).
+    pose proof (typing_to_ptype _ _ Val2 Typ2_2).
+    pose proof (typing_to_ptype _ _ Val Typ1).
+    simpl_deter.
+    dependent destruction H3.
+    + eapply appsub_to_auxas; eauto.
+    + eapply appsub_to_auxas in H3; eauto. contradiction.
+    + eapply appsub_to_auxas in H3_0; eauto. contradiction.
+Qed.
+
+Lemma papp_to_auxas_r :
+  forall v1 v2 vl e A B C D,
+    value v1 -> value v2 -> value vl ->
+    ptype v1 A ->
+    ptype v2 B ->
+    ptype vl C ->
+    typing nil (trm_app (trm_merge v1 v2) vl) D ->
+    papp v2 vl e ->
+    not (auxas (Some C) A) ->
+    auxas (Some C) B.
+Proof.
+  introv Val1 Val2 Val Ptyp1 Ptyp2 Ptyp Typ Papp nAux.
+  dependent destruction Typ.
+  dependent destruction Typ2.
+  - pose proof (typing_to_ptype _ _ Val1 Typ2_1).
+    pose proof (typing_to_ptype _ _ Val2 Typ2_2).
+    pose proof (typing_to_ptype _ _ Val Typ1).
+    simpl_deter.
+    dependent destruction H0.
+    + eapply appsub_to_auxas in H0; eauto. contradiction.
+    + eapply appsub_to_auxas in H0; eauto.
+    + eapply appsub_to_auxas in H0_0; eauto.
+  - pose proof (typing_to_ptype _ _ Val1 Typ2_1).
+    pose proof (typing_to_ptype _ _ Val2 Typ2_2).
+    pose proof (typing_to_ptype _ _ Val Typ1).
+    simpl_deter.
+    dependent destruction H3.
+    + eapply appsub_to_auxas in H3; eauto. contradiction.
+    + eapply appsub_to_auxas in H3; eauto.
+    + eapply appsub_to_auxas in H3_0; eauto.
+Qed.
+
 Theorem papp_determinism :
   forall (v vl e1 e2 : trm) (A : typ),
     value v -> value vl ->
@@ -72,16 +137,29 @@ Proof.
     + (* correct *)
       simpl_deter.
       dependent destruction Hv.
+      pose proof Htyp as AS.
+      eapply papp_to_auxas_l in AS; eauto.
       eapply typing_merge_distri_app_l in Htyp; eauto 3.
       destruct Htyp.
       eapply IHHp1; eauto 3.
-    + simpl_deter. contradiction.
-    + simpl_deter. contradiction.
+    + simpl_deter.
+      dependent destruction Hv.
+      pose proof Htyp as AS.
+      eapply papp_to_auxas_r in AS; eauto.
+      contradiction.
+    + simpl_deter.
+      contradiction.
   - dependent destruction Hp2.
-    + simpl_deter. contradiction.
+    + simpl_deter.
+      dependent destruction Hv.
+      pose proof Htyp as AS.
+      eapply papp_to_auxas_l in AS; eauto.
+      contradiction.
     + (* correct *)
       simpl_deter.
       dependent destruction Hv.
+      pose proof Htyp as AS.
+      eapply papp_to_auxas_r in AS; eauto.
       eapply typing_merge_distri_app_r in Htyp; eauto 3.
       destruct Htyp.
       eapply IHHp1; eauto 3.
@@ -290,26 +368,26 @@ Proof.
     + (* find a ptype for e *)
       dependent destruction Hv1.
       dependent destruction Htyp1.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        eapply uvalue_ptype in H6. destruct H6.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        eapply uvalue_ptype in H9. destruct H9.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
     + (* find a ptype for e *)
       dependent destruction Hv1.
       dependent destruction Htyp1.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        pose proof (uvalue_ptype e H7). destruct_conjs.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1) as Ptyp.
+        pose proof (uvalue_ptype e Ptyp). destruct_conjs.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1).
-        pose proof (uvalue_ptype e H10). destruct_conjs.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1) as Ptyp.
+        pose proof (uvalue_ptype e Ptyp). destruct_conjs.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -336,26 +414,26 @@ Proof.
     + (* find a ptype for e *)
       dependent destruction Hv1.
       dependent destruction Htyp1.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H6. destruct H6.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H9. destruct H9.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
     + (* find a ptype for e *)
       dependent destruction Hv1.
       dependent destruction Htyp1.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H7. destruct H7.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
-      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1).
-        eapply uvalue_ptype in H10. destruct H10.
+      * pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1) as Ptyp.
+        eapply uvalue_ptype in Ptyp. destruct Ptyp.
         eapply con_disjoint; eauto.
         eapply disjoint_symmetry.
         eapply disjoint_toplike; eauto.
@@ -383,24 +461,24 @@ Proof.
       dependent destruction Hv1.
       dependent destruction Htyp1.
       * eapply con_merge_l.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H6. destruct H6.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H6. destruct H6.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
       * eapply con_merge_l.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H9. destruct H9.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H9. destruct H9.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
@@ -408,24 +486,24 @@ Proof.
       dependent destruction Hv1.
       dependent destruction Htyp1.
       * eapply con_merge_l.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H7. destruct H7.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H7. destruct H7.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
       * eapply con_merge_l.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1).
-           eapply uvalue_ptype in H10. destruct H10.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_1 Hvl Htyp1_1 Htyp Hp1_1) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
-        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2).
-           eapply uvalue_ptype in H10. destruct H10.
+        ** pose proof (papp_uvalue _ _ _ _ _ Hv1_2 Hvl Htyp1_2 Htyp Hp1_2) as Ptyp.
+           eapply uvalue_ptype in Ptyp. destruct Ptyp.
            eapply con_disjoint; eauto.
            eapply disjoint_symmetry.
            eapply disjoint_toplike; eauto.
@@ -736,7 +814,8 @@ Proof.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
-        simpl_deter. contradiction.
+        simpl_deter. eapply appsub_to_auxas in Has.
+        contradiction.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
@@ -746,7 +825,8 @@ Proof.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
-        simpl_deter. contradiction.
+        simpl_deter.
+        eapply appsub_to_auxas in Has. contradiction.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
@@ -758,7 +838,8 @@ Proof.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
-        simpl_deter. contradiction.
+        simpl_deter.
+        eapply appsub_to_auxas in Has. contradiction.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
@@ -768,7 +849,8 @@ Proof.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
-        simpl_deter. contradiction.
+        simpl_deter. eapply appsub_to_auxas in Has.
+        contradiction.
       * assert (ptype v1 A1); eauto.
         assert (ptype v2 B0); eauto.
         assert (ptype vl A0); eauto.
@@ -824,34 +906,6 @@ Proof.
         eapply typing_merge_uvalue; eauto.
         pose proof (papp_consistent v1 v2 vl e1 e2 A B C).
         eapply H16; eauto.
-Qed.
-
-Inductive applicable : typ -> Prop :=
-| applicable_arrow : forall (A B : typ),
-    applicable (typ_arrow A B)
-| applicable_merge_l : forall (A B : typ),
-    applicable A -> applicable (typ_and A B)
-| applicable_merge_r : forall (A B : typ),
-    applicable B -> applicable (typ_and A B).
-
-Hint Constructors applicable : core.
-
-Lemma split_and_applicable :
-  forall (A B C: typ),
-    applicable A -> splitable A B C ->
-    applicable B \/ applicable C.
-Proof.
-  introv Happ Hspl.
-  dependent induction Hspl; eauto.
-  - dependent destruction Happ; eauto.
-Qed.
-
-Lemma appsub_is_applicable :
-  forall (A B : typ),
-    auxas (Some B) A -> applicable A.
-Proof.
-  intros.
-  dependent induction H; eauto.
 Qed.
 
 Lemma ord_sub_int :
@@ -947,20 +1001,16 @@ Proof.
       * assert (exists e, papp v1 v0 e). (* from appsub *)
         eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
         destruct H1. exists x. eapply papp_merge_l; eauto.
-        eapply appsub_to_auxas; eauto.
       * assert (exists e, papp v1 v0 e). (* from appsub *)
         eapply IHHv1_1. eapply Htyp1_1. eapply Has. eapply Hv2. eapply Htyp2.
         destruct H4. exists x. eapply papp_merge_l; eauto.
-        eapply appsub_to_auxas; eauto.
     + dependent destruction Htyp1.
       * assert (exists e, papp v2 v0 e). (* from appsub *)
         eapply IHHv1_2. eapply Htyp1_2. eapply Has. eapply Hv2. eapply Htyp2.
         destruct H1. exists x. eapply papp_merge_r; eauto.
-        eapply appsub_to_auxas; eauto. 
       *  assert (exists e, papp v2 v0 e). (* from appsub *)
          eapply IHHv1_2. eapply Htyp1_2. eapply Has. eapply Hv2. eapply Htyp2.
          destruct H4. exists x. eapply papp_merge_r; eauto.
-         eapply appsub_to_auxas; eauto.
     + dependent destruction Htyp1.
       * assert (exists e, papp v1 v0 e). (* from appsub *)
         eapply IHHv1_1. eapply Htyp1_1. eapply Has1. eapply Hv2. eapply Htyp2.
