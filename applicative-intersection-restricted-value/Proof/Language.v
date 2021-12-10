@@ -324,9 +324,6 @@ Definition consistency_spec v1 v2 :=
   forall (A : typ) (v1' v2' : trm), ordinary A -> typedred v1 A v1' -> typedred v2 A v2' -> v1' = v2'.
 
 Inductive consistent : trm -> trm -> Prop :=
-| con_abs : forall (e : trm) (A B1 B2 : typ),
-    lc (trm_abs e A B1) ->
-    consistent (trm_abs e A B1) (trm_abs e A B2)
 | con_abs_anno : forall (e : trm) (A B1 B2 C D : typ),
     lc (trm_abs e A B1) ->
     consistent (trm_anno (trm_abs e A B1) C) (trm_anno (trm_abs e A B2) D)

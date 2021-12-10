@@ -107,7 +107,6 @@ Qed.
 
 Hint Resolve step_lc_preservation : lc.
 
-
 Lemma step_uvalue_preservation :
   forall u u',
     uvalue u -> step u u' -> uvalue u'.
@@ -157,8 +156,6 @@ Proof.
   introv Hu1 Hu2 Htyp1 Htyp2 Hc Hs1 Hs2 IH.
   gen A B e1' e2'.
   dependent induction Hc; intros; eauto with con.
-  - dependent destruction Hs1; dependent destruction Hs2; eauto with value.
-    dependent destruction H0. dependent destruction H1; eauto.
   - dependent destruction Hs1; dependent destruction Hs2; eauto.
     + dependent destruction H1; eauto with value.
       assert (pvalue (trm_abs e A B2)) by eauto with lc. contradiction.
