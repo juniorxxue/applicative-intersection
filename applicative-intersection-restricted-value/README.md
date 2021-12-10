@@ -401,7 +401,7 @@ u ~~ u1 ,, u2
 v -->A v'
 ------------------
 
-A <: Int
+A <: Int  (required for toplike)
 ---------------------- Tred-Int-Anno
 n : A -->Int n : Int
 

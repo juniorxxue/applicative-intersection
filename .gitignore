@@ -11,3 +11,5 @@ out.*
 
 .evc
 .lia.cache
+typeset/*.pdf
+typeset/*.tex
