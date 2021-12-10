@@ -418,14 +418,12 @@ Notation "v ◐ vl ~-> e" := (papp v vl e) (at level 69).
 Inductive step : trm -> trm -> Prop :=
 | step_int_anno : forall (n : nat),
     step (trm_int n) (trm_anno (trm_int n) typ_int)
-| step_int_split : forall (A A1 A2 : typ) (n : nat),
-    splitable A A1 A2 ->
-    step (trm_anno (trm_int n) A) (trm_merge (trm_anno (trm_int n) A1) (trm_anno (trm_int n) A2))
 | step_abs_anno : forall (e : trm) (A B : typ),
     step (trm_abs e A B) (trm_anno (trm_abs e A B) (typ_arrow A B))
-| step_abs_split : forall (A B C C1 C2 : typ) (e : trm),
-    splitable C C1 C2 ->
-    step (trm_anno (trm_abs e A B) C) (trm_merge (trm_anno (trm_abs e A B) C1) (trm_anno (trm_abs e A B) C2))
+| step_pvalue_split : forall (A A1 A2 : typ) (p : trm),
+    pvalue p ->
+    splitable A A1 A2 ->
+    step (trm_anno p A) (trm_merge (trm_anno p A1) (trm_anno p A2))
 | step_papp : forall (v vl e : trm) (A : typ),
     value v -> value vl ->
     papp v vl e ->

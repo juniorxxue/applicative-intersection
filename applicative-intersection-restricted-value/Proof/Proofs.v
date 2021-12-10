@@ -20,27 +20,19 @@ Proof with eauto with value.
   gen e2 A.
   dependent induction Hstep1; intros.
   - dependent destruction Hstep2...
-  - dependent destruction Hstep2.
-    + eapply split_determinism in H; eauto.
-      destruct H. subst. reflexivity.
-    + inversion H0.
-    + destruct H0; eauto.
   - dependent destruction Hstep2...
-  - dependent destruction Htyp.
-    dependent destruction Htyp.
-    dependent destruction Hstep2.
-    + eapply split_determinism in H; eauto.
-      destruct H. subst. reflexivity.
-    + inversion H0.
-    + destruct H0; eauto.
+  - dependent destruction Hstep2.
+    + eapply split_determinism in H0; eauto.
+      destruct H0. subst. reflexivity.
+    + exfalso. eapply pvalue_and_value; eauto.
+    + contradiction.
   - dependent destruction Hstep2...
     eapply papp_determinism. eapply H. eapply H0. eapply H1. eapply H4. eapply Htyp.
   - dependent destruction Hstep2...
     + dependent destruction Htyp.
       eapply tred_determinism; eauto.
   - dependent destruction Hstep2...
-    + destruct H; eauto.
-    + destruct H; eauto with lc.
+    + contradiction.
     + assert (Heq: e' = e'0).
       dependent destruction Htyp; eauto.
       congruence.
@@ -101,8 +93,7 @@ Proof.
     try solve [dependent destruction Hstep; eauto].
   - dependent destruction Hstep; eauto 3 with lc.
   - dependent destruction Hstep; eauto 3 with lc.
-    + eapply lc_merge; eauto.
-    + eapply lc_merge; eauto.
+    eapply lc_merge; eauto.
 Qed.
 
 Hint Resolve step_lc_preservation : lc.
@@ -163,7 +154,7 @@ Proof.
       assert (pvalue (trm_abs e A B1)) by eauto with lc. contradiction.
     + dependent destruction Htyp1. dependent destruction Htyp2.
       dependent destruction H2; eauto with value.
-      * dependent destruction H3; eauto with value.
+      * dependent destruction H4; eauto with value.
         ** eapply con_merge_l; eauto.
         ** assert (pvalue (trm_abs e A B2)) by eauto with lc. contradiction.
       * assert (pvalue (trm_abs e A B1)) by eauto with lc. contradiction.
@@ -180,17 +171,13 @@ Proof.
          assert (pvalue (trm_abs e A1 B1)) by eauto. contradiction.
     + dependent destruction Htyp1. dependent destruction Htyp2.
       dependent destruction H2.
-      * dependent destruction H3; eauto with con value.
+      * dependent destruction H4; eauto with con value.
         ** eapply con_merge_l; eauto.
-        ** assert (pvalue (trm_int n)) by eauto. contradiction.
-      * dependent destruction H3; eauto with con value.
-        ** eapply con_merge_l; eauto.
-        ** assert (pvalue (trm_abs e0 A0 B2)) by eauto. contradiction.
+        ** contradiction.
       * dependent destruction H4; eauto with con value.
         eapply tred_consistent_preservation; eauto.
       * dependent destruction H4; eauto with con value.
-        ** assert (pvalue (trm_int n)) by eauto. contradiction.
-        ** assert (pvalue (trm_abs e0 A0 B2)) by eauto. contradiction.
+        ** contradiction.
         ** assert (e' = e'0). eapply determinism; eauto. subst.
            eapply con_anno; eauto with lc.
   - Case "Disjoint".
@@ -301,7 +288,7 @@ Proof.
            *** eapply IHHc2; eauto. intros. eapply IH; eauto. simpl; lia.
 Qed.
 
-Theorem preservation' :
+Theorem preservation :
   forall (e e' : trm) (A: typ),
     typing nil e A ->
     step e e' ->
@@ -317,34 +304,25 @@ Proof.
   - dependent destruction Hred.
     exists (typ_arrow A B). split; eauto 3.
   - dependent destruction Hred.
-    + dependent destruction Htyp.
-      exists (typ_and A1 A2).
+    + exists (typ_and A1 A2).
       split; eauto.
       dependent induction H.
-      * eapply typing_merge_uvalue; eauto 3.
+      * dependent destruction Htyp.
+        eapply typing_merge_uvalue; eauto 3.
         eapply typing_anno; eauto.
         eapply sub_inversion_split_r in H1; eauto.
         destruct_conjs. assumption.
         eapply typing_anno; eauto.
         eapply sub_inversion_split_r in H1; eauto.
         destruct_conjs. assumption.
-      * destruct (toplike_decidability B).
-        ** eapply split_toplike in H; eauto.
-           destruct H.
-           eapply typing_merge_uvalue; eauto 3.
-           *** eapply typing_anno; eauto.
-               assert (toplike (typ_arrow A C)) by eauto.
-               now eapply sub_toplike.
-           *** eapply typing_anno; eauto.
-               assert (toplike (typ_arrow A D)) by eauto.
-               now eapply sub_toplike.
-        ** eauto with subtyping.
-    + dependent destruction Htyp.
-      exists (typ_and C1 C2).
-      split; eauto.
-      eapply sub_inversion_split_r in H; eauto.
-      destruct H.
-      eapply typing_merge_uvalue; eauto with lc.
+      * dependent destruction Htyp.
+        eapply typing_merge_uvalue; eauto 3.
+        eapply typing_anno; eauto.
+        eapply sub_inversion_split_r in H3; eauto.
+        destruct_conjs; eauto.
+        eapply typing_anno; eauto.
+        eapply sub_inversion_split_r in H3; eauto.
+        destruct_conjs; eauto.
     + eapply tred_preservation; eauto.
     + eapply IH in Hred; eauto.
       destruct Hred.
