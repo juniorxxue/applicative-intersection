@@ -350,7 +350,7 @@ Inductive typing : ctx -> trm -> typ -> Prop :=
 | typing_var : forall (T : ctx) (x : var) (A : typ),
     uniq T -> binds x A T -> typing T (trm_fvar x) A
 | typing_lam : forall (L : vars) (T : ctx) (A B C : typ) (e : trm),
-    (forall x, x \notin L -> (typing ((x ~ A) ++ T)) (open e (trm_fvar x)) C) ->
+    (forall x, x \notin L -> (typing ((x ~ A) ++ T) (open e (trm_fvar x)) C)) ->
     sub C B ->
     typing T (trm_abs e A B) (typ_arrow A B)
 | typing_anno : forall (T : ctx) (A B C : typ) (e : trm),
