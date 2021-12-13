@@ -13,3 +13,8 @@ out.*
 .lia.cache
 typeset/*.pdf
 typeset/*.tex
+*.coq.d
+
+refactor/Proof/html/*
+
+*.swp
