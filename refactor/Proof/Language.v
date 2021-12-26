@@ -1,3 +1,15 @@
+(** This file is syntax of Applicative Intersection Types, which is a extension of "Disjoint Intersection Types"
+
+What makes this calculus different from classical simply typed lambda calculus
+
+- It has intersection types
+- It has merge operator (create inhabitants of intersection types)
+- It has subtyping (BCD-style: allow distribuivity upon function types and intersection types)
+- It's type safe: we will prove determinism, preservation and progress
+- Enhanced subtyping algorithms can solve overloading problems
+
+ *)
+
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Coq.Strings.String.
@@ -5,7 +17,6 @@ Require Import Coq.Strings.String.
 Import ListNotations.
 
 Set Printing Parentheses.
-
 
 (** * Types
 

@@ -7,6 +7,22 @@ Require Import Language Tactical.
 
 (** * Definitions *)
 
+(*
+
+------------------ Ord-Top
+Ordinary Top
+
+
+------------------ Ord-Int
+Ordinary Int
+
+
+Ordinary B
+------------------ Ord-Arrow
+Ordinary (A -> B)
+
+*)
+
 Inductive ordinary : type -> Prop :=
 | Ord_Top : ordinary Top
 | Ord_Tnt : ordinary Int
@@ -14,6 +30,19 @@ Inductive ordinary : type -> Prop :=
     ordinary B -> ordinary (Arr A B).
 
 Hint Constructors ordinary : core.
+
+
+(*
+
+-------------------- Sp-And
+A <| A & B |> B
+
+
+C <| B |> D
+---------------------------- Sp-Arrow
+A -> C <| A -> B |> A -> D
+
+*)
 
 Inductive splitable : type -> type -> type -> Prop :=
 | Spl_And : forall (A B : type),
@@ -44,9 +73,9 @@ Qed.
 
 Ltac solve_splitable :=
   match goal with
-  | [H1: splitable ?A ?A1 ?A2, H2: ordinary ?A |- _] =>
+  | [H1: splitable ?A _ _, H2: ordinary ?A |- _] =>
       (pose proof (splitable_not_ordinary _ _ _ H1) as Contra; contradiction)
-  | [H1: splitable (Arr ?A ?B) ?B1 ?B2, H2: ordinary ?B |- _] =>
+  | [H1: splitable (Arr _ ?B) _ _, H2: ordinary ?B |- _] =>
       (dependent destruction H1; pose proof (splitable_not_ordinary _ _ _ H1) as Contra; contradiction)
   | [H: splitable Int _ _ |- _] =>
       (inversion H)
@@ -54,7 +83,7 @@ Ltac solve_splitable :=
       (inversion H)
   end.
 
-Hint Extern 5 => solve_splitable : core.
+Hint Extern 7 => solve_splitable : core.
 
 (** [contra_ordinary] solves contradiction cases of ordinary *)
 

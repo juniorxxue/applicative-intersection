@@ -136,6 +136,7 @@ Ltac solve_value :=
   | [H: value (Lit _) |- _] => (inversion H)
   | [H: value (Lam _ _ _) |- _] => (inversion H)
   | [H: value (App _ _) |- _] => (inversion H)
+  | [H: binds _ _ nil |- _] => (inversion H)
   end.
 
 Hint Extern 5 => solve_value : core.

@@ -11,6 +11,38 @@ Set Printing Parentheses.
 
 (** * Definition *)
 
+(*
+
+------------------ S-Int
+Int <: Int
+
+
+ordinary B     toplike B
+----------------------------- S-Top
+A <: B
+
+
+B <: A    C <: D     oridinary D
+----------------------------------- S-Arr
+A -> C <: B -> D
+
+
+B <| D |> C    A <: B    A <: C
+-----------------------------------   S-And
+A <: D
+
+
+A <: C     ordinary C
+------------------------- S-And-L
+A & B <: C
+
+
+B <: C     ordinary C
+-------------------------- S-And-R
+A & B <: C
+
+*)
+
 Inductive sub : type -> type -> Prop :=
 | Sub_Int :
     sub Int Int
@@ -186,6 +218,7 @@ Proof.
   contradiction.
 Qed.
 
+
 (** * Inversion Lemmas *)
 
 Lemma sub_inv_splitable_l :
@@ -211,6 +244,15 @@ Proof.
   introv Sub Spl.
   dependent destruction Sub; eauto with subtyping.
   subst_splitable; intuition.
+Qed.
+
+Lemma sub_inv_int_arrow :
+  forall A B,
+    sub Int (Arr A B) -> ordinary B -> toplike B.
+Proof.
+  introv Sub Ord.
+  dependent destruction Sub; eauto.
+  dependent destruction H0; eauto.
 Qed.
 
 (** * Proper Types *)
@@ -297,6 +339,19 @@ Qed.
 
 (** ** Definition *)
 
+(*
+
+----------------------- Iso-Refl
+A << A
+
+
+B1 <| B |> B2
+A1 << B1     A2 << B2
+----------------------- Iso-And
+A1 & A2 << B
+
+*)
+
 Inductive isosub : type -> type -> Prop :=
 | Isub_Refl : forall (A : type),
     isosub A A
@@ -368,3 +423,23 @@ Proof.
   unfold isomorphic_spec in H.
   destruct H; assumption.
 Qed.
+
+(** * Automations *)
+
+(** ** Absurd Cases *)
+
+Lemma sub_arrow_int :
+  forall A B,
+    sub (Arr A B) Int -> False.
+Proof.
+  introv Sub.
+  dependent destruction Sub; eauto.
+Qed.
+
+Ltac solve_sub :=
+  match goal with
+  | [H: sub (Arr _ _) Int |- _] =>
+      (pose proof (sub_arrow_int _ _ H) as Contra; inversion Contra)
+  end.
+
+Hint Extern 5 => solve_sub : core.

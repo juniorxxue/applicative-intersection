@@ -18,3 +18,5 @@ typeset/*.tex
 refactor/Proof/html/*
 
 *.swp
+Makefile.coq
+Makefile.coq.conf

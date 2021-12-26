@@ -16,6 +16,27 @@ Definition arg := option type.
 
 (** ** Applicative Subtyping (Binary) *)
 
+(*
+
+---------------------------- AS?-Refl
+appsub? . A
+
+C <: A
+----------------------------- AS?-Fun
+appsub? C (A -> B)
+
+
+appsub? C A
+------------------------ AS?-And-L
+appsub? C (A & B)
+
+
+appsub? C B
+------------------------ AS?-And-R
+appsub? C (A & B)
+
+*)
+
 Inductive auxas : arg -> type -> Prop :=
 | Aas_Refl : forall (A : type),
     auxas None A
@@ -33,6 +54,36 @@ Hint Constructors auxas : core.
 Notation "appsub? S A" := (auxas S A) (at level 40).
 
 (** ** Applicative Subtyping *)
+
+(*
+
+------------------------ AS-Refl
+. |- A <: A
+
+
+C <: A
+------------------------ AS-Fun
+C |- A -> B <: B
+
+
+C |- A <: D
+not (appsub? C B)
+------------------------ AS-And-L
+C |- A & B <: D
+
+
+C |- B <: D
+not (appsub? C A)
+------------------------ AS-And-R
+C |- A & B <: D
+
+
+C |- A <: D1
+C |- B <: D2
+------------------------ AS-And-Both
+C |- A & B <: D1 & D2
+
+*)
 
 Inductive appsub : arg -> type -> type -> Prop :=
 | As_Refl : forall (A : type),

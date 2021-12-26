@@ -18,6 +18,40 @@ Definition disjoint_spec A B :=
 
 (** * Definition *)
 
+(*
+
+------------------- Disjoint-Top-L
+Disjoint Top A
+
+
+------------------- Disjoint-Top-R
+Disjoint A Top
+
+
+------------------------- Disjoint-Int-Arr
+Disjoint Int (A1 -> A2)
+
+
+------------------------- Disjoint-Arr-Int
+Disjoint (A1 -> A2) Int
+
+
+Disjoint B1 B2
+----------------------------- Disjoint-Arr-Arr
+Disjoint (A1 -> B1) (A2 -> B2)
+
+
+Disjoint A1 B       Disjoint A2 B
+------------------------------------ Disjoint-And-L
+Disjoint (A1 & A2) B
+
+
+Disjoint A B1       Disjoint A B2
+------------------------------------ Disjoint-And-R
+Disjoint A (B1 & B2)
+
+*)
+
 Inductive disjoint : type -> type -> Prop :=
 | Dj_Top_L : forall (A : type),
     disjoint Top A
@@ -43,7 +77,7 @@ Hint Constructors disjoint : core.
 
 (** induction on size *)
 
-Ltac ind_typ_size s :=
+Ltac ind_type_size s :=
   assert (SizeInd: exists i, s < i) by eauto;
   destruct SizeInd as [i SizeInd];
   repeat match goal with
@@ -61,7 +95,7 @@ Theorem disjoint_complete :
   forall A B, disjoint A B -> disjoint_spec A B.
 Proof.
   intros A B Dj C Sub1 Sub2.
-  ind_typ_size (size_type A + size_type B + size_type C).
+  ind_type_size (size_type A + size_type B + size_type C).
   destruct (splitable_or_ordinary C).
   - Case "Ord".
     dependent destruction Dj.

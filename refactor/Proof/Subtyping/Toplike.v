@@ -1,15 +1,19 @@
+(**
+
+The motivation of top-like comes from defining disjointness for types: "Two types are disjoint if they have no common super types".
+However, since we introduce [Top] to our type system, now every two types have at least one common supertype: [Top].
+
+Situation is becoming more complicated after we introduce intersection types and its subtyping,
+Top, Top & Top, Top & Top & Top ... are supertypes of all types. We need to generalize the idea of top-like types like these.
+
+ **)
+
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Metalib.LibTactics.
 Require Import Language.
 
-(**
-
-The motivation of top-like comes from defining disjointness for types: "Two types are disjoint if they have no common super types". However, since we introduce [Top] to our type system, now every two types have at least one common supertype: [Top].
-
- **)
-
-(**
+(*
 
 --------------------- TL-Top
 TopLike Top
@@ -25,13 +29,8 @@ TopLike B
 -------------------- TL-Arrow
 TopLike (A -> B)
 
-**)
+*)
 
-(** 
-
-Situation is becoming more complicated after we introduce intersection types and its subtyping, Top, Top & Top, Top & Top & Top ... are supertypes of all types. We need to generalize the idea of top-like types like these.
-
- *)
 
 (** * Definition *)
 
