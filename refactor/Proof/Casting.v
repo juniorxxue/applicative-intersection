@@ -19,7 +19,7 @@ Require Import Typing.
 
 (** * Definition *)
 
-(**
+(*
 
 A <: Int  (required for toplike)
 ---------------------- Cast-Int-Anno
@@ -276,7 +276,102 @@ Proof.
     + dependent destruction Val.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
 Qed.
-     
-      
-    
-    
+
+(** * Casting & Consistent *)
+
+(** ** Specification *)
+
+Definition consistent_spec v1 v2 :=
+  forall A v1' v2',
+    ordinary A ->
+    casting v1 A v1' ->
+    casting v2 A v2' ->
+    v1' = v2'.
+
+(** ** Soundness *)
+
+Lemma consistent_sound :
+  forall v1 v2 A B,
+    value v1 -> value v2 ->
+    typing nil v1 A ->
+    typing nil v2 B ->
+    consistent v1 v2 ->
+    consistent_spec v1 v2.
+Proof.
+  introv Val1 Val2 Typ1 Typ2 Con.
+  unfold consistent_spec. intros C v1' v2' Ord Ct1 Ct2.
+  now pose proof (casting_determinism_gen _ _ _ _ _ _ _ Val1 Val2 Typ1 Typ2 Con Ct1 Ct2).
+Qed.
+
+(** ** Completeness *)
+
+Ltac ind_term_size s :=
+  assert (SizeInd: exists i, s < i) by eauto;
+  destruct SizeInd as [i SizeInd];
+  repeat match goal with | [ h : term |- _ ] => (gen h) end;
+  induction i as [|i IH]; [
+      intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H; eauto) end
+    | intros ].
+
+Lemma consistent_completeness :
+  forall v1 v2 A B,
+    value v1 -> value v2 ->
+    typing nil v1 A ->
+    typing nil v2 B ->
+    consistent_spec v1 v2 ->
+    consistent v1 v2.
+Proof.
+  introv Val1 Val2 Typ1 Typ2 Cons. gen A B.
+  ind_term_size (size_term v1 + size_term v2).
+  dependent destruction Val1; dependent destruction Val2; simpl in SizeInd.
+  - Case "Anno~Anno".
+    dependent destruction Typ1. dependent destruction Typ2.
+    destruct (toplike_decidable A); destruct (toplike_decidable A0).
+    + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
+    + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
+    + eapply consistent_symmetry; eauto. eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
+    + destruct H; destruct H1.
+      * SCase "Lit Lit".
+        dependent destruction Typ1. dependent destruction Typ2.
+        (* derive equality from Cons *)
+        unfold consistent_spec in Cons.
+        repeat match goal with
+               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
+               end.
+        assert (Ct1: casting (Ann (Lit n) Int) Int (Ann (Lit n) Int)) by eauto.
+        assert (Ct2: casting (Ann (Lit n0) Int) Int (Ann (Lit n0) Int)) by eauto.
+        pose proof (Cons _ _ _ H0 Ct1 Ct2) as Eq.
+        dependent destruction Eq. eauto.
+      * SCase "Lit Lam".
+        dependent destruction Typ1. dependent destruction Typ2.
+        repeat match goal with
+               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
+               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
+               end.
+      * SCase "Lam Lit". 
+        dependent destruction Typ1. dependent destruction Typ2.
+        repeat match goal with
+               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
+               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
+               end.
+      * SCase "Lam Lam".
+        inversion Typ1; subst. inversion Typ2; subst.
+        repeat match goal with
+               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
+               end.
+        destruct (disjoint_spec_decidable D0 D); eauto.
+        unfold consistent_spec in Cons.
+        destruct_conjs.
+        pose proof (casting_progress (Ann (Lam A1 e B1) (Arr C0 D0)) (Arr C0 D0) (Arr (And C0 C) H7)).
+        match goal with
+        | [H1: sub ?D1 ?DD, H2: sub ?D2 ?DD
+           |- consistent (Ann (Lam ?A1 ?e1 ?B1) (Arr ?C1 ?D1)) (Ann (Lam ?A2 ?e2 ?B2) (Arr ?C2 ?D2))] =>
+            (pose proof (casting_progress (Ann (Lam A1 e1 B1) (Arr C1 D1)) (Arr C1 D1) (Arr (And C1 C2) DD)) as Ct1;
+             pose proof (casting_progress (Ann (Lam A2 e2 B2) (Arr C2 D2)) (Arr C2 D2) (Arr (And C1 C2) DD)) as Ct2;
+             assert (Ord: ordinary (Arr (And C1 C2) DD)) by eauto)
+        end.
+        destruct Ct1 as [x1 Ct1]; eauto. destruct Ct2 as [x2 Ct2]; eauto.
+        pose proof (Cons _ _ _ Ord Ct1 Ct2). subst.
+        dependent destruction Ct1; dependent destruction Ct2; eauto.
+  -           
+Abort.

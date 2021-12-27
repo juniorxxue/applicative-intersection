@@ -168,6 +168,36 @@ Proof.
     now dependent destruction Tl.
 Qed.
 
+(** ** Decidablility *)
+
+Lemma disjoint_spec_decidable :
+  forall A B,
+    disjoint A B \/ (exists C, ~ toplike C /\ ordinary C /\ sub A C /\ sub B C).
+Proof.
+  introv. gen B. induction A; eauto; intros.
+  - Case "Int".
+    induction B; eauto.
+    + SCase "Int".
+      right. exists Int. split; eauto.
+    + SCase "And".
+      destruct IHB1; destruct IHB2; eauto;
+        try solve [right; destruct_conjs; eexists; eauto].
+  - Case "Arrow". clear IHA1.
+    induction B; eauto.
+    + SCase "Arrow".
+      pose proof (IHA2 B2) as IH. destruct IH; eauto.
+      destruct_conjs. right. exists (Arr (And A1 B1) H).
+      repeat (split; eauto).
+    + SCase "And".
+      destruct IHB1; destruct IHB2;
+        try solve [right; destruct_conjs; eexists; eauto | eauto].
+  - Case "And".
+    pose proof (IHA1 B) as IH1.
+    pose proof (IHA2 B) as IH2.
+    destruct IH1; destruct IH2;
+      try solve [right; destruct_conjs; eexists; eauto | eauto].
+Qed.    
+
 (** * Disjoint & Toplike *)
 
 Lemma disjoint_spec_toplike :

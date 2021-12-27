@@ -255,6 +255,17 @@ Proof.
   dependent destruction H0; eauto.
 Qed.
 
+Lemma sub_inv_int :
+  forall A,
+    ~ toplike A ->
+    sub Int A ->
+    ordinary A ->
+    A = Int.
+Proof.
+  introv Ntl Sub Ord.
+  dependent destruction Sub; eauto.
+Qed.
+
 (** * Proper Types *)
 
 (** ** Definition *)

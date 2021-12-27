@@ -42,7 +42,7 @@ Hint Constructors ptype : core.
 
 (** * Properties *)
 
-(** * Determinism *)
+(** ** Determinism *)
 
 Lemma ptype_determinism :
   forall e A B,

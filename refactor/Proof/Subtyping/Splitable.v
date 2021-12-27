@@ -83,7 +83,15 @@ Ltac solve_splitable :=
       (inversion H)
   end.
 
-Hint Extern 7 => solve_splitable : core.
+Hint Extern 5 => solve_splitable : core.
+
+Ltac solve_ordinary :=
+  match goal with
+  | [H: ordinary (And _ _) |- _] =>
+      (inversion H)
+  end.
+
+Hint Extern 5 => solve_ordinary : core.
 
 (** [contra_ordinary] solves contradiction cases of ordinary *)
 
@@ -142,10 +150,9 @@ Lemma ordinary_decidable :
     ordinary A \/ not (ordinary A).
 Proof.
   introv. induction A; eauto.
-  - destruct IHA1; destruct IHA2; eauto.
-    + right. intros Contra. contra_ordinary.
-    + right. intros Contra. contra_ordinary.
-  - right. intros Contra. inversion Contra.
+  destruct IHA1; destruct IHA2; eauto.
+  - right. intros Contra. contra_ordinary.
+  - right. intros Contra. contra_ordinary.
 Qed.
 
 (** * Splitable & Size *)
