@@ -305,6 +305,24 @@ Qed.
 
 (** ** Completeness *)
 
+(** We need two "inversion lemmas" on specification *)
+
+Lemma consistent_spec_inv_merge_l :
+  forall v v1 v2,
+    consistent_spec (Mrg v1 v2) v ->
+    consistent_spec v1 v /\ consistent_spec v2 v.
+Proof.
+  introv Cons. split; unfold consistent_spec in *; intros; eauto.
+Qed.
+
+Lemma consistent_spec_inv_merge_r :
+  forall v v1 v2,
+    consistent_spec v (Mrg v1 v2) ->
+    consistent_spec v v1 /\ consistent_spec v v2.
+Proof.
+  introv Cons. split; unfold consistent_spec in *; intros; eauto.
+Qed.
+
 Ltac ind_term_size s :=
   assert (SizeInd: exists i, s < i) by eauto;
   destruct SizeInd as [i SizeInd];
@@ -362,7 +380,6 @@ Proof.
         destruct (disjoint_spec_decidable D0 D); eauto.
         unfold consistent_spec in Cons.
         destruct_conjs.
-        pose proof (casting_progress (Ann (Lam A1 e B1) (Arr C0 D0)) (Arr C0 D0) (Arr (And C0 C) H7)).
         match goal with
         | [H1: sub ?D1 ?DD, H2: sub ?D2 ?DD
            |- consistent (Ann (Lam ?A1 ?e1 ?B1) (Arr ?C1 ?D1)) (Ann (Lam ?A2 ?e2 ?B2) (Arr ?C2 ?D2))] =>
@@ -373,5 +390,13 @@ Proof.
         destruct Ct1 as [x1 Ct1]; eauto. destruct Ct2 as [x2 Ct2]; eauto.
         pose proof (Cons _ _ _ Ord Ct1 Ct2). subst.
         dependent destruction Ct1; dependent destruction Ct2; eauto.
-  -           
-Abort.
+  - eapply consistent_spec_inv_merge_r in Cons. destruct_conjs.
+    dependent destruction Typ2;
+      eapply Con_Mrg_R; eapply IH; eauto; simpl in *; lia.
+  - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
+    dependent destruction Typ1;
+      eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
+  - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
+    dependent destruction Typ1;
+      eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
+Qed.
