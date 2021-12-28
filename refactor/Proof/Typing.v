@@ -107,6 +107,8 @@ Hint Resolve typing_to_ptype : core.
 
 (** * Typing & Consistent *)
 
+(** ** Reflexivity *)
+
 (** Well-typed values are consistent with themselves *)
 
 Lemma consistent_reflexivity :

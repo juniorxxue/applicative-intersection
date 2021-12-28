@@ -352,3 +352,12 @@ Proof.
   - dependent destruction As2; eauto.
   - dependent destruction As1. dependent destruction As2. eauto.
 Qed.
+
+(** * Automations *)
+
+Ltac solve_disjoint :=
+  match goal with
+  | [H: disjoint (Arr _ ?A) (Arr _ ?B) |- disjoint ?A ?B] => (dependent destruction H; assumption)
+  end.
+
+Hint Extern 5 => solve_disjoint : core.
