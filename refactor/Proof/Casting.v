@@ -225,10 +225,17 @@ Lemma casting_transitivity :
   forall v v1 v2 A B,
     value v ->
     casting v A v1 ->
-    casting v B v2 ->
+    casting v1 B v2 ->
     casting v B v2.
 Proof.
-  induction 2; eauto.
+  introv Val Ct1 Ct2. gen B v2.
+  induction Ct1; intros; try solve [dependent induction Ct2; eauto].
+  - dependent induction Ct2; eauto.
+    eapply Ct_Lam; eauto. eapply sub_transitivity; eauto.
+  - dependent destruction Val.
+    dependent induction Ct2; eauto.
+  - dependent destruction Val.
+    dependent induction Ct2; eauto.
 Qed.
 
 (** * Progress *)
@@ -331,7 +338,7 @@ Ltac ind_term_size s :=
       intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H; eauto) end
     | intros ].
 
-Lemma consistent_completeness :
+Lemma consistent_complete :
   forall v1 v2 A B,
     value v1 -> value v2 ->
     typing nil v1 A ->
@@ -399,4 +406,54 @@ Proof.
   - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
     dependent destruction Typ1;
       eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
+Qed.
+
+(** ** Preservation *)
+
+Lemma casting_consistent :
+  forall v v1 v2 A A1 A2 B C,
+    value v ->
+    typing nil v A ->
+    typing nil v1 A1 ->
+    typing nil v2 A2 ->
+    casting v B v1 ->
+    casting v C v2 ->
+    consistent v1 v2.
+Proof.
+  introv Val Typ Typ1 Typ2 Ct1 Ct2.
+  eapply consistent_complete; eauto.
+  unfold consistent_spec. intros E v1' v2' Ord Ct1' Ct2'.
+  pose proof (casting_transitivity v v1 v1' B E Val Ct1 Ct1').
+  pose proof (casting_transitivity v v2 v2' C E Val Ct2 Ct2').
+  eapply casting_determinism_gen; eauto.
+Qed.
+
+(** * Preservation *)
+
+Lemma casting_preservation :
+  forall v v' A B,
+    value v ->
+    typing nil v B ->
+    casting v A v' ->
+    exists C, typing nil v' C /\ isosub C A.
+Proof.
+  introv Val Typ Ct. gen B.
+  induction Ct; intros; try solve [eexists; eauto].
+  - Case "Lam".
+    exists (Arr C D). split; eauto 3.
+    repeat (dependent destruction Typ).
+    dependent destruction Val.
+    assert (Sub1: sub (Arr A B) (Arr C D)) by (eapply sub_transitivity; eauto).
+    dependent destruction Sub1; eauto 3.
+    assert (Sub2: sub (Arr A D) (Arr C D)) by eauto.
+    eapply Ty_Ann; eauto. eapply Ty_Lam; eauto. eapply sub_transitivity; eauto.
+  - Case "Merge L".
+    dependent destruction Val. dependent destruction Typ; eauto.
+  - Case "Merge R".
+    dependent destruction Val. dependent destruction Typ; eauto.
+  - pose proof (IHCt1 Val B Typ) as IH1. destruct IH1 as [x1 IH1].
+    pose proof (IHCt2 Val B Typ) as IH2. destruct IH2 as [x2 IH2].
+    destruct_conjs.
+    exists (And x1 x2). split; eauto. eapply Ty_Mrg_Uv; eauto.
+    eapply casting_consistent; eauto.
 Qed.
