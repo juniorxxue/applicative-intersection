@@ -152,6 +152,8 @@ Ltac contra_appsub :=
   match goal with
   | [H1: not (auxas ?S ?A), H2: appsub ?S ?A _ |- _] =>
       (pose proof (auxas_false _ _ _ H1 H2) as Contra; inversion Contra)
+  | [H1: not (auxas ?S ?A), H2: auxas ?S ?A |- _] =>
+      (contradiction)
   end.
 
 Hint Extern 5 => contra_appsub : core.

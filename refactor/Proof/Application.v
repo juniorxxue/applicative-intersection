@@ -61,23 +61,12 @@ Notation "v ◐ vl ~-> e" := (papp v vl e) (at level 69).
 
 (** * Determinism *)
 
-Lemma papp_determinism_gen :
-  forall v1 v2 vl e1 e2 A B,
-    value v1 -> value v2 -> value vl ->
-    consistent v1 v2 ->
-    papp v1 vl e1 ->
-    papp v2 vl e2 ->
-    typing nil (App v1 vl) A ->
-    typing nil (App v2 vl) B ->
-    e1 = e2.
-Proof.
-  introv Val1 Val2 Vall Con P1 P2 Typ1 Typ2.
-  gen e1 e2 A B vl.
-  induction Con; intros.
-  - dependent destruction P1; dependent destruction P2; eauto.
-    + 
-Abort.
-    
+(** Well-typed application term doesn't ensure that all subterms of function can accept its argument,
+    but ensures part of its functions can accept *)
+
+(** Notation: automation heavily relies on [contra_appsub] *)
+
+Section papp_determinism.
 
 Lemma papp_determinism :
   forall v vl e1 e2 A,
@@ -87,6 +76,13 @@ Lemma papp_determinism :
     typing nil (App v vl) A ->
     e1 = e2.
 Proof.
+  Ltac solver1 := repeat match goal with
+                         | [Typ: typing nil ?v ?A, Val: value ?v, Pt: ptype ?v _ |- _] =>
+                             (pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val) Typ); subst_ptype; clear Pt)
+                         end;
+                  match goal with
+                  | [H: appsub _ _ _ |- _] => (dependent destruction H; eauto)
+                  end.  
   introv Val Vall P1 P2 Typ. gen e2 A.
   induction P1; intros.
   - Case "Lit Topike".
@@ -98,11 +94,22 @@ Proof.
     dependent destruction Typ.
     repeat (f_equal). eapply casting_determinism; eauto.
   - Case "Merge L".
-    dependent destruction P2; eauto.
-    + admit.
-    + 
-Admitted.
-
+    dependent destruction P2; eauto;
+      repeat subst_ptype; dependent destruction Val;
+      dependent destruction Typ; dependent destruction Typ1; eauto; solver1.
+  - Case "Merge R".
+    dependent destruction P2; eauto;
+      repeat subst_ptype; dependent destruction Val;
+      dependent destruction Typ; dependent destruction Typ1; eauto; solver1.
+  - Case "Merge P".
+    dependent destruction P2; eauto;
+      repeat subst_ptype; dependent destruction Val;
+      dependent destruction Typ; dependent destruction Typ1; eauto.
+    + f_equal; solver1.
+    + f_equal; solver1.
+Qed.
+      
+End papp_determinism.
 
 (** * Consistent *)
 
