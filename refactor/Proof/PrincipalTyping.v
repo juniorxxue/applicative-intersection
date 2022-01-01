@@ -4,26 +4,6 @@ Require Import Value.
 
 (** * Definition *)
 
-(*
-
------------------- ptype-int
-ptype n => Int
-
-
---------------------------------- ptype-arrow
-ptype (\x. e : A -> B) => A -> B
-
-
------------------- ptype-anno
-ptype (e : A) => A
-
-
-ptype e1 => A   ptype e2 => B 
---------------------------------------------------- ptype-merge
-ptype e1,,e2 => A & B
-
- *)
-
 Inductive ptype : term -> type -> Prop :=
 | Pt_Int : forall (n : nat),
     ptype (Lit n) Int
@@ -65,4 +45,3 @@ Ltac subst_ptype :=
   | [H1: ptype ?v ?A1, H2: ptype ?v ?A2 |- _] =>
       (pose proof (ptype_determinism _ _ _ H1 H2) as Eqs; subst; clear H2)
   end.
-

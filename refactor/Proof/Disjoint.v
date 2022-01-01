@@ -18,40 +18,6 @@ Definition disjoint_spec A B :=
 
 (** * Definition *)
 
-(*
-
-------------------- Disjoint-Top-L
-Disjoint Top A
-
-
-------------------- Disjoint-Top-R
-Disjoint A Top
-
-
-------------------------- Disjoint-Int-Arr
-Disjoint Int (A1 -> A2)
-
-
-------------------------- Disjoint-Arr-Int
-Disjoint (A1 -> A2) Int
-
-
-Disjoint B1 B2
------------------------------ Disjoint-Arr-Arr
-Disjoint (A1 -> B1) (A2 -> B2)
-
-
-Disjoint A1 B       Disjoint A2 B
------------------------------------- Disjoint-And-L
-Disjoint (A1 & A2) B
-
-
-Disjoint A B1       Disjoint A B2
------------------------------------- Disjoint-And-R
-Disjoint A (B1 & B2)
-
-*)
-
 Inductive disjoint : type -> type -> Prop :=
 | Dj_Top_L : forall (A : type),
     disjoint Top A

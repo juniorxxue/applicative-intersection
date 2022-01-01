@@ -10,34 +10,6 @@ Require Import Disjoint.
 
 (** * Definition *)
 
-(*
-
-------------------------------------------- Con-Abs-Anno
-(\x. e : A -> B1) : C ~~ (\x. e : A -> B2) : D
-
-
----------------------- Con-Anno
-e : A ~~ e : B
-
-
-ptype u1 A    ptype u2 B     disjoint A B
------------------------------------------------- Con-Disjoint
-u1 ~~ u2
-
-
-u1 ~~ u
-u2 ~~ u
------------------------------------------------- Con-Merge-L
-u1 ,, u2 ~~ u
-
-
-u ~~ u1
-u ~~ u2
------------------------------------------------- Con-Merge-R
-u ~~ u1 ,, u2
-
-*)
-
 Inductive consistent : term -> term -> Prop :=
 | Con_Lam : forall (e : term) (A B1 B2 C D : type),
     lc (Lam A e B1) ->
@@ -109,4 +81,3 @@ Proof.
     pose proof (IHCon2 v1 v2) as IH2.
     destruct IH1; destruct IH2; eauto.
 Qed.
-    

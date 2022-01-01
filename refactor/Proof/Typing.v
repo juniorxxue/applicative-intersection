@@ -15,43 +15,6 @@ Import ListNotations.
 
 (** * Definition *)
 
-(*
-
----------------- T-Int
-T |- n => Int
-
-
-x : A \in T
------------------ T-Var
-T |- x => A
-
-
-T, x : A |- e => C    C <: B
--------------------------------- T-Lam
-T |- \x. e : A -> B => A -> B
-
-
-T |- e => C      C <: A
---------------------------------------------- T-Ann
-T |- e : A => A
-
-
-T |- e2 => A      T |- e1 => B    A |- B <: C
----------------------------------------------------- T-App
-T |- e1 e2 => C
-
-
-disjoint A B        T |- e1 => A   T |- e2 => B
------------------------------------------------------- T-Merge
-T |- e1,,e2 => A & B
-
-
-consistent u1 u2      . |- u1 => A     . |- u2 => B
------------------------------------------------------- T-Merge-uValue
-T |- u1,,u2 => A & B
-
-*)
-
 Inductive typing : ctx -> term -> type -> Prop :=
 | Ty_Int : forall (T : ctx) (n : nat),
     uniq T ->

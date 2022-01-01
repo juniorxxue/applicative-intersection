@@ -19,46 +19,6 @@ Require Import Typing.
 
 (** * Definition *)
 
-(*
-
-A <: Int  (required for toplike)
----------------------- Cast-Int-Anno
-n : A -->Int n : Int
-
-
-Ordinary A
-TopLike A
-------------------- Cast-Top
-v -->A (1 : A)
-
-
-not (TopLike D)
-E <: C -> D
-Ordinary D
----------------------------------------------------------- Cast-Arrow-Anno
-(\x. e : A -> B) : E  -->(C -> D)  (\x. e : A -> D) : C -> D
-
-
-v1 -->A v1'
-Ordinary A
----------------------------- Cast-Merge-L
-v1,,v2 -->A v1'
-
-
-v2 -->A v2'
-Ordinary A
----------------------------- Cast-Merge-R
-v1,,v2 -->A v2'
-
-
-B <| A |> C
-v -->B v1
-v -->C v2
---------------------------------- Cast-And
-v --> A v1,,v2
-
-*)
-
 Inductive casting : term -> type -> term -> Prop :=
 | Ct_Lit : forall (n : nat) (A : type),
     sub A Int ->
