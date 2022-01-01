@@ -168,3 +168,28 @@ Proof.
 Qed.
 
 Hint Resolve open_abs : core.
+
+Lemma fv_open_lower :
+  forall e1 e2 k,
+    fv e1 [<=] fv (open_rec k e2 e1).
+Proof with auto.
+  intros.
+  generalize dependent k.
+  induction e1; intros; simpl; try fsetdec...
+  - specialize (IHe1_1 k).
+    specialize (IHe1_2 k).
+    fsetdec...
+  - specialize (IHe1_1 k).
+    specialize (IHe1_2 k).
+    fsetdec...
+Qed.
+
+Lemma add_notin_context :
+  forall x T1 T2,
+    T1 [<=] add x T2 ->
+    x \notin T1 ->
+    T1 [<=] T2.
+Proof with auto.
+  intros.
+  fsetdec...
+Qed.

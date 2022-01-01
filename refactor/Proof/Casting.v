@@ -92,7 +92,7 @@ Inductive casting : term -> type -> term -> Prop :=
 
 Hint Constructors casting : core.
 
-Notation "e ~~> [ A ] e'" := (casting e A e') (at level 68).
+Notation "e ⇝ [ A ] e'" := (casting e A e') (at level 68).
 
 (** * Determinism *)
 

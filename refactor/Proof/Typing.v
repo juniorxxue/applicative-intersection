@@ -60,10 +60,11 @@ Inductive typing : ctx -> term -> type -> Prop :=
     uniq T -> binds x A T ->
     typing T (Fvar x) A
 | Ty_Lam : forall (L : vars) (T : ctx) (A B C : type) (e : term),
-    (forall x, x \notin L -> typing (cons (x , A) T) (open e (Fvar x)) C) ->
+    (forall x, x \notin L ->
+          typing ((one (x, A)) ++ T) (open e (Fvar x)) C) ->
     sub C B ->
     typing T (Lam A e B) (Arr A B)
-| Ty_Ann : forall (T : ctx) (A B C : type) (e : term),
+| Ty_Ann : forall (T : ctx) (A C : type) (e : term),
     typing T e C ->
     sub C A ->
     typing T (Ann e A) A
@@ -133,3 +134,16 @@ Proof.
 Qed.
 
 Hint Resolve consistent_reflexivity : core.
+
+(** * Typing & LC *)
+
+Lemma typing_to_lc :
+  forall T e A,
+    typing T e A -> lc e.
+Proof.
+  introv Typ.
+  induction Typ; eauto.
+  Unshelve. eauto.
+Qed.
+
+Hint Resolve typing_to_lc : core.

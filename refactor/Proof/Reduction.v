@@ -67,4 +67,4 @@ Inductive step : term -> term -> Prop :=
 
 Hint Constructors step : core.
 
-Notation "e ~-> e'" := (step e e') (at level 68).
+Notation "e ⟾ e'" := (step e e') (at level 68).
