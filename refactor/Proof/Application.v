@@ -429,7 +429,7 @@ Proof.
     dependent destruction Typ. exists D. split.
     + eapply Ty_Ann; eauto. eapply sub_toplike_super; eauto.
     + dependent destruction As; eauto.
-  - Case "Lam".    
+  - Case "Lam".
     repeat dependent destruction Typ. dependent destruction As.
     dependent destruction Val.
     match goal with
@@ -479,3 +479,48 @@ Qed.
 End papp_preservation.
     
 (** * Progress *)
+
+Lemma papp_progress :
+  forall v vl A B C,
+    value v -> value vl ->
+    typing nil v A -> typing nil vl B ->
+    appsub (Some B) A C ->
+    exists e, papp v vl e.
+Proof.
+  introv Val Vall Typ Typl As. gen A B C vl.
+  induction Val; intros.
+  - Case "Anno".
+    destruct H.
+    + SCase "Lit".
+      repeat dependent destruction Typ.
+      dependent destruction H1; eauto. dependent destruction As; eauto.
+    + SCase "Lam".
+      repeat dependent destruction Typ.
+      dependent destruction H3; eauto.
+      * dependent destruction As; eauto.
+      * destruct (toplike_decidable D); eauto.
+        dependent destruction As; eauto.
+        assert (Sub: sub B A1) by (eapply sub_transitivity; eauto).
+        pose proof (casting_progress _ _ _ Vall Typl Sub) as Ct. destruct Ct.
+        eexists. eapply Pa_Lam; eauto.
+  - Case "Merge".
+    dependent destruction As.
+    + inversion Typ.
+    + dependent destruction Typ.
+      * pose proof (IHVal1 _ Typ1 _ _ As _ Vall Typl) as IH. destruct IH.
+        eexists. eapply Pa_Mrg_L; eauto.
+      * pose proof (IHVal1 _ Typ1 _ _ As _ Vall Typl) as IH. destruct IH.
+        eexists. eapply Pa_Mrg_L; eauto.
+    + dependent destruction Typ.
+      * pose proof (IHVal2 _ Typ2 _ _ As _ Vall Typl) as IH. destruct IH.
+        eexists. eapply Pa_Mrg_R; eauto.
+      * pose proof (IHVal2 _ Typ2 _ _ As _ Vall Typl) as IH. destruct IH.
+        eexists. eapply Pa_Mrg_R; eauto.
+    + dependent destruction Typ.
+      * pose proof (IHVal1 _ Typ1 _ _ As1 _ Vall Typl) as IH1. destruct IH1.
+        pose proof (IHVal2 _ Typ2 _ _ As2 _ Vall Typl) as IH2. destruct IH2.
+        eexists. eapply Pa_Mrg_P; eauto.
+      * pose proof (IHVal1 _ Typ1 _ _ As1 _ Vall Typl) as IH1. destruct IH1.
+        pose proof (IHVal2 _ Typ2 _ _ As2 _ Vall Typl) as IH2. destruct IH2.
+        eexists. eapply Pa_Mrg_P; eauto.
+Qed.

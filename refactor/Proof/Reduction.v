@@ -68,3 +68,65 @@ Inductive step : term -> term -> Prop :=
 Hint Constructors step : core.
 
 Notation "e ⟾ e'" := (step e e') (at level 68).
+
+(** * Value *)
+
+Lemma value_no_step :
+  forall v,
+    value v -> forall e, ~ step v e.
+Proof.
+  introv Val.
+  induction v; intros; eauto.
+  - intros St.
+    dependent destruction Val. dependent destruction St; eauto.
+    + eapply IHv1; eauto.
+    + eapply IHv1; eauto.
+    + eapply IHv2; eauto.
+  - dependent destruction Val.
+    destruct H.
+    + intros St. dependent destruction St; eauto.
+    + intros St. dependent destruction St; eauto.
+Qed.
+
+(** * Determinism *)
+
+Section determinism.
+
+Theorem determinism:
+  forall e e1 e2 A,
+    typing nil e A ->
+    step e e1 -> step e e2 -> e1 = e2.
+Proof.
+  Ltac solver1 := try solve [match goal with
+                             | [Val: value ?v, St: step ?v _ |- _] =>
+                                 (pose proof (value_no_step _ Val _ St); contradiction)
+                             end].
+  introv Typ St1 St2. gen e2 A.
+  dependent induction St1; intros.
+  - dependent destruction St2; eauto.
+  - dependent destruction St2; eauto.
+  - dependent destruction St2; eauto.
+    subst_splitable. reflexivity.
+  - dependent destruction St2; solver1.
+    pose proof (papp_determinism v vl e). eauto.
+  - dependent destruction St2; eauto; solver1.
+    dependent destruction Typ.
+    eapply casting_determinism; eauto.
+  - dependent destruction St2; eauto; solver1.
+    f_equal. dependent destruction Typ; eauto.
+  - dependent destruction St2; solver1.
+    f_equal. dependent destruction Typ; eauto.
+  - dependent destruction St2; solver1.
+    f_equal. dependent destruction Typ; eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ;
+      f_equal; eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ;
+      f_equal; eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ;
+      f_equal; eauto.
+Qed.
+
+End determinism.

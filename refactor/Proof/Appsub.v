@@ -137,6 +137,8 @@ Proof.
   dependent induction H; eauto.
 Qed.
 
+Hint Resolve appsub_to_auxas : core.
+
 Lemma auxas_false :
   forall (A B : type) (S : arg),
     not (auxas S A) ->

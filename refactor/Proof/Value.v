@@ -134,6 +134,8 @@ Hint Resolve lc_inv_lam : core.
 Ltac solve_value :=
   match goal with
   | [H: value (Lit _) |- _] => (inversion H)
+  | [H: value (Fvar _) |- _] => (inversion H)
+  | [H: value (Bvar _) |- _] => (inversion H)
   | [H: value (Lam _ _ _) |- _] => (inversion H)
   | [H: value (App _ _) |- _] => (inversion H)
   | [H: binds _ _ nil |- _] => (inversion H)
@@ -157,6 +159,8 @@ Ltac solve_pvalue_and_value :=
   match goal with
   | [H1: value ?v, H2: pvalue ?v |- _] =>
       (pose proof (pvalue_and_value _ H2 H1) as Contra; inversion Contra)
+  | [H1: pvalue ?p, H2: ~ pvalue ?p |- _] =>
+      (contradiction)
   end.
 
 Hint Extern 5 => solve_pvalue_and_value : core.

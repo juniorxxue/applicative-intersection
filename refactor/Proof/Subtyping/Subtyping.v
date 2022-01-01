@@ -157,9 +157,6 @@ Lemma splitable_toplike1:
 Proof.
   introv Spl Tl1 Tl2.
   dependent induction Spl; eauto.
-  dependent destruction Tl1.
-  dependent destruction Tl2.
-  eapply Tl_Arr; eauto.
 Qed.
 
 Lemma splitable_toplike2 :
@@ -199,7 +196,6 @@ Lemma sub_toplike:
 Proof.
   introv Tl Sub.
   induction Sub; eauto with subtyping.
-  - dependent destruction Tl; eauto.
   - eapply splitable_toplike1; eauto.
   - dependent destruction Tl; eauto.
   - dependent destruction Tl; eauto.
@@ -252,7 +248,6 @@ Lemma sub_inv_int_arrow :
 Proof.
   introv Sub Ord.
   dependent destruction Sub; eauto.
-  dependent destruction H0; eauto.
 Qed.
 
 Lemma sub_inv_int :

@@ -55,6 +55,8 @@ Ltac solve_toplike :=
   match goal with
   | [H: toplike Int |- _] =>
       (inversion H)
+  | [H: toplike (Arr _ ?B) |- toplike ?B] =>
+      (dependent destruction H; assumption)
   end.
 
 Hint Extern 5 => solve_toplike : core.
