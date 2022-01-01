@@ -10,7 +10,7 @@ Require Import Subtyping.Splitable.
 (** ** Locally Closed *)
 
 Inductive lc : term -> Prop :=
-| Lc_Int : forall (n : nat),
+| Lc_Lit : forall (n : nat),
     lc (Lit n)
 | Lc_Var : forall (x : atom),
     lc (Fvar x)
@@ -26,8 +26,6 @@ Inductive lc : term -> Prop :=
 | Lc_Ann : forall (e : term) (A : type),
     lc e ->
     lc (Ann e A).
-
-Hint Constructors lc : core.
 
 (** ** Partial Value *)
 
@@ -74,6 +72,7 @@ Lemma lc_pvalue :
 Proof.
   introv H.
   induction p; try solve [eauto | inversion H; eauto].
+  econstructor.
 Qed.
 
 Hint Resolve lc_pvalue : core.
@@ -84,6 +83,8 @@ Lemma lc_value :
 Proof.
   introv Hv.
   induction Hv; eauto.
+  - econstructor; eauto.
+  - econstructor; eauto.
 Qed.
 
 Hint Resolve lc_value : core.
@@ -125,6 +126,7 @@ Lemma lc_inv_lam:
     lc (Lam A e B2).
 Proof.
   inversion 1; eauto.
+  econstructor; eauto.
 Qed.
 
 Hint Resolve lc_inv_lam : core.

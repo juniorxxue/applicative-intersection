@@ -112,10 +112,9 @@ Lemma subst_lc :
     lc (substitution x u e).
 Proof.
   intros x u e He Hu.
-  induction He; try solve [simpl; eauto].
-  - simpl. destruct (x0 == x); eauto.
-  - simpl.
-    apply Lc_Lam with (L := L `union` singleton x).
+  induction He; try solve [simpl; econstructor; eauto].
+  - simpl. destruct (x0 == x); eauto. econstructor.
+  - simpl. eapply Lc_Lam with (L := L `union` singleton x).
     intros x0 Fr.
     rewrite subst_open_var; eauto.
 Qed.

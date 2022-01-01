@@ -130,3 +130,21 @@ Proof.
 Qed.
 
 End determinism.
+
+(** * Preservation *)
+
+(** * Progress *)
+
+Theorem progress :
+  forall e A,
+    typing nil e A ->
+    value e \/ exists e', step e e'.
+Proof.
+  introv Typ.
+  dependent induction Typ; eauto 3.
+  - Case "Anno".
+    destruct IHTyp; eauto.
+    + right. eapply casting_progress in Typ; eauto. destruct Typ.
+      exists x. eapply St_Val; eauto.
+    + destruct (pvalue_decidable e); destruct (splitable_or_ordinary A); eauto.
+Admitted.

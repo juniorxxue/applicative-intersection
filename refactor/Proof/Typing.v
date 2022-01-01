@@ -142,8 +142,7 @@ Lemma typing_to_lc :
     typing T e A -> lc e.
 Proof.
   introv Typ.
-  induction Typ; eauto.
-  Unshelve. eauto.
+  induction Typ; try solve [econstructor; eauto].
 Qed.
 
 Hint Resolve typing_to_lc : core.

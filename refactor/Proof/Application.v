@@ -286,7 +286,6 @@ Proof.
     rewrite subst_open_var; eauto.
     rewrite_env (([(y, A)] ++ F) ++ E).
     eapply H0; eauto.
-    Unshelve. eauto.
   - subst. simpl.
     eapply Ty_Ann; eauto.
   - subst. simpl.
@@ -366,7 +365,6 @@ Proof.
     eapply subst_notin_fv; eauto.
     eapply isosub_to_sub1 in H5.
     eapply sub_transitivity; eauto.
-    Unshelve. eauto.
   - Case "Ann".
     exists A0. split; eauto.
     pose proof (IHTyp F) as IH. destruct IH; eauto. destruct_conjs.
