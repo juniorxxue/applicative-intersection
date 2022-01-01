@@ -92,15 +92,16 @@ Qed.
 
 Section determinism.
 
+Ltac solver1 := try solve [match goal with
+                           | [Val: value ?v, St: step ?v _ |- _] =>
+                               (pose proof (value_no_step _ Val _ St); contradiction)
+                           end].
+
 Theorem determinism:
   forall e e1 e2 A,
     typing nil e A ->
     step e e1 -> step e e2 -> e1 = e2.
 Proof.
-  Ltac solver1 := try solve [match goal with
-                             | [Val: value ?v, St: step ?v _ |- _] =>
-                                 (pose proof (value_no_step _ Val _ St); contradiction)
-                             end].
   introv Typ St1 St2. gen e2 A.
   dependent induction St1; intros.
   - dependent destruction St2; eauto.
@@ -133,6 +134,12 @@ End determinism.
 
 (** * Preservation *)
 
+Lemma step_uvalue :
+  forall u u',
+    uvalue u -> step u u' -> uvalue u'.
+Proof.
+Admitted.
+
 (** * Progress *)
 
 Theorem progress :
@@ -143,8 +150,19 @@ Proof.
   introv Typ.
   dependent induction Typ; eauto 3.
   - Case "Anno".
-    destruct IHTyp; eauto.
+    destruct IHTyp as [Val | St] ; eauto.
     + right. eapply casting_progress in Typ; eauto. destruct Typ.
       exists x. eapply St_Val; eauto.
-    + destruct (pvalue_decidable e); destruct (splitable_or_ordinary A); eauto.
-Admitted.
+    + destruct (pvalue_decidable e) as [Pv | nPv];
+        destruct (splitable_or_ordinary A) as [Spl | Ord]; eauto.
+      * destruct Pv; right; destruct_conjs; eexists; eauto.
+      * destruct St. right. eexists; eauto.
+      * destruct St. right. eexists; eauto.
+  - Case "App".
+    right. destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
+    pose proof (papp_progress e1 e2 A B C) as P. destruct P; eauto.
+  - Case "Merge".
+    destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
+  - Case "Merge V".
+    destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
+Qed.
