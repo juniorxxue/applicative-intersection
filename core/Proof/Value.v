@@ -212,23 +212,38 @@ Hint Extern 5 => solve_value_anno_ordinary : core.
 
 (** ** Solve Value *)
 
-Lemma value_merge_inversion_l :
+Lemma value_inv_merge_l :
   forall (v1 v2 : term),
     value (Mrg v1 v2) -> value v1.
 Proof.
   inversion 1; eauto.
 Qed.
 
-Hint Resolve value_merge_inversion_l : core.
-
-Lemma value_merge_inversion_r :
+Lemma value_inv_merge_r :
   forall (v1 v2 : term),
     value (Mrg v1 v2) -> value v2.
 Proof.
   inversion 1; eauto.
 Qed.
 
-Hint Resolve value_merge_inversion_r : core.
+Lemma uvalue_inv_merge_l :
+  forall (u1 u2 : term),
+    uvalue (Mrg u1 u2) -> uvalue u1.
+Proof.
+  inversion 1; eauto.
+Qed.
+
+Lemma uvalue_inv_merge_r :
+  forall (u1 u2 : term),
+    uvalue (Mrg u1 u2) -> uvalue u2.
+Proof.
+  inversion 1; eauto.
+Qed.
+
+Hint Resolve value_inv_merge_l : core.
+Hint Resolve value_inv_merge_r : core.
+Hint Resolve uvalue_inv_merge_l : core.
+Hint Resolve uvalue_inv_merge_r : core.
 
 Lemma value_is_uvalue :
   forall v,

@@ -15,7 +15,7 @@ typeset/*.pdf
 typeset/*.tex
 *.coq.d
 
-refactor/Proof/html/*
+core/Proof/html/*
 
 *.swp
 Makefile.coq

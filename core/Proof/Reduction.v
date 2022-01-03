@@ -162,7 +162,7 @@ Qed.
 
 End determinism.
 
-(** * Preservation *)
+(** * Consistent *)
 
 Inductive step_or_value : term -> term -> Prop :=
 | Sv_V : forall v, value v -> step_or_value v v
@@ -214,6 +214,11 @@ Ltac solver3 := match goal with
                 | [Val: value ?v, St: step ?v _ |- _] =>
                     (pose proof (value_no_step _ Val _ St); contradiction)
                 end.
+
+Ltac solver4 IHC IH :=
+  eapply IHC; eauto; intros; match goal with
+                             | St: step ?e ?e' |- _ => eapply (IH e e'); eauto; simpl; lia
+                             end.
 
 Lemma step_consistent :
   forall e1 e2 e1' e2' A B,
@@ -267,68 +272,26 @@ Proof.
       eapply typing_to_ptype in Typ2; eauto. repeat subst_ptype.
       eapply Con_Dj; eauto. eapply disjoint_iso_l; eauto.
   - Case "Merge L".
-    dependent destruction Sv1; eauto.
-    + dependent destruction Typ1.
-      * eapply Con_Mrg_L.
-        ** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-      * eapply Con_Mrg_L.
-        ** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-    + dependent destruction Typ1.
-      * dependent destruction Uv1. dependent destruction H0.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-      * dependent destruction H3.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_L.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
+    dependent destruction Sv1; eauto 3.
+    + dependent destruction Typ1;
+        eapply Con_Mrg_L; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
+    + dependent destruction Typ1;
+        match goal with
+        | St: step (Mrg _ _) _ |- _ => dependent destruction St
+        end; eapply Con_Mrg_L; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
   - Case "Merge R".
-    dependent destruction Sv2; eauto.
-    + dependent destruction Typ2.
-      * eapply Con_Mrg_R.
-        ** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-      * eapply Con_Mrg_R.
-        ** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-    + dependent destruction Typ2.
-      * dependent destruction Uv2. dependent destruction H0.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-      * dependent destruction H3.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-        ** eapply Con_Mrg_R.
-           *** eapply IHCon1; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
-           *** eapply IHCon2; eauto. intros. eapply (IH e e'); eauto. simpl. lia.
+    dependent destruction Sv2; eauto 3.
+    + dependent destruction Typ2;
+        eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
+    + dependent destruction Typ2;
+        match goal with
+        | St: step (Mrg _ _) _ |- _ => dependent destruction St
+        end; eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
 Qed.
     
 End step_consistent.
+
+(** * Preservation *)
 
 Ltac ind_term_size s :=
   assert (SizeInd: exists i, s < i) by eauto;
