@@ -167,6 +167,18 @@ Qed.
 
 (** Value property is preserved by casting *)
 
+Lemma casting_lc :
+  forall v v' A,
+    lc v ->
+    casting v A v' ->
+    lc v'.
+Proof.
+  introv Lc Ct.
+  dependent induction Ct; eauto.
+  - econstructor; eauto.
+  - econstructor; eauto.
+Qed.
+
 Lemma casting_value :
   forall v v' A,
     value v ->

@@ -111,7 +111,23 @@ Qed.
       
 End papp_determinism.
 
-(** * Consistent *)
+(** * App & Value *)
+
+Lemma papp_lc :
+  forall v vl e,
+    lc v -> lc vl ->
+    papp v vl e ->
+    lc e.
+Proof.
+  introv Lc Lcl Pa.
+  dependent induction Pa; try solve [econstructor; eauto 3].
+  - eapply Lc_Ann. eapply open_abs; eauto.
+    pose proof (casting_lc vl vl' A). eauto 3.
+  - dependent destruction Lc; eauto 3.
+  - dependent destruction Lc; eauto 3.
+Qed.
+
+(** * App & Consistent *)
 
 (** Automating this lemma is tricky for it has "four" irrelevant cases *)
 

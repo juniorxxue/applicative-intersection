@@ -163,6 +163,10 @@ Ltac solve_pvalue_and_value :=
       (pose proof (pvalue_and_value _ H2 H1) as Contra; inversion Contra)
   | [H1: pvalue ?p, H2: ~ pvalue ?p |- _] =>
       (contradiction)
+  | [H: lc (Lam ?A ?e ?B1), Contra: ~ pvalue (Lam ?A ?e ?B2) |- _] =>
+      (pose proof (Pv_Lam _ _ _ (lc_inv_lam e A B1 B2 H)); contradiction)
+  | [H1: value (Ann ?e _), H2: ~ pvalue ?e |- _] =>
+      (dependent destruction H1; contradiction)
   end.
 
 Hint Extern 5 => solve_pvalue_and_value : core.
