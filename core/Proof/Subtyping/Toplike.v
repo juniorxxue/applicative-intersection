@@ -13,35 +13,17 @@ Require Import Strings.String.
 Require Import Metalib.LibTactics.
 Require Import Language.
 
-(*
-
---------------------- TL-Top
-TopLike Top
-
-
-TopLike A
-TopLike B
---------------------- TL-And
-TopLike (A & B)
-
-
-TopLike B
--------------------- TL-Arrow
-TopLike (A -> B)
-
-*)
-
 
 (** * Definition *)
 
 Inductive toplike : type -> Prop :=
 | Tl_Top :
     toplike Top
-| Tl_And : forall (A B : type),
+| Tl_And : forall A B,
     toplike A ->
     toplike B ->
     toplike (And A B)
-| Tl_Arr : forall (A B : type),
+| Tl_Arr : forall A B,
     toplike B ->
     toplike (Arr A B).
 

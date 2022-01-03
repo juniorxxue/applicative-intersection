@@ -11,56 +11,24 @@ Set Printing Parentheses.
 
 (** * Definition *)
 
-(*
-
------------------- S-Int
-Int <: Int
-
-
-ordinary B     toplike B
------------------------------ S-Top
-A <: B
-
-
-B <: A    C <: D     oridinary D
------------------------------------ S-Arr
-A -> C <: B -> D
-
-
-B <| D |> C    A <: B    A <: C
------------------------------------   S-And
-A <: D
-
-
-A <: C     ordinary C
-------------------------- S-And-L
-A & B <: C
-
-
-B <: C     ordinary C
--------------------------- S-And-R
-A & B <: C
-
-*)
-
 Inductive sub : type -> type -> Prop :=
 | Sub_Int :
     sub Int Int
-| Sub_Top : forall (A B : type),
+| Sub_Top : forall A B,
     ordinary B -> toplike B ->
     sub A B
-| Sub_Arrow : forall (A B C D : type),
+| Sub_Arrow : forall A B C D,
     sub C A -> sub B D ->
     ordinary D ->
     sub (Arr A B) (Arr C D)
-| Sub_And : forall (A B B1 B2 : type),
+| Sub_And : forall A B B1 B2,
     splitable B B1 B2 ->
     sub A B1 -> sub A B2 ->
     sub A B
-| Sub_And_L : forall (A B C : type),
+| Sub_And_L : forall A B C,
     sub A C -> ordinary C ->
     sub (And A B) C
-| Sub_And_R : forall (A B C : type),
+| Sub_And_R : forall A B C,
     sub B C -> ordinary C ->
     sub (And A B) C.
 
@@ -344,19 +312,6 @@ Qed.
 (** * Isomorphic Subtyping *)
 
 (** ** Definition *)
-
-(*
-
------------------------ Iso-Refl
-A << A
-
-
-B1 <| B |> B2
-A1 << B1     A2 << B2
------------------------ Iso-And
-A1 & A2 << B
-
-*)
 
 Inductive isosub : type -> type -> Prop :=
 | Isub_Refl : forall (A : type),

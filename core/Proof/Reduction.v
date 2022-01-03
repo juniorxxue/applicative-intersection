@@ -24,43 +24,43 @@ Require Import Application.
 (** * Definition *)
 
 Inductive step : term -> term -> Prop :=
-| St_Lit : forall (n : nat),
+| St_Lit : forall n,
     step (Lit n) (Ann (Lit n) Int)
-| St_Lam : forall (e : term) (A B : type),
+| St_Lam : forall e A B,
     step (Lam A e B) (Ann (Lam A e B) (Arr A B))
-| St_Spl : forall (A A1 A2 : type) (p : term),
+| St_Spl : forall p A A1 A2,
     pvalue p ->
     splitable A A1 A2 ->
     step (Ann p A) (Mrg (Ann p A1) (Ann p A2))
-| St_App : forall (v vl e : term) (A : type),
+| St_App : forall v vl e,
     value v -> value vl ->
     papp v vl e ->
     step (App v vl) e
-| St_Val : forall (v v' : term) (A : type),
+| St_Val : forall v v' A,
     value v ->
     casting v A v' ->
     step (Ann v A) v'
-| St_Ann : forall (e e' : term) (A : type),
+| St_Ann : forall e e' A,
     not (pvalue e) ->
     step e e' ->
     step (Ann e A) (Ann e' A)
-| St_App_L : forall (e1 e2 e1' : term),
+| St_App_L : forall e1 e1' e2,
     lc e2 ->
     step e1 e1' ->
     step (App e1 e2) (App e1' e2)
-| St_App_R : forall (v e2 e2' : term),
+| St_App_R : forall v e2 e2',
     value v ->
     step e2 e2' ->
     step (App v e2) (App v e2')
-| St_Mrg : forall (e1 e1' e2 e2' : term),
+| St_Mrg : forall e1 e1' e2 e2',
     step e1 e1' ->
     step e2 e2' ->
     step (Mrg e1 e2) (Mrg e1' e2')         
-| St_Mrg_L : forall (e1 v e1' : term),
+| St_Mrg_L : forall e1 v e1',
     value v ->
     step e1 e1' ->
     step (Mrg e1 v) (Mrg e1' v)
-| St_Mrg_R : forall (v e2 e2' : term),
+| St_Mrg_R : forall v e2 e2',
     value v ->
     step e2 e2' ->
     step (Mrg v e2) (Mrg v e2').

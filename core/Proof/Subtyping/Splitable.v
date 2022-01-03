@@ -7,47 +7,18 @@ Require Import Language Tactical.
 
 (** * Definitions *)
 
-(*
-
------------------- Ord-Top
-Ordinary Top
-
-
------------------- Ord-Int
-Ordinary Int
-
-
-Ordinary B
------------------- Ord-Arrow
-Ordinary (A -> B)
-
-*)
-
 Inductive ordinary : type -> Prop :=
 | Ord_Top : ordinary Top
 | Ord_Tnt : ordinary Int
-| Ord_Arrow : forall (A B : type),
+| Ord_Arrow : forall A B,
     ordinary B -> ordinary (Arr A B).
 
 Hint Constructors ordinary : core.
 
-
-(*
-
--------------------- Sp-And
-A <| A & B |> B
-
-
-C <| B |> D
----------------------------- Sp-Arrow
-A -> C <| A -> B |> A -> D
-
-*)
-
 Inductive splitable : type -> type -> type -> Prop :=
-| Spl_And : forall (A B : type),
+| Spl_And : forall A B,
     splitable (And A B) A B
-| Spl_Arr : forall (A B B1 B2 : type),
+| Spl_Arr : forall A B B1 B2,
     splitable B B1 B2 ->
     splitable (Arr A B) (Arr A B1) (Arr A B2).
 

@@ -5,15 +5,15 @@ Require Import Value.
 (** * Definition *)
 
 Inductive ptype : term -> type -> Prop :=
-| Pt_Int : forall (n : nat),
+| Pt_Int : forall n,
     ptype (Lit n) Int
-| Pt_Arr : forall (e : term) (A B : type),
+| Pt_Arr : forall e A B,
     lc (Lam A e B) ->
     ptype (Lam A e B) (Arr A B)
-| Pt_Ann : forall (e : term) (A : type),
+| Pt_Ann : forall e A,
     lc e ->
     ptype (Ann e A) A
-| Pt_Mrg : forall (e1 e2 : term) (A B : type),
+| Pt_Mrg : forall e1 e2 A B,
     ptype e1 A ->
     ptype e2 B ->
     ptype (Mrg e1 e2) (And A B).

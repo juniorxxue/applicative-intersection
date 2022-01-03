@@ -17,15 +17,15 @@ Definition arg := option type.
 (** ** Applicative Subtyping (Binary) *)
 
 Inductive auxas : arg -> type -> Prop :=
-| Aas_Refl : forall (A : type),
+| Aas_Refl : forall A,
     auxas None A
-| Aas_Arr : forall (A B C : type),
+| Aas_Arr : forall A B C,
     sub C A ->
     auxas (Some C) (Arr A B)
-| Aas_And_L : forall (A B C : type),
+| Aas_And_L : forall A B C,
     auxas (Some C) A ->
     auxas (Some C) (And A B)
-| Aas_And_R : forall (A B C : type),
+| Aas_And_R : forall A B C,
     auxas (Some C) B ->
     auxas (Some C) (And A B).
 
@@ -35,20 +35,20 @@ Notation "appsub? S A" := (auxas S A) (at level 40).
 (** ** Applicative Subtyping *)
 
 Inductive appsub : arg -> type -> type -> Prop :=
-| As_Refl : forall (A : type),
+| As_Refl : forall A,
     appsub None A A
-| As_Arr : forall (A B C : type),
+| As_Arr : forall A B C,
     sub C A ->
     appsub (Some C) (Arr A B) B
-| As_And_L : forall (A B C D: type),
+| As_And_L : forall A B C D,
     appsub (Some C) A D ->
     not (auxas (Some C) B) ->
     appsub (Some C) (And A B) D
-| As_And_R : forall (A B C D : type),
+| As_And_R : forall A B C D,
     appsub (Some C) B D ->
     not (auxas (Some C) A) ->
     appsub (Some C) (And A B) D
-| As_And_P : forall (A B C D1 D2: type),
+| As_And_P : forall A B C D1 D2,
     appsub (Some C) A D1 ->
     appsub (Some C) B D2 ->
     appsub (Some C) (And A B) (And D1 D2).
@@ -78,7 +78,7 @@ Hint Extern 5 => solve_appsub : core.
 (** ** Contradictions *)
 
 Lemma appsub_to_auxas :
-  forall (A B : type) (S : arg),
+  forall A B S,
     appsub S A B ->
     auxas S A.
 Proof.
@@ -89,7 +89,7 @@ Qed.
 Hint Resolve appsub_to_auxas : core.
 
 Lemma auxas_false :
-  forall (A B : type) (S : arg),
+  forall A B S,
     not (auxas S A) ->
     appsub S A B ->
     False.

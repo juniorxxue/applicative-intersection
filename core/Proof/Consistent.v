@@ -11,21 +11,21 @@ Require Import Disjoint.
 (** * Definition *)
 
 Inductive consistent : term -> term -> Prop :=
-| Con_Lam : forall (e : term) (A B1 B2 C D : type),
+| Con_Lam : forall e A B1 B2 C D,
     lc (Lam A e B1) ->
     consistent (Ann (Lam A e B1) C) (Ann (Lam A e B2) D)
-| Con_Ann : forall (e : term) (A B : type),
+| Con_Ann : forall e A B,
     lc e ->
     consistent (Ann e A) (Ann e B)
-| Con_Dj : forall (u1 u2 : term) (A B : type),
+| Con_Dj : forall u1 u2 A B,
     ptype u1 A -> ptype u2 B ->
     disjoint A B ->
     consistent u1 u2
-| Con_Mrg_L : forall (u u1 u2 : term),
+| Con_Mrg_L : forall u u1 u2,
     consistent u1 u ->
     consistent u2 u ->
     consistent (Mrg u1 u2) u
-| Con_Mrg_R : forall (u u1 u2 : term),
+| Con_Mrg_R : forall u u1 u2,
     consistent u u1 ->
     consistent u u2 ->
     consistent u (Mrg u1 u2).

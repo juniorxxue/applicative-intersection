@@ -19,21 +19,21 @@ Definition disjoint_spec A B :=
 (** * Definition *)
 
 Inductive disjoint : type -> type -> Prop :=
-| Dj_Top_L : forall (A : type),
+| Dj_Top_L : forall A,
     disjoint Top A
-| Dj_Top_R : forall (A : type),
+| Dj_Top_R : forall A,
     disjoint A Top
-| Dj_And_L : forall (A1 A2 B : type),
+| Dj_And_L : forall A1 A2 B,
     disjoint A1 B -> disjoint A2 B ->
     disjoint (And A1 A2) B
-| Dj_And_R : forall (A B1 B2 : type),
+| Dj_And_R : forall A B1 B2,
     disjoint A B1 -> disjoint A B2 ->
     disjoint A (And B1 B2)
-| Dj_Int_Arr : forall (A1 A2 : type),
+| Dj_Int_Arr : forall A1 A2,
     disjoint Int (Arr A1 A2)
-| Dj_Arr_Int : forall (A1 A2 : type),
+| Dj_Arr_Int : forall A1 A2,
     disjoint (Arr A1 A2) Int
-| Dj_Arr_Arr : forall (A1 A2 B1 B2 : type),
+| Dj_Arr_Arr : forall A1 A2 B1 B2,
     disjoint B1 B2 ->
     disjoint (Arr A1 B1) (Arr A2 B2).
 

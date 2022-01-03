@@ -10,29 +10,29 @@ Require Import Subtyping.Splitable.
 (** ** Locally Closed *)
 
 Inductive lc : term -> Prop :=
-| Lc_Lit : forall (n : nat),
+| Lc_Lit : forall n,
     lc (Lit n)
-| Lc_Var : forall (x : atom),
+| Lc_Var : forall x,
     lc (Fvar x)
-| Lc_Lam : forall (e : term) (A B : type) (L : atoms),
+| Lc_Lam : forall e A B L,
     (forall x : atom, x `notin` L -> lc (open e x)) ->
     lc (Lam A e B)
-| Lc_App : forall (e1 e2 : term),
+| Lc_App : forall e1 e2,
     lc e1 -> lc e2 ->
     lc (App e1 e2)
-| Lc_Mrg : forall (e1 e2 : term),
+| Lc_Mrg : forall e1 e2,
     lc e1 -> lc e2 ->
     lc (Mrg e1 e2)
-| Lc_Ann : forall (e : term) (A : type),
+| Lc_Ann : forall e A,
     lc e ->
     lc (Ann e A).
 
 (** ** Partial Value *)
 
 Inductive pvalue : term -> Prop :=
-| Pv_Lit : forall (n : nat),
+| Pv_Lit : forall n,
     pvalue (Lit n)
-| Pv_Lam : forall (e : term) (A B : type),
+| Pv_Lam : forall e A B,
     lc (Lam A e B) ->
     pvalue (Lam A e B).
 
@@ -41,10 +41,10 @@ Hint Constructors pvalue : core.
 (** ** Universal Value *)
 
 Inductive uvalue : term -> Prop :=
-| Uv_Ann : forall (e : term) (A : type),
+| Uv_Ann : forall e A,
     lc e ->
     uvalue (Ann e A)
-| Uv_Mrg : forall (u1 u2 : term),
+| Uv_Mrg : forall u1 u2,
     uvalue u1 -> uvalue u2 ->
     uvalue (Mrg u1 u2).
 
@@ -53,10 +53,10 @@ Hint Constructors uvalue : core.
 (** ** Value *)
 
 Inductive value : term -> Prop :=
-| V_Ann : forall (A : type) (e : term),
+| V_Ann : forall e A,
     pvalue e -> ordinary A ->
     value (Ann e A)
-| V_Mrg : forall (v1 v2 : term),
+| V_Mrg : forall v1 v2,
     value v1 -> value v2 ->
     value (Mrg v1 v2).
 
@@ -213,28 +213,28 @@ Hint Extern 5 => solve_value_anno_ordinary : core.
 (** ** Solve Value *)
 
 Lemma value_inv_merge_l :
-  forall (v1 v2 : term),
+  forall v1 v2,
     value (Mrg v1 v2) -> value v1.
 Proof.
   inversion 1; eauto.
 Qed.
 
 Lemma value_inv_merge_r :
-  forall (v1 v2 : term),
+  forall v1 v2,
     value (Mrg v1 v2) -> value v2.
 Proof.
   inversion 1; eauto.
 Qed.
 
 Lemma uvalue_inv_merge_l :
-  forall (u1 u2 : term),
+  forall u1 u2,
     uvalue (Mrg u1 u2) -> uvalue u1.
 Proof.
   inversion 1; eauto.
 Qed.
 
 Lemma uvalue_inv_merge_r :
-  forall (u1 u2 : term),
+  forall u1 u2,
     uvalue (Mrg u1 u2) -> uvalue u2.
 Proof.
   inversion 1; eauto.
@@ -260,7 +260,7 @@ Hint Resolve value_is_uvalue : core.
 (** ** Decidability *)
 
 Lemma pvalue_decidable :
-  forall (e : term),
+  forall e,
     lc e ->
     pvalue e \/ ~ pvalue e.
 Proof.
@@ -269,7 +269,7 @@ Proof.
 Qed.
 
 Lemma value_decidable :
-  forall (e : term),
+  forall e,
     lc e ->
     value e \/ ~ value e.
 Proof.
@@ -281,4 +281,4 @@ Proof.
     destruct (pvalue_decidable e);
       destruct (ordinary_decidable t); eauto;
       try solve [right; intros Hcontra; inversion Hcontra; contradiction].
-Qed.
+Qed. 

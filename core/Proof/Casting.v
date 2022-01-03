@@ -20,15 +20,15 @@ Require Import Typing.
 (** * Definition *)
 
 Inductive casting : term -> type -> term -> Prop :=
-| Ct_Lit : forall (n : nat) (A : type),
+| Ct_Lit : forall n A,
     sub A Int ->
     casting (Ann (Lit n) A) Int (Ann (Lit n) Int)
-| Ct_Top : forall (A : type) (v : term),
+| Ct_Top : forall A v,
     lc v ->
     toplike A ->
     ordinary A ->
     casting v A (Ann (Lit 1) A)
-| Ct_Lam : forall (A B C D E : type) (e : term),
+| Ct_Lam : forall A B C D E e,
     lc (Lam A e B) ->
     not (toplike D) ->
     sub E (Arr C D) ->
@@ -36,15 +36,15 @@ Inductive casting : term -> type -> term -> Prop :=
     casting (Ann (Lam A e B) E)
             (Arr C D)
             (Ann (Lam A e D) (Arr C D))
-| Ct_Mrg_L : forall (v1 v2 v: term) (A : type),
+| Ct_Mrg_L : forall v1 v2 v A,
     casting v1 A v ->
     ordinary A ->
     casting (Mrg v1 v2) A v
-| Ct_Mrg_R : forall (v1 v2 v : term) (A : type),
+| Ct_Mrg_R : forall v1 v2 v A,
     casting v2 A v ->
     ordinary A ->
     casting (Mrg v1 v2) A v
-| Ct_And : forall (v1 v2 v : term) (A A1 A2 : type),
+| Ct_And : forall v1 v2 v A A1 A2,
     splitable A A1 A2 ->
     casting v A1 v1 ->
     casting v A2 v2 ->
