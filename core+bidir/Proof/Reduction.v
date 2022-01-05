@@ -129,7 +129,7 @@ Ltac solver1 := try solve [match goal with
 
 Theorem determinism:
   forall e e1 e2 A,
-    typing nil e A ->
+    typing nil e Inf A ->
     step e e1 -> step e e2 -> e1 = e2.
 Proof.
   introv Typ St1 St2. gen e2 A.
@@ -142,9 +142,11 @@ Proof.
     pose proof (papp_determinism v vl e). eauto.
   - dependent destruction St2; eauto; solver1.
     dependent destruction Typ.
+    dependent destruction Typ.
     eapply casting_determinism; eauto.
   - dependent destruction St2; eauto; solver1.
-    f_equal. dependent destruction Typ; eauto.
+    f_equal. dependent destruction Typ.
+    dependent destruction Typ; eauto.
   - dependent destruction St2; solver1.
     f_equal. dependent destruction Typ; eauto.
   - dependent destruction St2; solver1.
@@ -223,11 +225,11 @@ Ltac solver4 IHC IH :=
 Lemma step_consistent :
   forall e1 e2 e1' e2' A B,
     uvalue e1 -> uvalue e2 ->
-    typing nil e1 A -> typing nil e2 B ->
+    typing nil e1 Inf A -> typing nil e2 Inf B ->
     consistent e1 e2 ->
     step_or_value e1 e1' -> step_or_value e2 e2' ->
     (forall e e' A, size_term e < (size_term e1 + size_term e2) ->
-        typing nil e A -> step e e' -> (exists C, typing nil e' C /\ isosub C A)) ->
+        typing nil e Inf A -> step e e' -> (exists C, typing nil e' Inf C /\ isosub C A)) ->
     consistent e1' e2'.
 Proof.
   introv Uv1 Uv2 Typ1 Typ2 Con Sv1 Sv2 IH. gen A B e1' e2'.
@@ -242,11 +244,14 @@ Proof.
     solver2.
     * solver2. eapply Con_Mrg_L; eauto.
     * solver2; try solve [solver3].
-      pose proof (casting_preservation e v' A C) as Cp1.
-      pose proof (casting_preservation e v'0 B C0) as Cp2.
+      dependent destruction Typ1.
+      pose proof (casting_preservation e v' B0 A) as Cp1.
+      dependent destruction Typ2.
+      pose proof (casting_preservation e v'0 B A0) as Cp2.
       destruct Cp1; destruct Cp2; eauto. destruct_conjs.
       eapply casting_consistent; eauto.      
     * solver2; try solve [solver3].
+      dependent destruction Typ1. dependent destruction Typ2.
       assert (e' = e'0). eapply determinism; eauto. subst. econstructor; eauto.
       eapply step_lc; eauto.
   - Case "Disjoint".    
@@ -303,32 +308,38 @@ Ltac ind_term_size s :=
 
 Theorem preservation :
   forall e e' A,
-    typing nil e A ->
+    typing nil e Inf A ->
     step e e' ->
-    (exists B, typing nil e' B /\ isosub B A).
+    (exists B, typing nil e' Inf B /\ isosub B A).
 Proof.
   introv Typ St. gen e' A.
   ind_term_size (size_term e).
   dependent destruction Typ; simpl in SizeInd.
   - Case "Lit".
     dependent destruction St; eauto.
+    exists Int; eauto.
   - Case "Var".
     dependent destruction St.
   - Case "Lam".
     dependent destruction St; eauto.
+    exists (Arr A B). split; eauto.
   - Case "Ann".
     dependent destruction St.
     + SCase "Split".
+      dependent destruction Typ.
       exists (And A1 A2). split; eauto.
-      pose proof (sub_inv_splitable_r C A A1 A2) as Sub. destruct Sub; eauto.
+      pose proof (sub_inv_splitable_r A B A1 A2) as Sub. destruct Sub; eauto.
       eapply Ty_Mrg_Uv; eauto.
     + SCase "Value".
+      dependent destruction Typ.
       eapply casting_preservation; eauto.
     + SCase "Ann".
+      dependent destruction Typ.
       eapply IH in St; eauto; try lia.
-      destruct St as [B Typ']. destruct Typ' as [Typ'1 Typ'2].
+      destruct St as [C Typ']. destruct Typ' as [Typ'1 Typ'2].
       pose proof (isosub_to_sub1 _ _ Typ'2).
-      exists A. split; eauto. eapply Ty_Ann; eauto; try solve [eapply sub_transitivity; eauto].
+      exists B. split; eauto. eapply Ty_Ann; eauto; try solve [eapply sub_transitivity; eauto].
+      eapply Ty_Sub; eauto. eapply sub_transitivity; eauto.
   - Case "App".
     dependent destruction St.
     + pose proof (papp_preservation e1 e2 e) as P.
@@ -351,8 +362,8 @@ Proof.
   - Case "Merge U".
     dependent destruction St.    
     + (* TODO: Automation *)
-      assert (exists C, (typing nil e1' C) /\ (isosub C A)) by (eapply IH; eauto; lia).
-      assert (exists C, (typing nil e2' C) /\ (isosub C B)) by (eapply IH; eauto; lia).
+      assert (exists C, (typing nil e1' Inf C) /\ (isosub C A)) by (eapply IH; eauto; lia).
+      assert (exists C, (typing nil e2' Inf C) /\ (isosub C B)) by (eapply IH; eauto; lia).
       destruct_conjs. exists (And H3 H4).
       pose proof (step_uvalue _ _ H0 St1).
       pose proof (step_uvalue _ _ H1 St2).
@@ -361,7 +372,7 @@ Proof.
       pose proof (Sv_S _ _ St2) as Sov2.
       pose proof (step_consistent u1 u2 e1' e2' A B H0 H1 Typ1 Typ2 H2 Sov1 Sov2) as Sc.
       eapply Sc. intros. eapply IH; eauto. lia.
-    + assert (exists C, (typing nil e1' C) /\ (isosub C A)) by (eapply IH; eauto; lia).
+    + assert (exists C, (typing nil e1' Inf C) /\ (isosub C A)) by (eapply IH; eauto; lia).
       destruct_conjs. exists (And H4 B).
       pose proof (step_uvalue _ _ H1 St).
       split; eauto. eapply Ty_Mrg_Uv; eauto.
@@ -369,7 +380,7 @@ Proof.
       pose proof (Sv_V _ H) as Sov2.
       pose proof (step_consistent u1 u2 e1' u2 A B H1 H2 Typ1 Typ2 H3 Sov1 Sov2) as Sc.
       eapply Sc; eauto. intros. eapply IH; eauto. lia.
-    + assert (exists C, (typing nil e2' C) /\ (isosub C B)) by (eapply IH; eauto; lia).
+    + assert (exists C, (typing nil e2' Inf C) /\ (isosub C B)) by (eapply IH; eauto; lia).
       destruct_conjs. exists (And A H4).
       pose proof (step_uvalue _ _ H2 St).
       split; eauto. eapply Ty_Mrg_Uv; eauto.
@@ -383,8 +394,8 @@ Qed.
 (** * Progress *)
 
 Theorem progress :
-  forall e A,
-    typing nil e A ->
+  forall e A dir,
+    typing nil e dir A ->
     value e \/ exists e', step e e'.
 Proof.
   introv Typ.
