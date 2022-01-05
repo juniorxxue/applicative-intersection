@@ -74,7 +74,7 @@ Qed.
 Lemma casting_super :
   forall A B v v',
     value v ->
-    typing nil v B ->
+    typing nil v Inf B ->
     casting v A v' ->
     sub B A.
 Proof.
@@ -101,7 +101,7 @@ Qed.
 Lemma casting_determinism_gen :
   forall v1 v2 v1' v2' A B C,
     value v1 -> value v2 ->
-    typing nil v1 A -> typing nil v2 B ->
+    typing nil v1 Inf A -> typing nil v2 Inf B ->
     consistent v1 v2 ->
     casting v1 C v1' ->
     casting v2 C v2' ->
@@ -154,7 +154,7 @@ Qed.
 Lemma casting_determinism :
   forall v v1 v2 A B,
     value v ->
-    typing nil v A ->
+    typing nil v Inf A ->
     casting v B v1 ->
     casting v B v2 ->
     v1 = v2.
@@ -212,10 +212,10 @@ Qed.
 
 (** * Progress *)
 
-Lemma casting_progress :
+Lemma casting_progress' :
   forall v A B,
     value v ->
-    typing nil v A ->
+    typing nil v Inf A ->
     sub A B ->
     exists v', casting v B v'.
 Proof.
@@ -224,8 +224,11 @@ Proof.
   - Case "Sub-Int".
     dependent destruction Typ; eauto.
     dependent destruction Val. dependent destruction H.
-    dependent destruction Typ; eauto.
-    dependent destruction Typ; eauto.
+    + SCase "Lit".
+      dependent destruction Typ; eauto.
+    + SCase "Lam".
+      dependent destruction Typ; eauto.
+      dependent destruction Typ; eauto.
   - Case "Sub-Top".
     dependent destruction Typ; eauto.
   - Case "Sub-Arr".
@@ -235,8 +238,8 @@ Proof.
       eexists; eauto.
     + SCase "Not Toplike".
       dependent destruction Val. dependent destruction H0; eauto.
-      dependent destruction Typ. dependent destruction H1.
-      assert (toplike B) by (eapply sub_inv_int_arrow; eauto).
+      dependent destruction Typ. dependent destruction Typ.
+      dependent destruction H2; eauto. dependent destruction H3.
       assert (toplike D) by (eapply sub_toplike; eauto).
       contradiction.
   - Case "Sub-And".
@@ -256,6 +259,17 @@ Proof.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
 Qed.
 
+Lemma casting_progress :
+  forall v A ,
+    value v ->
+    typing nil v Chk A ->
+    exists v', casting v A v'.
+Proof.
+  introv Val Typ.
+  dependent destruction Typ.
+  eapply casting_progress'; eauto.
+Qed.
+
 (** * Casting & Consistent *)
 
 (** ** Specification *)
@@ -272,8 +286,8 @@ Definition consistent_spec v1 v2 :=
 Lemma consistent_sound :
   forall v1 v2 A B,
     value v1 -> value v2 ->
-    typing nil v1 A ->
-    typing nil v2 B ->
+    typing nil v1 Inf A ->
+    typing nil v2 Inf B ->
     consistent v1 v2 ->
     consistent_spec v1 v2.
 Proof.
@@ -310,11 +324,23 @@ Ltac ind_term_size s :=
       intros; match goal with | [ H : _ < 0 |- _ ] => (dependent destruction H; eauto) end
     | intros ].
 
+Ltac inv :=
+  match goal with
+  | Typ: typing nil (Ann _ _) Inf _       |- _ => dependent destruction Typ
+  | Typ: typing nil _ Chk _               |- _ => dependent destruction Typ
+  | Typ: typing nil (Lit _) Inf _         |- _ => dependent destruction Typ
+  | Typ: typing nil (Lam _ _ _) Inf _     |- _ => dependent destruction Typ
+  | Sub: sub Int ?A, nTl: ~ toplike ?A, Ord: ordinary ?A |- _ =>
+      (pose proof (sub_inv_int _ nTl Sub Ord); clear nTl Sub Ord; subst)
+  | Sub: sub (Arr _ _) ?A, nTl: ~ toplike ?A, Ord: ordinary ?A |- _ =>
+      (pose proof (sub_inv_arrow_arrow _ _ _ nTl Ord Sub); clear Sub)
+  end.
+
 Lemma consistent_complete :
   forall v1 v2 A B,
     value v1 -> value v2 ->
-    typing nil v1 A ->
-    typing nil v2 B ->
+    typing nil v1 Inf A ->
+    typing nil v2 Inf B ->
     consistent_spec v1 v2 ->
     consistent v1 v2.
 Proof.
@@ -322,48 +348,37 @@ Proof.
   ind_term_size (size_term v1 + size_term v2).
   dependent destruction Val1; dependent destruction Val2; simpl in SizeInd.
   - Case "Anno~Anno".
-    dependent destruction Typ1. dependent destruction Typ2.
-    destruct (toplike_decidable A); destruct (toplike_decidable A0).
+    repeat inv.
+    destruct (toplike_decidable B0); destruct (toplike_decidable B).
     + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
     + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
     + eapply consistent_symmetry; eauto. eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
     + destruct H; destruct H1.
       * SCase "Lit Lit".
-        dependent destruction Typ1. dependent destruction Typ2.
+        repeat inv.
         (* derive equality from Cons *)
         unfold consistent_spec in Cons.
-        repeat match goal with
-               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
-               end.
         assert (Ct1: casting (Ann (Lit n) Int) Int (Ann (Lit n) Int)) by eauto.
         assert (Ct2: casting (Ann (Lit n0) Int) Int (Ann (Lit n0) Int)) by eauto.
-        pose proof (Cons _ _ _ H0 Ct1 Ct2) as Eq.
+        pose proof (Cons _ _ _ Ord_Tnt Ct1 Ct2) as Eq.
         dependent destruction Eq. eauto.
       * SCase "Lit Lam".
-        dependent destruction Typ1. dependent destruction Typ2.
-        repeat match goal with
-               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
-               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
-               end.
-      * SCase "Lam Lit". 
-        dependent destruction Typ1. dependent destruction Typ2.
-        repeat match goal with
-               | [H: sub Int ?A |- _] => (dependent destruction H; eauto)
-               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
-               end.
+        repeat inv. destruct_conjs. subst. eauto.
+      * SCase "Lam Lit".
+        repeat inv. destruct_conjs. subst. eauto.
       * SCase "Lam Lam".
-        inversion Typ1; subst. inversion Typ2; subst.
-        repeat match goal with
-               | [H: sub (Arr _ _) _ |- _] => (dependent destruction H; eauto)
-               end.
-        destruct (disjoint_spec_decidable D0 D); eauto.
         unfold consistent_spec in Cons.
+        repeat inv. destruct_conjs. subst.
+        match goal with
+        | |- consistent (Ann _ (Arr _ ?A)) (Ann _ (Arr _ ?B)) =>
+            destruct (disjoint_spec_decidable A B); eauto
+        end.
         destruct_conjs.
         match goal with
         | [H1: sub ?D1 ?DD, H2: sub ?D2 ?DD
            |- consistent (Ann (Lam ?A1 ?e1 ?B1) (Arr ?C1 ?D1)) (Ann (Lam ?A2 ?e2 ?B2) (Arr ?C2 ?D2))] =>
-            (pose proof (casting_progress (Ann (Lam A1 e1 B1) (Arr C1 D1)) (Arr C1 D1) (Arr (And C1 C2) DD)) as Ct1;
-             pose proof (casting_progress (Ann (Lam A2 e2 B2) (Arr C2 D2)) (Arr C2 D2) (Arr (And C1 C2) DD)) as Ct2;
+            (pose proof (casting_progress' (Ann (Lam A1 e1 B1) (Arr C1 D1)) (Arr C1 D1) (Arr (And C1 C2) DD)) as Ct1;
+             pose proof (casting_progress' (Ann (Lam A2 e2 B2) (Arr C2 D2)) (Arr C2 D2) (Arr (And C1 C2) DD)) as Ct2;
              assert (Ord: ordinary (Arr (And C1 C2) DD)) by eauto)
         end.
         destruct Ct1 as [x1 Ct1]; eauto. destruct Ct2 as [x2 Ct2]; eauto.
@@ -385,9 +400,9 @@ Qed.
 Lemma casting_consistent :
   forall v v1 v2 A A1 A2 B C,
     value v ->
-    typing nil v A ->
-    typing nil v1 A1 ->
-    typing nil v2 A2 ->
+    typing nil v Inf A ->
+    typing nil v1 Inf A1 ->
+    typing nil v2 Inf A2 ->
     casting v B v1 ->
     casting v C v2 ->
     consistent v1 v2.
@@ -405,12 +420,14 @@ Qed.
 Lemma casting_preservation :
   forall v v' A B,
     value v ->
-    typing nil v B ->
+    typing nil v Inf B ->
     casting v A v' ->
-    exists C, typing nil v' C /\ isosub C A.
+    exists C, typing nil v' Inf C /\ isosub C A.
 Proof.
   introv Val Typ Ct. gen B.
   induction Ct; intros; try solve [eexists; eauto].
+  - Case "Lit".
+    exists A. split; eauto.
   - Case "Lam".
     exists (Arr C D). split; eauto 3.
     repeat (dependent destruction Typ).
@@ -418,7 +435,8 @@ Proof.
     assert (Sub1: sub (Arr A B) (Arr C D)) by (eapply sub_transitivity; eauto).
     dependent destruction Sub1; eauto 3.
     assert (Sub2: sub (Arr A D) (Arr C D)) by eauto.
-    eapply Ty_Ann; eauto. eapply Ty_Lam; eauto. eapply sub_transitivity; eauto.
+    eapply Ty_Ann; eauto. eapply Ty_Sub; eauto.
+    eapply Ty_Lam; eauto. intros. eapply typing_chk_sub; eauto.
   - Case "Merge L".
     dependent destruction Val. dependent destruction Typ; eauto.
   - Case "Merge R".

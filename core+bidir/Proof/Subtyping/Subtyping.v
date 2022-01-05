@@ -229,6 +229,17 @@ Proof.
   dependent destruction Sub; eauto.
 Qed.
 
+Lemma sub_inv_arrow_arrow :
+  forall A B C,
+    ~ toplike C ->
+    ordinary C ->
+    sub (Arr A B) C ->
+    exists D E, C = (Arr D E) /\ sub D A /\ sub B E.
+Proof.
+  introv nTl Ord Sub.
+  dependent destruction Sub; eauto.
+Qed.
+
 (** * Proper Types *)
 
 (** ** Definition *)

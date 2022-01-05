@@ -15,50 +15,57 @@ Import ListNotations.
 
 (** * Definition *)
 
-Inductive typing : ctx -> term -> type -> Prop :=
+Inductive mode : Set :=
+| Inf
+| Chk.
+
+Inductive typing : ctx -> term -> mode -> type -> Prop :=
 | Ty_Int : forall T n,
     uniq T ->
-    typing T (Lit n) Int
+    typing T (Lit n) Inf Int
 | Ty_Var : forall T x A,
     uniq T -> binds x A T ->
-    typing T (Fvar x) A
-| Ty_Lam : forall L T A B C e,
+    typing T (Fvar x) Inf A
+| Ty_Lam : forall L T A B e,
     (forall x, x \notin L ->
-          typing ((one (x, A)) ++ T) (open e (Fvar x)) C) ->
-    sub C B ->
-    typing T (Lam A e B) (Arr A B)
-| Ty_Ann : forall T A C e,
-    typing T e C ->
-    sub C A ->
-    typing T (Ann e A) A
+          typing ((one (x, A)) ++ T) (open e (Fvar x)) Chk B) ->
+    typing T (Lam A e B) Inf (Arr A B)
+| Ty_Ann : forall T A e,
+    typing T e Chk A ->
+    typing T (Ann e A) Inf A
 | Ty_App : forall T A B C e1 e2,
-    typing T e1 A ->
-    typing T e2 B ->
+    typing T e1 Inf A ->
+    typing T e2 Inf B ->
     appsub (Some B) A C ->
-    typing T (App e1 e2) C
+    typing T (App e1 e2) Inf C
 | Ty_Mrg : forall T A B e1 e2,
     disjoint A B ->
-    typing T e1 A ->
-    typing T e2 B ->
-    typing T (Mrg e1 e2) (And A B)
+    typing T e1 Inf A ->
+    typing T e2 Inf B ->
+    typing T (Mrg e1 e2) Inf (And A B)
 | Ty_Mrg_Uv : forall T A B u1 u2,
     uniq T ->
     uvalue u1 -> uvalue u2 ->
     consistent u1 u2 ->
-    typing nil u1 A ->
-    typing nil u2 B ->
-    typing T (Mrg u1 u2) (And A B).
+    typing nil u1 Inf A ->
+    typing nil u2 Inf B ->
+    typing T (Mrg u1 u2) Inf (And A B)
+| Ty_Sub : forall T e A B,
+    typing T e Inf A ->
+    sub A B ->
+    typing T e Chk B.    
 
 Hint Constructors typing : core.
 
-Notation "T ⊢ e ⦂ A" := (typing T e A) (at level 50).
+Notation "T ⊢ e ⇒ A" := (typing T e Inf A) (at level 50).
+Notation "T ⊢ e ⇐ A" := (typing T e Chk A) (at level 50).
 
 (** * Typing & PrincipalTyping *)
 
 Lemma typing_to_ptype :
   forall u A,
     uvalue u ->
-    typing nil u A ->
+    typing nil u Inf A ->
     ptype u A.
 Proof.
   introv Uval Typ. gen A.
@@ -77,7 +84,7 @@ Hint Resolve typing_to_ptype : core.
 
 Lemma consistent_reflexivity :
   forall v A,
-    typing nil v A ->
+    typing nil v Inf A ->
     value v ->
     consistent v v.
 Proof.
@@ -102,10 +109,24 @@ Hint Resolve consistent_reflexivity : core.
 
 Lemma typing_to_lc :
   forall T e A,
-    typing T e A -> lc e.
+    typing T e Inf A -> lc e.
 Proof.
   introv Typ.
-  induction Typ; try solve [econstructor; eauto].
+  induction Typ; eauto 3; try solve [econstructor; eauto].
 Qed.
 
 Hint Resolve typing_to_lc : core.
+
+(** * Check Subsumption *)
+
+Lemma typing_chk_sub :
+  forall A B e T,
+    typing T e Chk A ->
+    sub A B ->
+    typing T e Chk B.
+Proof.
+  introv Typ Sub.
+  dependent destruction Typ.
+  eapply Ty_Sub; eauto.
+  eapply sub_transitivity; eauto.
+Qed.
