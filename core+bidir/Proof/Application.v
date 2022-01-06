@@ -3,7 +3,7 @@ Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Strings.String.
-Require Import Psatz.
+Require Import Lia.
 
 Require Import Language.
 Require Import Tactical.
@@ -224,22 +224,6 @@ Proof.
     dependent destruction J; eauto.
 Qed.
 
-Lemma typing_subst_var_case :
-  forall E F u S T (z x : atom),
-    binds x T (F ++ [(z, S)] ++ E) ->
-    uniq (F ++ [(z, S)] ++ E) ->
-    typing E u Inf S ->
-    typing (F ++ E) (substitution z u x) Inf T.
-Proof.
-  introv H J K.
-  simpl.
-  destruct (x == z).
-  - subst. assert (T = S).
-    eapply binds_mid_eq; eauto. subst.
-    eapply typing_weakening; eauto.
-  - eapply Ty_Var; eauto.
-Qed.
-
 Lemma fv_open_lower :
   forall e1 e2 k,
     fv e1 [<=] fv (open_rec k e2 e1).
@@ -284,58 +268,6 @@ Proof with auto.
   fsetdec.
 Qed.
 
-Lemma typing_subst:
-  forall E F e u S T (z : atom) dir,
-    typing (F ++ (one (z, S)) ++ E) e dir T ->
-    typing E u Inf S ->
-    typing (F ++ E) (substitution z u e) dir T.
-Proof.
-  introv He Hu.
-  remember (F ++ (one (z, S)) ++ E) as E'.
-  gen F.
-  induction He; intros.
-  - subst. eapply Ty_Int; eauto.
-  - subst. eapply typing_subst_var_case; eauto.
-  - subst. simpl.
-    pick fresh y and apply Ty_Lam; eauto.
-    rewrite subst_open_var; eauto.
-    rewrite_env (([(y, A)] ++ F) ++ E).
-    eapply H0; eauto.
-  - subst. simpl.
-    eapply Ty_Ann; eauto.
-  - subst. simpl.
-    eapply Ty_App; eauto.
-  - subst. simpl.
-    eapply Ty_Mrg; eauto.
-  - subst. simpl.
-    pose proof (subst_value u1 z u _ He1) as St1.
-    pose proof (subst_value u2 z u _ He2) as St2.
-    rewrite St1. rewrite St2.
-    eapply Ty_Mrg_Uv; eauto.
-  - subst. simpl.
-    eapply Ty_Sub; eauto.
-Qed.
-
-Lemma typing_rename : forall (x y : atom) E e T1 T2, 
-  x `notin` fv e -> y `notin` (dom E `union` fv e) ->
-  typing ((one (x, T1)) ++ E) (open e x) Inf T2 ->
-  typing ((one (y, T1)) ++ E) (open e y) Inf T2.
-Proof.
-  introv Fr1 Fr2 Htyp.
-  destruct (x == y).
-  - subst. eauto.
-  - assert (J : uniq ((one (x, T1)) ++ E)).
-    eapply typing_uniq; eauto.
-    assert (J': uniq E).
-    inversion J; eauto.
-    rewrite (@subst_intro x); eauto.
-    rewrite_env (nil ++ (one (y, T1)) ++ E).
-    eapply typing_subst with (S := T1).
-    simpl_env.
-    eapply typing_weakening_gen; eauto.
-    eapply Ty_Var; eauto.
-Qed.
-
 (** substitution lemma, 
 stating that substituting a (closed, well-typed) term s for a variable x in a term t preserves the type of t *)
 
@@ -357,8 +289,14 @@ Proof.
     eapply typing_weakening; eauto.
     solve_uniq.
   - Case "Lam".
-    (* TODO: automation *)
-    admit.
+    exists (Arr A0 B). split; eauto.
+    eapply (Ty_Lam (union L (singleton x))); eauto. intros.
+    pose proof (H0 x0) as IH.
+    exploit IH; eauto. intros IH'. destruct_conjs.
+    rewrite_env (([(x0, A0)] ++ F) ++ E).
+    rewrite subst_open_var; eauto 3.
+    eapply isosub_to_sub1 in H3.
+    eapply typing_chk_sub; eauto.    
   - Case "Ann".
     exists A0. split; eauto.
     pose proof (IHTyp F) as IH. destruct IH; eauto. destruct_conjs.
@@ -380,7 +318,11 @@ Proof.
     pose proof (subst_value u2 x v _ Typ2) as Rw2.
     rewrite Rw1. rewrite Rw2.
     eapply Ty_Mrg_Uv; eauto.
-Admitted.
+  - Case "Sub".
+    pose proof (IHTyp F). destruct H0; eauto. destruct H0.
+    exists B. split; eauto. eapply isosub_to_sub1 in H1.
+    eapply Ty_Sub; eauto. eapply sub_transitivity; eauto.
+Qed.
 
 (** * Preservation *)
 
