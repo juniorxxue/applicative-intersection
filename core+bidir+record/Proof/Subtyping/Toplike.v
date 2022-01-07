@@ -25,7 +25,10 @@ Inductive toplike : type -> Prop :=
     toplike (And A B)
 | Tl_Arr : forall A B,
     toplike B ->
-    toplike (Arr A B).
+    toplike (Arr A B)
+| Tl_Rcd : forall l A,
+    toplike A ->
+    toplike (Rcd l A).
 
 Hint Constructors toplike : core.
 
@@ -35,10 +38,11 @@ Hint Constructors toplike : core.
 
 Ltac solve_toplike :=
   match goal with
-  | [H: toplike Int |- _] =>
-      (inversion H)
-  | [H: toplike (Arr _ ?B) |- toplike ?B] =>
-      (dependent destruction H; assumption)
+  | H: toplike Int |- _ => inversion H
+  | H: toplike (Arr _ ?A) |- toplike ?A =>
+      dependent destruction H; assumption
+  | H: toplike (Rcd _ ?A) |- toplike ?A =>
+      dependent destruction H; assumption
   end.
 
 Hint Extern 5 => solve_toplike : core.
@@ -55,6 +59,8 @@ Ltac contra_toplike :=
       (dependent destruction H1; contradiction)
   | [H1: toplike (And _ ?A), H2: not (toplike ?A) |- _] =>
       (dependent destruction H1; contradiction)
+  | [H1: toplike (Rcd _ ?A), H2: not (toplike ?A) |- _] =>
+      (dependent induction H1; contradiction)
   end.
 
 Hint Extern 5 => contra_toplike : core.
@@ -81,4 +87,6 @@ Proof.
   - Case "And".
     destruct IHA1; destruct IHA2; eauto;
       try solve [right; intros Contra; eauto].
+  - Case "Rcd".
+    destruct IHA; eauto.
 Qed.

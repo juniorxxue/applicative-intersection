@@ -10,8 +10,11 @@ Require Import Language Tactical.
 Inductive ordinary : type -> Prop :=
 | Ord_Top : ordinary Top
 | Ord_Tnt : ordinary Int
-| Ord_Arrow : forall A B,
-    ordinary B -> ordinary (Arr A B).
+| Ord_Arr : forall A B,
+    ordinary B -> ordinary (Arr A B)
+| Ord_Rcd : forall l A,
+    ordinary A ->
+    ordinary (Rcd l A).
 
 Hint Constructors ordinary : core.
 
@@ -20,7 +23,10 @@ Inductive splitable : type -> type -> type -> Prop :=
     splitable (And A B) A B
 | Spl_Arr : forall A B B1 B2,
     splitable B B1 B2 ->
-    splitable (Arr A B) (Arr A B1) (Arr A B2).
+    splitable (Arr A B) (Arr A B1) (Arr A B2)
+| Spl_Rcd : forall l A A1 A2,
+    splitable A A1 A2 ->
+    splitable (Rcd l A) (Rcd l A1) (Rcd l A2).
 
 Hint Constructors splitable : core.
 
@@ -44,14 +50,18 @@ Qed.
 
 Ltac solve_splitable :=
   match goal with
-  | [H1: splitable ?A _ _, H2: ordinary ?A |- _] =>
-      (pose proof (splitable_not_ordinary _ _ _ H1) as Contra; contradiction)
-  | [H1: splitable (Arr _ ?B) _ _, H2: ordinary ?B |- _] =>
-      (dependent destruction H1; pose proof (splitable_not_ordinary _ _ _ H1) as Contra; contradiction)
-  | [H: splitable Int _ _ |- _] =>
-      (inversion H)
-  | [H: splitable Top _ _ |- _] =>
-      (inversion H)
+  | H1: splitable ?A _ _, H2: ordinary ?A |- _ =>
+      pose proof (splitable_not_ordinary _ _ _ H1) as Contra; contradiction
+  | H1: splitable (Arr _ ?B) _ _, H2: ordinary ?B |- _ =>
+      dependent destruction H1;
+      pose proof (splitable_not_ordinary _ _ _ H1) as Contra;
+      contradiction
+  | H1: splitable (Rcd _ ?A) _ _, H2: ordinary ?A |- _ =>
+      dependent induction H1;
+      pose proof (splitable_not_ordinary _ _ _ H1) as Contra;
+      contradiction
+  | H: splitable Int _ _ |- _ => inversion H
+  | H: splitable Top _ _ |- _ => inversion H
   end.
 
 Hint Extern 5 => solve_splitable : core.
@@ -68,11 +78,12 @@ Hint Extern 5 => solve_ordinary : core.
 
 Ltac contra_ordinary :=
   match goal with
-  | [H1: ordinary ?A, H2: not (ordinary ?A) |- _] =>
-      (contradiction)
-  | [H1: ordinary (Arr _ ?A), H2: not (ordinary ?A) |- _] =>
-      (dependent destruction H1; contradiction)
-     end.
+  | H1: ordinary ?A, H2: not (ordinary ?A) |- _ => contradiction
+  | H1: ordinary (Arr _ ?A), H2: not (ordinary ?A) |- _ =>
+      dependent destruction H1; contradiction
+  | H1: ordinary (Rcd _ ?A), H2: not (ordinary ?A) |- _ =>
+      dependent destruction H1; contradiction
+  end.
 
 (** * Splitable or Ordinary *)
 
@@ -83,9 +94,11 @@ Lemma splitable_or_ordinary :
     ordinary A \/ exists A1 A2, splitable A A1 A2.
 Proof.
   introv. dependent induction A; eauto.
-  destruct IHA1; destruct IHA2; eauto.
-  - right. destruct_conjs; eauto.
-  - right. destruct_conjs; eauto.
+  - destruct IHA1; destruct IHA2; eauto.
+    + right. destruct_conjs; eauto.
+    + right. destruct_conjs; eauto.
+  - destruct IHA; eauto.
+    right. destruct_conjs; eauto.
 Qed.
 
 (** * Determinism of Splitable *)
@@ -100,8 +113,9 @@ Proof.
   - dependent destruction Spl2.
     split; eauto.
   - dependent destruction Spl2.
-    assert (B1 = B3 /\ B2 = B4); eauto.
-    destruct_conjs. split; congruence.
+    split; f_equal; eapply IHSpl1; eauto.
+  - dependent induction Spl2.
+    split; f_equal; eapply IHSpl1; eauto.
 Qed.
 
 (** * Unify Splitable Varialbes *)
@@ -110,8 +124,9 @@ Qed.
 
 Ltac subst_splitable :=
   match goal with
-  | [H1: splitable ?A ?A1 ?A2, H2: splitable ?A ?A3 ?A4 |- _] =>
-      (pose proof (splitable_determinism _ _ _ _ _ H1 H2) as Eqs; destruct Eqs; subst; clear H1)
+  | H1: splitable ?A ?A1 ?A2, H2: splitable ?A ?A3 ?A4 |- _ =>
+      pose proof (splitable_determinism _ _ _ _ _ H1 H2) as Eqs;
+      destruct Eqs; subst; clear H1
   end.
 
 (** * Decidablility of Ordinary *)
@@ -121,9 +136,11 @@ Lemma ordinary_decidable :
     ordinary A \/ not (ordinary A).
 Proof.
   introv. induction A; eauto.
-  destruct IHA1; destruct IHA2; eauto.
-  - right. intros Contra. contra_ordinary.
-  - right. intros Contra. contra_ordinary.
+  - destruct IHA1; destruct IHA2; eauto.
+    + right. intros Contra. contra_ordinary.
+    + right. intros Contra. contra_ordinary.
+  - destruct IHA; eauto.
+    right. intros Contra. contra_ordinary.
 Qed.
 
 (** * Splitable & Size *)

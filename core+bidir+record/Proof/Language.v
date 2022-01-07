@@ -33,7 +33,8 @@ Inductive type : Set :=
 | Int : type
 | Top : type          
 | Arr : type -> type -> type
-| And : type -> type -> type.
+| And : type -> type -> type
+| Rcd : nat -> type -> type.
 
 Hint Constructors type : core.
 
@@ -41,6 +42,7 @@ Hint Constructors type : core.
 
 Notation "A → B" := (Arr A B) (at level 20).
 Notation "A & B" := (And A B) (at level 20).
+Notation "{ l : A }" := (Rcd l A) (at level 20).
 
 (** * Terms
 
@@ -62,14 +64,20 @@ Inductive term : Set :=
 | Lam : type -> term -> type -> term
 | App : term -> term -> term
 | Mrg : term -> term -> term
-| Ann : term -> type -> term.
+| Ann : term -> type -> term
+| Fld : nat -> term -> term
+| Prj : term -> nat -> term.
 
 Hint Constructors term : core.
 
 Notation "e ∷ A" := (Ann e A) (at level 20).
 Notation "ƛ A . e : B" := (Lam A e B) (at level 20).
+Notation "{ l = e }" := (Fld l e) (at level 20).
+Notation "e ◍ l" := (Prj e l) (at level 20).
 
 (** coerce atom x to (Fvar x) *)
+
+Check (Prj (Fld 1 (Lit 1)) 1).
 
 Coercion Fvar : atom >-> term.
 
@@ -83,6 +91,7 @@ Fixpoint size_type (A : type) {struct A} : nat :=
   | Top => 1
   | Arr A B => 1 + (size_type A) + (size_type B)
   | And A B => 1 + (size_type A) + (size_type B)
+  | Rcd l A => 1 + (size_type A)
   end.
 
 Fixpoint size_term (e : term) {struct e} : nat :=
@@ -94,6 +103,8 @@ Fixpoint size_term (e : term) {struct e} : nat :=
   | App e1 e2 => 1 + (size_term e1) + (size_term e2)
   | Mrg e1 e2 => 1 + (size_term e1) + (size_term e2)
   | Ann e A => 1 + (size_term e) + (size_type A)
+  | Fld l e => 1 + (size_term e)
+  | Prj e l => 1 + (size_term e)
   end.
 
 (** * Substituion *)
@@ -107,6 +118,8 @@ Fixpoint substitution (z : atom) (u : term) (e : term) {struct e} : term :=
   | App e1 e2 => App (substitution z u e1) (substitution z u e2)
   | Mrg e1 e2 => Mrg (substitution z u e1) (substitution z u e2)
   | Ann e A => Ann (substitution z u e) A
+  | Fld l e => Fld l (substitution z u e)
+  | Prj e l => Prj (substitution z u e) l
   end.
 
 Notation "{ z ↦ u } e" := (substitution z u e) (at level 69).
@@ -121,7 +134,9 @@ Fixpoint fv (e : term) {struct e} : atoms :=
   | Lam A e B => fv e
   | App e1 e2 => (fv e1) `union` (fv e2)
   | Mrg e1 e2 => (fv e1) `union` (fv e2)
-  | Ann e A => (fv e)
+  | Ann e A => fv e
+  | Fld l e => fv e
+  | Prj e l => fv e
   end.
 
 (** * Context *)
@@ -139,6 +154,8 @@ Fixpoint open_rec (k : nat) (u : term) (e : term) {struct e} : term :=
   | App e1 e2 => App (open_rec k u e1) (open_rec k u e2)
   | Mrg e1 e2 => Mrg (open_rec k u e1) (open_rec k u e2)
   | Ann e A => Ann (open_rec k u e) A
+  | Fld l e => Fld l (open_rec k u e)
+  | Prj e l => Prj (open_rec k u e) l
   end.
 
 Definition open e u := open_rec 0 u e.

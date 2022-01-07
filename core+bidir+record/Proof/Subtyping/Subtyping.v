@@ -17,10 +17,14 @@ Inductive sub : type -> type -> Prop :=
 | Sub_Top : forall A B,
     ordinary B -> toplike B ->
     sub A B
-| Sub_Arrow : forall A B C D,
+| Sub_Arr : forall A B C D,
     sub C A -> sub B D ->
     ordinary D ->
     sub (Arr A B) (Arr C D)
+| Sub_Rcd : forall A B l,
+    ordinary B ->
+    sub A B ->
+    sub (Rcd l A) (Rcd l B)
 | Sub_And : forall A B B1 B2,
     splitable B B1 B2 ->
     sub A B1 -> sub A B2 ->
@@ -49,6 +53,16 @@ Proof.
   introv H. dependent induction H; eauto.
 Qed.
 
+(** generlization of [Sub_Rcd] *)
+
+Lemma sub_record :
+  forall l A B,
+    sub A B ->
+    sub (Rcd l A) (Rcd l B).
+Proof.
+  introv H. dependent induction H; eauto.
+Qed.
+
 (** generlization of [Sub_And_L] *)
 
 Lemma sub_and_l :
@@ -71,9 +85,10 @@ Qed.
 
 (** add it to local and global hint base **)
 
-Hint Resolve sub_arrow : subtyping core.
-Hint Resolve sub_and_l : subtyping core.
-Hint Resolve sub_and_r : subtyping core.
+Hint Resolve sub_arrow : core.
+Hint Resolve sub_record : core.
+Hint Resolve sub_and_l : core.
+Hint Resolve sub_and_r : core.
 
 (** * Reflexivity *)
 
@@ -81,11 +96,11 @@ Lemma sub_reflexivity:
   forall A,
     sub A A.
 Proof.
-  induction A; eauto with subtyping.
+  dependent induction A; eauto.
 Qed.
 
-Hint Resolve sub_reflexivity : subtyping.
 Hint Resolve sub_reflexivity : core.
+
 
 (** * Subtyping & Splitable *)
 
@@ -93,14 +108,14 @@ Lemma sub_splitable_l :
   forall A A1 A2,
     splitable A A1 A2 -> sub A A1.
 Proof.
-  introv H. dependent induction H; eauto with subtyping.
+  introv H. dependent induction H; eauto.
 Qed.
 
 Lemma sub_splitable_r :
   forall A A1 A2,
     splitable A A1 A2 -> sub A A2.
 Proof.
-  introv H. dependent induction H; eauto with subtyping.
+  introv H. dependent induction H; eauto.
 Qed.
 
 Hint Resolve sub_splitable_l : subtyping.
@@ -131,12 +146,10 @@ Lemma splitable_toplike2 :
   forall A A1 A2,
     splitable A A1 A2 -> toplike A -> toplike A1 /\ toplike A2.
 Proof.
-  introv Spl Tl.
-  induction Spl.
-  - dependent destruction Tl; eauto.
-  - dependent destruction Tl.
-    pose proof (IHSpl Tl).
-    destruct_conjs; eauto.
+  introv Spl Tl. induction Spl.
+  - dependent destruction Tl; intuition.
+  - dependent destruction Tl; intuition.
+  - dependent destruction Tl; intuition.
 Qed.
 
 Lemma splitable_not_toplike :
@@ -148,12 +161,18 @@ Proof.
   induction A; intros; eauto.
   - dependent destruction Spl.
     destruct (toplike_decidable A2); eauto.
-    pose proof (IHA2 H _ _ Spl) as Ntls.
-    destruct Ntls.
+    pose proof (IHA2 H _ _ Spl) as nTls.
+    destruct nTls.
     + left. intros Contra. contra_toplike.
     + right. intros Contra. contra_toplike.
   - dependent destruction Spl.
     destruct (toplike_decidable A1); eauto.
+  - dependent induction Spl.
+    destruct (toplike_decidable A); eauto.
+    pose proof (IHA H _ _ Spl) as nTls.
+    destruct nTls.
+    + left. intros Contra. contra_toplike.
+    + right. intros Contra. contra_toplike.
 Qed.
 
 (** * Subtyping & Toplike (1) *)
@@ -182,7 +201,6 @@ Proof.
   contradiction.
 Qed.
 
-
 (** * Inversion Lemmas *)
 
 Lemma sub_inv_splitable_l :
@@ -194,6 +212,10 @@ Proof.
   - dependent destruction Spl.
     dependent destruction Ord.
     pose proof (IHSub2 H _ _ Spl) as IH.
+    destruct IH; eauto with subtyping.
+  - dependent destruction Spl.
+    dependent destruction Ord.
+    pose proof (IHSub Ord _ _ Spl) as IH.
     destruct IH; eauto with subtyping.
   - dependent destruction Spl.
     left. assumption.
@@ -247,11 +269,15 @@ Qed.
 Inductive proper : type -> Prop :=
 | Pr_Int : proper Int
 | Pr_Top : proper Top
-| Pr_Arr : forall (A B : type),
+| Pr_Arr : forall A B,
     ordinary B ->
     proper A -> proper B ->
     proper (Arr A B)
-| Pr_Spl : forall (A A1 A2 : type),
+| Pr_Rcd : forall l A,
+    ordinary A ->
+    proper A ->
+    proper (Rcd l A)
+| Pr_Spl : forall A A1 A2,
     splitable A A1 A2 ->
     proper A1 -> proper A2 ->
     proper A.
@@ -270,11 +296,21 @@ Proof.
   induction Pr_B; eauto.
 Qed.
 
+Lemma proper_record :
+  forall l A,
+    proper A ->
+    proper (Rcd l A).
+Proof.
+  introv Pr_A.
+  induction Pr_A; eauto.
+Qed.
+
 Lemma proper_complete:
   forall (A : type), proper A.
 Proof.
   induction A; eauto.
   eapply proper_arrow; eauto.
+  eapply proper_record; eauto.
 Qed.
 
 (** We build a new induction principle for [type] *)
@@ -298,8 +334,13 @@ Proof.
   - dependent induction Sub2; eauto.
     clear IHSub2_1 IHSub2_2.
     dependent induction Sub1; eauto with subtyping.
+  - dependent induction Sub2; eauto.
+    clear IHSub2.
+    dependent induction Sub1; eauto with subtyping.
   - gen A A1.
-    proper_ind C; introv Sub1 Sub2 Spl Pr IH; eauto with subtyping.
+    proper_ind C; introv Sub1 Sub2 Spl IPr IH; eauto with subtyping.
+    + eapply sub_inv_splitable_r in Sub1; eauto. destruct Sub1.
+      eapply sub_inv_splitable_l in Sub2; eauto. intuition.
     + eapply sub_inv_splitable_r in Sub1; eauto. destruct Sub1.
       eapply sub_inv_splitable_l in Sub2; eauto. intuition.
     + eapply sub_inv_splitable_r in Sub1; eauto. destruct Sub1.
