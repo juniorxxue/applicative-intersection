@@ -189,6 +189,11 @@ A << A
 A << A
 
 
+A << B
+----------------------- Iso-Rcd
+{l : A} << {l : B}
+
+
 B1 <| B |> B2
 A1 << B1     A2 << B2
 ----------------------- Iso-And
@@ -210,6 +215,10 @@ C <: A
 appsub? C (A -> B)
 
 
+------------------------ As-Label
+appsub? l {l : A}
+
+
 appsub? C A
 ------------------------ AS?-And-L
 appsub? C (A & B)
@@ -227,6 +236,8 @@ appsub? C (A & B)
 S |- A <: B
 -----------
 
+S := Maybe (Either Type Label)
+
 
 ------------------------ AS-Refl
 . |- A <: A
@@ -237,22 +248,26 @@ C <: A
 C |- A -> B <: B
 
 
-C |- A <: D
-not (appsub? C B)
+------------------------ As-Label
+l |- {l : A} <: A
+
+
+S |- A <: D
+not (appsub? S B)
 ------------------------ AS-And-L
-C |- A & B <: D
+S |- A & B <: D
 
 
-C |- B <: D
-not (appsub? C A)
+S |- B <: D
+not (appsub? S A)
 ------------------------ AS-And-R
-C |- A & B <: D
+S |- A & B <: D
 
 
-C |- A <: D1
-C |- B <: D2
+S |- A <: D1
+S |- B <: D2
 ------------------------ AS-And-Both
-C |- A & B <: D1 & D2
+S |- A & B <: D1 & D2
 ```
 
 # Application Subtyping (Unified)
@@ -479,26 +494,40 @@ toplike D
 (\x. e : A -> B) : C -> D ● v --> 1 : D
 
 
+toplike A
+---------------------------------- PApp-Int-Toplike-R
+(n : {l : A}) ● vl --> 1 : A
+
+
+toplike C
+--------------------------------------------------- PApp-Abs-Toplike-R
+(\x. e : A -> B) : {l : C} ● v --> 1 : C
+
+
 v -->A v'
 not (toplike D)
-------------------------------------------------- PApp-Abs-Anno
+------------------------------------------------- PApp-Abs
 (\x. e : A -> B) : C -> D ● v --> e [x |-> v'] : D
 
 
-not (appsub? ptype(vl) ptype(v2))
+------------------------ PApp-Rcd
+{l = v} ● l --> v
+
+
+not (appsub? atype(vl) ptype(v2))
 v1 ● vl --> e
 -------------------------------------------- PApp-Merge-L
 v1 ,, v2 ● vl --> e
 
 
-not (appsub? ptype(vl) ptype(v1))
+not (appsub? atype(vl) ptype(v1))
 v2 ● vl --> e
 -------------------------------------------- PApp-Merge-R
 v1 ,, v2 ● vl --> e
 
 
-appsub? ptype(vl) ptype(v1)
-appsub? ptype(vl) ptype(v2)
+appsub? atype(vl) ptype(v1)
+appsub? atype(vl) ptype(v2)
 v1 ● vl --> e1
 v2 ● vl --> e2
 -------------------------------------------- PApp-Merge-Parallel
@@ -530,6 +559,11 @@ v ● vl --> e
 v vl --> e
 
 
+v ● l --> e
+---------------- Step-Proj
+v.l --> e
+
+
 v -->A v'
 ------------------------ Step-Anno-Value
 v : A --> v'
@@ -551,6 +585,16 @@ e2 --> e2'
 v e2 --> v e2'
 
 
+e --> e'
+------------------------ Step-Rcd
+{1 = e} --> {l = e'}
+
+
+e --> e'
+---------------------- Step-Proj-R
+e.l --> e'.l
+
+
 e1 --> e1'     e2 --> e2'
 ---------------------------- Step-Merge-BCD
 e1 ,, e2 --> e1' ,, e2'
@@ -569,7 +613,7 @@ v ,, e2 --> v ,, e2'
 # Typing
 
 ```
-T |- e => A (no subsumption lemma)
+T |- e => A
 
 
 ---------------- T-Int
@@ -586,6 +630,11 @@ T, x : A |- e <= B
 T |- \x. e : A -> B => A -> B
 
 
+T |- e => A
+---------------------------- T-Rcd
+T |- {l = e} => {l : A}
+
+
 T |- e <= A
 --------------------------------------------- T-Ann
 T |- e : A => A
@@ -594,6 +643,11 @@ T |- e : A => A
 T |- e2 => A      T |- e1 => B    A |- B <: C
 ---------------------------------------------------- T-App
 T |- e1 e2 => C
+
+
+T |- e => A      l |- A <: B
+---------------------------------- T-Proj
+T |- e.l => B
 
 
 disjoint A B        T |- e1 => A   T |- e2 => B
