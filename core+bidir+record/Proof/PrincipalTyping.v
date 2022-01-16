@@ -13,6 +13,9 @@ Inductive ptype : term -> type -> Prop :=
 | Pt_Ann : forall e A,
     lc e ->
     ptype (Ann e A) A
+| Pt_Rcd : forall l e A,
+    ptype e A ->
+    ptype (Fld l e) (Rcd l A)
 | Pt_Mrg : forall e1 e2 A B,
     ptype e1 A ->
     ptype e2 B ->
@@ -32,6 +35,8 @@ Proof.
   intros * Pt1 Pt2. generalize dependent B.
   induction Pt1; eauto; intros;
     try solve [dependent destruction Pt2; eauto].
+  - dependent destruction Pt2; eauto.
+    f_equal. eauto.
   - dependent destruction Pt2; eauto.
     pose proof (IHPt1_1 _ Pt2_1).
     pose proof (IHPt1_2 _ Pt2_2).

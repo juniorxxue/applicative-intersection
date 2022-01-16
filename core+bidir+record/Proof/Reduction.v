@@ -3,7 +3,7 @@ Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Strings.String.
-Require Import Psatz.
+Require Import Lia.
 
 Require Import Language.
 Require Import Tactical.
@@ -32,10 +32,14 @@ Inductive step : term -> term -> Prop :=
     pvalue p ->
     splitable A A1 A2 ->
     step (Ann p A) (Mrg (Ann p A1) (Ann p A2))
-| St_App : forall v vl e,
-    value v -> value vl ->
-    papp v vl e ->
-    step (App v vl) e
+| St_App : forall f v e,
+    value f -> value v ->
+    papp f (Av v) e ->
+    step (App f v) e
+| St_Prj : forall l v e,
+    value v ->
+    papp v (Al l) e ->
+    step (Prj v l) e    
 | St_Val : forall v v' A,
     value v ->
     casting v A v' ->
@@ -52,6 +56,12 @@ Inductive step : term -> term -> Prop :=
     value v ->
     step e2 e2' ->
     step (App v e2) (App v e2')
+| St_Rcd : forall l e e',
+    step e e' ->
+    step (Fld l e) (Fld l e')
+| St_Prj_L : forall e e' l,
+    step e e' ->
+    step (Prj e l) (Prj e' l)
 | St_Mrg : forall e1 e1' e2 e2',
     step e1 e1' ->
     step e2 e2' ->
@@ -86,6 +96,10 @@ Proof.
     destruct H.
     + intros St. dependent destruction St; eauto.
     + intros St. dependent destruction St; eauto.
+  - intros St.
+    dependent destruction St.
+    dependent destruction Val.
+    pose proof (IHv Val e'). contradiction.
 Qed.
 
 Lemma step_lc :
@@ -96,14 +110,19 @@ Proof.
   induction Lc; intros;
     try solve [dependent destruction St; eauto 3].
   - dependent destruction St. eapply Lc_Ann. eapply Lc_Lam; eauto.
-  - dependent destruction St; try solve [econstructor; eauto].
-    pose proof (papp_lc e1 e2 e). eauto 3.
+  - Case "App".
+    dependent destruction St; try solve [econstructor; eauto].
+    pose proof (papp_lc_v e1 e2 e). eauto 3.
   - dependent destruction St; econstructor; eauto.
   - dependent destruction St.
     + econstructor; eapply Lc_Ann; eapply lc_pvalue; eauto.
     + eapply casting_lc; eauto.
     + econstructor. eauto.
-Qed. 
+  - dependent destruction St. econstructor. eauto.
+  - Case "Prj".
+    dependent destruction St; try solve [econstructor; eauto].
+    pose proof (papp_lc_l e l e0). eauto 3.
+Qed.
 
 Lemma step_uvalue :
   forall u u',
@@ -113,6 +132,7 @@ Proof.
   induction Uv; intros.
   - dependent destruction St; eauto.
     eapply Uv_Ann. eapply step_lc; eauto.
+  - dependent destruction St; eauto.
   - dependent destruction St; eauto.
 Qed.
 
@@ -139,7 +159,11 @@ Proof.
   - dependent destruction St2; eauto.
     subst_splitable. reflexivity.
   - dependent destruction St2; solver1.
-    pose proof (papp_determinism v vl e). eauto.
+    dependent destruction Typ.
+    pose proof (papp_determinism_v f v e e0). eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ.
+    pose proof (papp_determinism_l v l e e0). eauto.
   - dependent destruction St2; eauto; solver1.
     dependent destruction Typ.
     dependent destruction Typ.
@@ -151,6 +175,12 @@ Proof.
     f_equal. dependent destruction Typ; eauto.
   - dependent destruction St2; solver1.
     f_equal. dependent destruction Typ; eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ;
+      f_equal; eauto.
+  - dependent destruction St2; solver1.
+    dependent destruction Typ;
+      f_equal; eauto.
   - dependent destruction St2; solver1.
     dependent destruction Typ;
       f_equal; eauto.
@@ -254,6 +284,7 @@ Proof.
       dependent destruction Typ1. dependent destruction Typ2.
       assert (e' = e'0). eapply determinism; eauto. subst. econstructor; eauto.
       eapply step_lc; eauto.
+  - admit.
   - Case "Disjoint".    
     dependent destruction Sv1; dependent destruction Sv2; eauto.
     + pose proof (step_uvalue _ _ Uv2 H3).
@@ -292,7 +323,7 @@ Proof.
         match goal with
         | St: step (Mrg _ _) _ |- _ => dependent destruction St
         end; eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-Qed.
+Admitted.
     
 End step_consistent.
 
@@ -313,7 +344,7 @@ Theorem preservation :
     (exists B, typing nil e' Inf B /\ isosub B A).
 Proof.
   introv Typ St. gen e' A.
-  ind_term_size (size_term e).
+  ind_term_size (size_term e). (* shelved item *)
   dependent destruction Typ; simpl in SizeInd.
   - Case "Lit".
     dependent destruction St; eauto.
@@ -323,6 +354,10 @@ Proof.
   - Case "Lam".
     dependent destruction St; eauto.
     exists (Arr A B). split; eauto.
+  - Case "Rcd".
+    dependent destruction St; eauto.
+    exploit (IH e); eauto; try lia. intros IH'. destruct_conjs.
+    eexists. split; eauto.
   - Case "Ann".
     dependent destruction St.
     + SCase "Split".
@@ -339,17 +374,18 @@ Proof.
       destruct St as [C Typ']. destruct Typ' as [Typ'1 Typ'2].
       pose proof (isosub_to_sub1 _ _ Typ'2).
       exists B. split; eauto. eapply Ty_Ann; eauto; try solve [eapply sub_transitivity; eauto].
-      eapply Ty_Sub; eauto. eapply sub_transitivity; eauto.
+      eapply Ty_Sub; eauto. eapply sub_transitivity; eauto.     
   - Case "App".
     dependent destruction St.
-    + pose proof (papp_preservation e1 e2 e) as P.
-      eapply P; eauto.
+    + admit.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply appsub_iso in H0; eauto. destruct_conjs.
       eexists; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply appsub_iso in H0; eauto. destruct_conjs.
       eexists; eauto.
+  - Case "Prj".
+    admit.
   - Case "Merge".
     dependent destruction St.
     + eapply IH in St1; eauto; try lia.
@@ -389,7 +425,7 @@ Proof.
       pose proof (step_consistent u1 u2 u1 e2' A B H1 H2 Typ1 Typ2 H3 Sov1 Sov2) as Sc.
       eapply Sc; eauto. intros. eapply IH; eauto. lia.
       Unshelve. eauto.
-Qed.
+Admitted.
 
 (** * Progress *)
 
@@ -400,6 +436,9 @@ Theorem progress :
 Proof.
   introv Typ.
   dependent induction Typ; eauto 3.
+  - Case "Rcd".
+    destruct IHTyp as [Val | St] ; eauto.
+    right. destruct St. exists (Fld l x); eauto.    
   - Case "Anno".
     destruct IHTyp as [Val | St] ; eauto.
     + right. eapply casting_progress in Typ; eauto. destruct Typ.
@@ -411,7 +450,10 @@ Proof.
       * destruct St. right. eexists; eauto.
   - Case "App".
     right. destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
-    pose proof (papp_progress e1 e2 A B C) as P. destruct P; eauto.
+    pose proof (papp_progress_v e1 e2 A B C) as Pa. destruct Pa; eauto.
+  - Case "Prj".
+    right. destruct IHTyp; eauto 3; try solve [destruct_conjs; eauto].
+    pose proof (papp_progress_l e A B l) as Pa. destruct Pa; eauto.
   - Case "Merge".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
   - Case "Merge V".

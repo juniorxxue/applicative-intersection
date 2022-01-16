@@ -1,7 +1,7 @@
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Program.Tactics.
-Require Import Psatz. (* lia *)
+Require Import Lia.
 Require Import Metalib.LibTactics.
 Require Import Language Tactical.
 

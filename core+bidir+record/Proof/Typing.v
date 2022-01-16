@@ -30,14 +30,21 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
     (forall x, x \notin L ->
           typing ((one (x, A)) ++ T) (open e (Fvar x)) Chk B) ->
     typing T (Lam A e B) Inf (Arr A B)
+| Ty_Rcd : forall T e l A,
+    typing T e Inf A ->
+    typing T (Fld l e) Inf (Rcd l A)
 | Ty_Ann : forall T A e,
     typing T e Chk A ->
     typing T (Ann e A) Inf A
 | Ty_App : forall T A B C e1 e2,
     typing T e1 Inf A ->
     typing T e2 Inf B ->
-    appsub (Some B) A C ->
+    appsub (Some (Avt B)) A C ->
     typing T (App e1 e2) Inf C
+| Ty_Prj : forall T e l A B,
+    typing T e Inf A ->
+    appsub (Some (Alt l)) A B ->
+    typing T (Prj e l) Inf B
 | Ty_Mrg : forall T A B e1 e2,
     disjoint A B ->
     typing T e1 Inf A ->
@@ -69,9 +76,8 @@ Lemma typing_to_ptype :
     ptype u A.
 Proof.
   introv Uval Typ. gen A.
-  induction Uval; intros.
-  - dependent destruction Typ; eauto.
-  - dependent destruction Typ; eauto.
+  induction Uval; intros;
+    dependent destruction Typ; eauto.
 Qed.
 
 Hint Resolve typing_to_ptype : core.
@@ -90,6 +96,7 @@ Lemma consistent_reflexivity :
 Proof.
   introv Typ Val. gen A.
   induction Val; eauto; intros.
+  dependent destruction Typ; eauto.
   Case "Merge".  
   dependent destruction Typ.
   - SCase "Disjoint".

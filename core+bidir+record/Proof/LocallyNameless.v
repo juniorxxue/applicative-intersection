@@ -9,8 +9,7 @@ Require Import Language Value.
 Lemma subst_fresh : forall (x : atom) e u,
     x `notin` fv e -> substitution x u e = e.
 Proof.
-  intros.
-  induction e; eauto.
+  intros. induction e; eauto; try solve [simpl in *; f_equal; auto].
   - Case "fvar".
     simpl.
     destruct (a == x).
@@ -18,19 +17,6 @@ Proof.
       subst. simpl fv in H. fsetdec.
     + SCase "a <> x".
       auto.
-  - Case "abs".
-    simpl.
-    f_equal.
-    auto.
-  - Case "app".
-    simpl in *.
-    f_equal; auto.
-  - Case "merge".
-    simpl in *.
-    f_equal; auto.
-  - Case "anno".
-    simpl in *.
-    f_equal; auto.
 Qed.
 
 Lemma subst_eq_var:
@@ -76,6 +62,8 @@ Proof.
     pick fresh x for L.
     apply open_rec_lc_core with
       (i := S k) (j := 0) (u := u) (v := Fvar x); eauto.
+  - intro k. simpl. f_equal; eauto.
+  - intro k. simpl. f_equal; eauto.
   - intro k. simpl. f_equal; eauto.
   - intro k. simpl. f_equal; eauto.
   - intro k. simpl. f_equal; eauto.
@@ -135,6 +123,10 @@ Proof.
     simpl in H. fsetdec.
   - f_equal. simpl in H.
     now eapply IHe.
+  - simpl in H.
+    f_equal; eauto.
+  - simpl in H.
+    f_equal; eauto.
   - simpl in H.
     f_equal; eauto.
   - simpl in H.

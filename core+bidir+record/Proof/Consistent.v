@@ -17,6 +17,9 @@ Inductive consistent : term -> term -> Prop :=
 | Con_Ann : forall e A B,
     lc e ->
     consistent (Ann e A) (Ann e B)
+| Con_Rcd : forall l u1 u2,
+    consistent u1 u2 ->
+    consistent (Fld l u1) (Fld l u2)
 | Con_Dj : forall u1 u2 A B,
     ptype u1 A -> ptype u2 B ->
     disjoint A B ->

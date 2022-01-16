@@ -25,7 +25,13 @@ Inductive lc : term -> Prop :=
     lc (Mrg e1 e2)
 | Lc_Ann : forall e A,
     lc e ->
-    lc (Ann e A).
+    lc (Ann e A)
+| Lc_Fld : forall e l,
+    lc e ->
+    lc (Fld l e)
+| Lc_Prj : forall e l,
+    lc e ->
+    lc (Prj e l).
 
 (** ** Partial Value *)
 
@@ -44,6 +50,9 @@ Inductive uvalue : term -> Prop :=
 | Uv_Ann : forall e A,
     lc e ->
     uvalue (Ann e A)
+| Uv_Rcd : forall l u,
+    uvalue u ->
+    uvalue (Fld l u)
 | Uv_Mrg : forall u1 u2,
     uvalue u1 -> uvalue u2 ->
     uvalue (Mrg u1 u2).
@@ -56,6 +65,9 @@ Inductive value : term -> Prop :=
 | V_Ann : forall e A,
     pvalue e -> ordinary A ->
     value (Ann e A)
+| V_Rcd : forall l v,
+    value v ->
+    value (Fld l v)
 | V_Mrg : forall v1 v2,
     value v1 -> value v2 ->
     value (Mrg v1 v2).
@@ -82,12 +94,12 @@ Lemma lc_value :
     value v -> lc v.
 Proof.
   introv Hv.
-  induction Hv; eauto.
-  - econstructor; eauto.
-  - econstructor; eauto.
+  induction Hv; econstructor; eauto.
 Qed.
 
 Hint Resolve lc_value : core.
+
+(** inversion *)
 
 Lemma lc_inv_anno:
   forall e A,
@@ -97,9 +109,6 @@ Proof.
   now dependent destruction H.
 Qed.
 
-Hint Resolve lc_inv_anno : core.
-
-
 Lemma lc_inv_merge_l:
   forall e1 e2,
     lc (Mrg e1 e2) -> lc e1.
@@ -108,8 +117,6 @@ Proof.
   now dependent destruction H.
 Qed.
 
-Hint Resolve lc_inv_merge_l : core.
-
 Lemma lc_inv_merge_r:
   forall e1 e2,
     lc (Mrg e1 e2) -> lc e2.
@@ -117,8 +124,6 @@ Proof.
   intros.
   now dependent destruction H.
 Qed.
-
-Hint Resolve lc_inv_merge_r : core.
 
 Lemma lc_inv_lam:
   forall e A B1 B2,
@@ -129,7 +134,19 @@ Proof.
   econstructor; eauto.
 Qed.
 
+Lemma lc_inv_rcd :
+  forall l e,
+    lc (Fld l e) ->
+    lc e.
+Proof.
+  inversion 1; eauto.
+Qed.
+
+Hint Resolve lc_inv_anno : core.
+Hint Resolve lc_inv_merge_l : core.
+Hint Resolve lc_inv_merge_r : core.
 Hint Resolve lc_inv_lam : core.
+Hint Resolve lc_inv_rcd : core.
 
 (** ** Structural Inversion *)
 
@@ -140,6 +157,7 @@ Ltac solve_value :=
   | [H: value (Bvar _) |- _] => (inversion H)
   | [H: value (Lam _ _ _) |- _] => (inversion H)
   | [H: value (App _ _) |- _] => (inversion H)
+  | [H: value (Prj _ _) |- _] => (inversion H)
   | [H: binds _ _ nil |- _] => (inversion H)
   end.
 
@@ -281,4 +299,7 @@ Proof.
     destruct (pvalue_decidable e);
       destruct (ordinary_decidable t); eauto;
       try solve [right; intros Hcontra; inversion Hcontra; contradiction].
-Qed. 
+  - destruct IHe; eauto.
+    right. intros Contra. dependent destruction Contra.
+    contradiction.
+Qed.

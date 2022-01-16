@@ -2,7 +2,7 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Program.Tactics.
-Require Import Psatz. (* lia *)
+Require Import Lia.
 Require Import Language Tactical.
 Require Import Subtyping.Toplike.
 Require Import Subtyping.Splitable.
@@ -368,6 +368,9 @@ Qed.
 Inductive isosub : type -> type -> Prop :=
 | Isub_Refl : forall (A : type),
     isosub A A
+| Isub_Rcd : forall l A B,
+    isosub A B ->
+    isosub (Rcd l A) (Rcd l B)
 | Isub_And : forall (A1 A2 B B1 B2 : type),
     splitable B B1 B2 ->
     isosub A1 B1 ->
@@ -385,11 +388,17 @@ Lemma isosub_transitivity :
     isosub A B -> isosub B C ->
     isosub A C.
 Proof.
-  introv Isub1 Isub2. gen A.
-  dependent induction Isub2; intros; eauto.
-  dependent destruction Isub1; eauto.
-  dependent destruction H0; eauto.
-Qed.
+  introv Isub1 Isub2. gen A C.
+  proper_ind B; intros; eauto.
+  - dependent destruction Isub2; eauto.
+  - dependent destruction Isub2; eauto.
+  - dependent destruction Isub2; eauto.
+  - dependent destruction Isub1; eauto.
+    dependent destruction Isub2; eauto.
+  - gen A A1.
+    proper_ind C; intros; eauto.
+    (* proof should be the same with sub_transitivity *)
+Abort.
 
 (** ** Specficiation *)
 

@@ -17,6 +17,7 @@ typeset/*.tex
 
 core/Proof/html/*
 core+bidir/Proof/html/*
+core+bidir+record/Proof/html/*
 
 *.swp
 Makefile.coq

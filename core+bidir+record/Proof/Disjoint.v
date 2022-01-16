@@ -2,7 +2,7 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Program.Tactics.
-Require Import Psatz. (* lia *)
+Require Import Lia.
 Require Import Language Tactical.
 Require Import Subtyping.Toplike.
 Require Import Subtyping.Splitable.
@@ -35,7 +35,21 @@ Inductive disjoint : type -> type -> Prop :=
     disjoint (Arr A1 A2) Int
 | Dj_Arr_Arr : forall A1 A2 B1 B2,
     disjoint B1 B2 ->
-    disjoint (Arr A1 B1) (Arr A2 B2).
+    disjoint (Arr A1 B1) (Arr A2 B2)
+| Dj_Rcd_Eq : forall l A B,
+    disjoint A B ->
+    disjoint (Rcd l A) (Rcd l B)
+| Dj_Rcd_Neq : forall l1 l2 A B,
+    l1 <> l2 ->
+    disjoint (Rcd l1 A) (Rcd l2 B)
+| Dj_Int_Rcd : forall l A,
+    disjoint Int (Rcd l A)
+| Dj_Rcd_Int : forall l A,
+    disjoint (Rcd l A) Int
+| Dj_Arr_Rcd : forall A B C l,
+    disjoint (Arr A B) (Rcd l C)
+| Dj_Rcd_Arr : forall A B C l,
+    disjoint (Rcd l A) (Arr B C).
 
 Hint Constructors disjoint : core.
 
@@ -97,6 +111,12 @@ Proof.
       dependent destruction Sub1; dependent destruction Sub2; eauto 1.
       constructor. eapply IH; eauto.
       simpl in SizeInd. lia.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
+    + admit.
   - Case "Split".
     destruct_conjs.
     dependent destruction Sub1; dependent destruction Sub2; eauto 1.
@@ -105,7 +125,7 @@ Proof.
     eapply splitable_toplike1; eauto 3.
     + eapply IH; eauto 3. lia.
     + eapply IH; eauto 3. lia.
-Qed.
+Admitted.
 
 (** ** Symmetry *)
 
@@ -132,7 +152,8 @@ Proof.
     eapply Dj_Arr_Arr. eapply IHA2. intros.
     assert (Tl: toplike (Arr (And A1 B1) C)) by (eapply H; eauto).
     now dependent destruction Tl.
-Qed.
+  - admit.
+Admitted.
 
 (** ** Decidablility *)
 
@@ -162,7 +183,9 @@ Proof.
     pose proof (IHA2 B) as IH2.
     destruct IH1; destruct IH2;
       try solve [right; destruct_conjs; eexists; eauto | eauto].
-Qed.    
+  - Case "Rcd".
+    admit.
+Admitted.
 
 (** * Disjoint & Toplike *)
 
@@ -204,7 +227,7 @@ Proof.
   - dependent destruction Spl; eauto.
     pose proof (IHDj _ _ Spl).
     destruct H; eauto.
-Qed.
+Admitted.
 
 Lemma disjoint_splitable_r :
   forall A A1 A2 B,
@@ -223,7 +246,7 @@ Proof.
   - dependent destruction Spl; eauto.
     pose proof (IHDj _ _ Spl).
     destruct H; eauto.
-Qed.  
+Admitted.
   
 
 (** * Disjoint & Subtyping *)
@@ -257,11 +280,13 @@ Lemma disjoint_iso_l1 :
     isosub A C1 ->
     disjoint A C2.
 Proof.
-  introv Hdisj Hiso.
-  gen C2. dependent induction Hiso; intros; eauto.
-  eapply disjoint_splitable_l in Hdisj; eauto.
-  destruct Hdisj; eauto.
-Qed.
+  introv Dj Isub.
+  gen C2. dependent induction Isub; intros; eauto.
+  - dependent destruction Dj; eauto.
+    admit.
+  - eapply disjoint_splitable_l in Dj; eauto.
+    intuition.
+Admitted.
 
 Lemma disjoint_iso_l2 :
   forall B C1 C2,
@@ -269,11 +294,12 @@ Lemma disjoint_iso_l2 :
     isosub B C2 ->
     disjoint C1 B.
 Proof.
-  introv Hdisj Hiso.
-  gen C1. dependent induction Hiso; intros; eauto.
-  eapply disjoint_splitable_r in Hdisj; eauto.
-  destruct Hdisj; eauto.
-Qed.
+  introv Dj Isub.
+  gen C1. dependent induction Isub; intros; eauto.
+  - admit.
+  - eapply disjoint_splitable_r in Dj; eauto.
+    intuition.
+Admitted.
 
 Lemma disjoint_iso_l :
   forall A B C1 C2,
@@ -317,7 +343,7 @@ Proof.
   - dependent destruction As1; eauto.
   - dependent destruction As2; eauto.
   - dependent destruction As1. dependent destruction As2. eauto.
-Qed.
+Admitted.
 
 (** * Automations *)
 

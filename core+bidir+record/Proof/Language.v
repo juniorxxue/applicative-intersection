@@ -29,12 +29,14 @@ Set Printing Parentheses.
 
 *)
 
+Definition label := nat.
+
 Inductive type : Set :=
 | Int : type
 | Top : type          
 | Arr : type -> type -> type
 | And : type -> type -> type
-| Rcd : nat -> type -> type.
+| Rcd : label -> type -> type.
 
 Hint Constructors type : core.
 
@@ -65,8 +67,8 @@ Inductive term : Set :=
 | App : term -> term -> term
 | Mrg : term -> term -> term
 | Ann : term -> type -> term
-| Fld : nat -> term -> term
-| Prj : term -> nat -> term.
+| Fld : label -> term -> term
+| Prj : term -> label -> term.
 
 Hint Constructors term : core.
 

@@ -3,7 +3,7 @@ Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Strings.String.
-Require Import Psatz.
+Require Import Lia.
 
 Require Import Language.
 Require Import Tactical.
@@ -30,12 +30,17 @@ Inductive casting : term -> type -> term -> Prop :=
     casting v A (Ann (Lit 1) A)
 | Ct_Lam : forall A B C D E e,
     lc (Lam A e B) ->
-    not (toplike D) ->
+    ~ toplike D ->
     sub E (Arr C D) ->
     ordinary D ->
     casting (Ann (Lam A e B) E)
             (Arr C D)
             (Ann (Lam A e D) (Arr C D))
+| Ct_Rcd : forall v v' A l,
+    ordinary A ->
+    ~ toplike A ->
+    casting v A v' ->
+    casting (Fld l v) (Rcd l A) (Fld l v')
 | Ct_Mrg_L : forall v1 v2 v A,
     casting v1 A v ->
     ordinary A ->
@@ -86,6 +91,10 @@ Proof.
   - Case "Lam".
     dependent destruction Typ.
     assumption.
+  - Case "Record".
+    dependent destruction Val.
+    dependent destruction Typ.
+    eapply sub_record; eauto.
   - Case "Merge L".
     dependent destruction Val.
     dependent destruction Typ;
@@ -119,6 +128,11 @@ Proof.
     + SCase "Anno".
       dependent destruction Val1. dependent destruction Val2.
       destruct H; dependent destruction Ct1; dependent destruction Ct2; eauto.
+    + SCase "Record".
+      dependent destruction Val1. dependent destruction Val2.
+      dependent destruction Ct1; dependent destruction Ct2; eauto.
+      dependent destruction Typ1. dependent destruction Typ2.
+      admit.
     + SCase "Disjoint".
       pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val1) Typ1).
       pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val2) Typ2).
@@ -147,7 +161,7 @@ Proof.
     pose proof (splitable_decrease_size _ _ _ H1) as SplSize. destruct SplSize.
     assert (size_type C1 < i) by lia. assert (size_type C2 < i) by lia.
     f_equal; eauto 3.
-Qed.
+Admitted.
 
 (** Then prove its determinism by directly applying [casting_determinism_gen] *)
 
@@ -174,9 +188,7 @@ Lemma casting_lc :
     lc v'.
 Proof.
   introv Lc Ct.
-  dependent induction Ct; eauto.
-  - econstructor; eauto.
-  - econstructor; eauto.
+  dependent induction Ct; eauto 3; econstructor; eauto.
 Qed.
 
 Lemma casting_value :
@@ -187,6 +199,7 @@ Lemma casting_value :
 Proof.
   introv Val Ct.
   induction Ct; eauto.
+  inversion Val; eauto.
 Qed.
 
 Hint Resolve casting_value : core.
@@ -204,6 +217,8 @@ Proof.
   induction Ct1; intros; try solve [dependent induction Ct2; eauto].
   - dependent induction Ct2; eauto.
     eapply Ct_Lam; eauto. eapply sub_transitivity; eauto.
+  - dependent destruction Val.
+    dependent induction Ct2; eauto.
   - dependent destruction Val.
     dependent induction Ct2; eauto.
   - dependent destruction Val.
@@ -242,6 +257,7 @@ Proof.
       dependent destruction H2; eauto. dependent destruction H3.
       assert (toplike D) by (eapply sub_toplike; eauto).
       contradiction.
+  - admit.
   - Case "Sub-And".
     pose proof (IHSub1 _ Val Typ). pose proof (IHSub2 _ Val Typ).
     destruct_conjs; eauto.
@@ -257,7 +273,7 @@ Proof.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
     + dependent destruction Val.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
-Qed.
+Admitted.
 
 Lemma casting_progress :
   forall v A ,
@@ -384,16 +400,23 @@ Proof.
         destruct Ct1 as [x1 Ct1]; eauto. destruct Ct2 as [x2 Ct2]; eauto.
         pose proof (Cons _ _ _ Ord Ct1 Ct2). subst.
         dependent destruction Ct1; dependent destruction Ct2; eauto.
+  - admit.
   - eapply consistent_spec_inv_merge_r in Cons. destruct_conjs.
     dependent destruction Typ2;
       eapply Con_Mrg_R; eapply IH; eauto; simpl in *; lia.
+  - admit.
+  - admit.
+  - admit.
   - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
     dependent destruction Typ1;
       eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
   - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
     dependent destruction Typ1;
       eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
-Qed.
+  - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
+    dependent destruction Typ1;
+      eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
+Admitted.
 
 (** ** Preservation *)
 
@@ -437,13 +460,15 @@ Proof.
     assert (Sub2: sub (Arr A D) (Arr C D)) by eauto.
     eapply Ty_Ann; eauto. eapply Ty_Sub; eauto.
     eapply Ty_Lam; eauto. intros. eapply typing_chk_sub; eauto.
+  - admit.
   - Case "Merge L".
     dependent destruction Val. dependent destruction Typ; eauto.
   - Case "Merge R".
     dependent destruction Val. dependent destruction Typ; eauto.
-  - pose proof (IHCt1 Val B Typ) as IH1. destruct IH1 as [x1 IH1].
+  - Case "Merge".
+    pose proof (IHCt1 Val B Typ) as IH1. destruct IH1 as [x1 IH1].
     pose proof (IHCt2 Val B Typ) as IH2. destruct IH2 as [x2 IH2].
     destruct_conjs.
     exists (And x1 x2). split; eauto. eapply Ty_Mrg_Uv; eauto.
     eapply casting_consistent; eauto.
-Qed.
+Admitted.
