@@ -392,7 +392,8 @@ Proof.
       eapply Ty_Sub; eauto. eapply sub_transitivity; eauto.     
   - Case "App".
     dependent destruction St.
-    + admit.
+    + pose proof (papp_preservation_v e1 e2 e) as P.
+      eapply P; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply appsub_iso_v in H0; eauto. destruct_conjs.
       eexists; eauto.
@@ -401,7 +402,8 @@ Proof.
       eexists; eauto.
   - Case "Prj".
     dependent destruction St.
-    + admit.
+    + pose proof (papp_preservation_l e l e0) as P.
+      eapply P; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply appsub_iso_l in H; eauto. destruct_conjs.
       eexists; eauto.
@@ -444,7 +446,7 @@ Proof.
       pose proof (step_consistent u1 u2 u1 e2' A B H1 H2 Typ1 Typ2 H3 Sov1 Sov2) as Sc.
       eapply Sc; eauto. intros. eapply IH; eauto. lia.
       Unshelve. eauto.
-Admitted.
+Qed.
 
 (** * Progress *)
 
