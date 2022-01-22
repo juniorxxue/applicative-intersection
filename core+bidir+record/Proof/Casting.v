@@ -362,6 +362,25 @@ Ltac inv :=
       (pose proof (sub_inv_arrow_arrow _ _ _ nTl Ord Sub); clear Sub)
   end.
 
+Lemma consistent_spec_inv_rcd :
+  forall v1 v2 l A B,
+    value v1 -> value v2 ->
+    typing nil v1 Inf A ->
+    typing nil v2 Inf B ->
+    consistent_spec (Fld l v1) (Fld l v2) ->
+    consistent_spec v1 v2.
+Proof.
+  introv Val1 Val2 Typ1 Typ2 Cons.
+  unfold consistent_spec in *. introv Ord Ct1 Ct2.
+  destruct (toplike_decidable A0).
+  - pose proof (casting_ordinary_toplike _ _ _ Ord H Ct1) as Eq1.
+    pose proof (casting_ordinary_toplike _ _ _ Ord H Ct2) as Eq2.
+    congruence.
+  - assert ((Fld l v1') = (Fld l v2')) as Eq.
+    eapply (Cons (Rcd l A0)); eauto.
+    dependent destruction Eq; eauto.
+Qed.
+
 Lemma consistent_complete :
   forall v1 v2 A B,
     value v1 -> value v2 ->
@@ -410,16 +429,28 @@ Proof.
         destruct Ct1 as [x1 Ct1]; eauto. destruct Ct2 as [x2 Ct2]; eauto.
         pose proof (Cons _ _ _ Ord Ct1 Ct2). subst.
         dependent destruction Ct1; dependent destruction Ct2; eauto.
-  - admit.
+  - Case "Ann~Rcd".
+    eapply Con_Dj; eauto.
+    dependent destruction Typ1. dependent destruction Typ2.
+    destruct H.
+    + dependent destruction Typ1. dependent destruction Typ1.
+      dependent destruction H1; eauto. eapply disjoint_toplike; eauto.
+    + dependent destruction Typ1. dependent destruction Typ1.
+      dependent destruction H2; eauto. eapply disjoint_toplike; eauto.
   - eapply consistent_spec_inv_merge_r in Cons. destruct_conjs.
     dependent destruction Typ2;
       eapply Con_Mrg_R; eapply IH; eauto; simpl in *; lia.
-  - admit.
+  - Case "Rcd~Ann".
+    eapply Con_Dj; eauto.
+    dependent destruction Typ1. dependent destruction Typ2.
+    destruct H.
+    + dependent destruction Typ2. dependent destruction Typ2.
+      dependent destruction H1; eauto. eapply disjoint_symmetry. eapply disjoint_toplike; eauto.
+    + dependent destruction Typ2. dependent destruction Typ2.
+      dependent destruction H2; eauto. eapply disjoint_symmetry. eapply disjoint_toplike; eauto.
   - dependent destruction Typ1. dependent destruction Typ2.
     destruct (l == l0).
-    + subst. assert (consistent_spec v v0).
-      unfold consistent_spec in Cons.
-      admit.
+    + subst. assert (consistent_spec v v0) by (eapply consistent_spec_inv_rcd; eauto).
       eapply Con_Rcd. eapply (IH _ Val1 _ Val2 H); eauto; try lia.
     + eapply Con_Dj; eauto.
   - eapply consistent_spec_inv_merge_r in Cons. destruct_conjs.
@@ -434,7 +465,7 @@ Proof.
   - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
     dependent destruction Typ1;
       eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
-Admitted.
+Qed.
 
 (** ** Preservation *)
 
@@ -478,7 +509,10 @@ Proof.
     assert (Sub2: sub (Arr A D) (Arr C D)) by eauto.
     eapply Ty_Ann; eauto. eapply Ty_Sub; eauto.
     eapply Ty_Lam; eauto. intros. eapply typing_chk_sub; eauto.
-  - admit.
+  - Case "Rcd".
+    dependent destruction Val. dependent destruction Typ; eauto.
+    pose proof (IHCt Val _ Typ). destruct H1. destruct H1.
+    exists (Rcd l x). split; eauto.
   - Case "Merge L".
     dependent destruction Val. dependent destruction Typ; eauto.
   - Case "Merge R".
@@ -489,4 +523,4 @@ Proof.
     destruct_conjs.
     exists (And x1 x2). split; eauto. eapply Ty_Mrg_Uv; eauto.
     eapply casting_consistent; eauto.
-Admitted.
+Qed.
