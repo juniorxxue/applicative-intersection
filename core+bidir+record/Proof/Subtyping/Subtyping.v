@@ -383,22 +383,42 @@ Notation "A ≋ B" := (isosub A B) (at level 40).
 
 (** ** Transitivity *)
 
+Lemma isosub_inv_splitable :
+  forall A A1 A2 B,
+    isosub A B ->
+    splitable A A1 A2 ->
+    exists B1 B2, splitable B B1 B2 /\ isosub A1 B1 /\ isosub A2 B2.
+Proof.
+  introv Isub Spl. gen A1 A2.
+  induction Isub; intros.
+  - eexists. eexists. eauto.
+  - dependent destruction Spl.
+    pose proof (IHIsub _ _ Spl). destruct H. destruct H. destruct_conjs.
+    exists (Rcd l x). exists (Rcd l x0). intuition.
+  - dependent destruction Spl.
+    exists B1. exists B2. split; eauto.
+Qed.
+    
+
 Lemma isosub_transitivity :
   forall A B C,
     isosub A B -> isosub B C ->
     isosub A C.
 Proof.
-  introv Isub1 Isub2. gen A C.
-  proper_ind B; intros; eauto.
-  - dependent destruction Isub2; eauto.
-  - dependent destruction Isub2; eauto.
-  - dependent destruction Isub2; eauto.
-  - dependent destruction Isub1; eauto.
-    dependent destruction Isub2; eauto.
-  - gen A A1.
-    proper_ind C; intros; eauto.
-    (* proof should be the same with sub_transitivity *)
-Abort.
+  introv Isub1 Isub2. ind_type_size (size_type B).
+  dependent destruction Isub2; eauto.
+  - dependent destruction Isub1; simpl in SizeInd; eauto.
+    + eapply Isub_Rcd. eapply IH; eauto; try lia.
+    + dependent destruction H.
+      pose proof (isosub_inv_splitable _ _ _ _ Isub2 H) as Isubs.
+      pose proof (splitable_decrease_size _ _ _ H). destruct_conjs.
+      eapply Isub_And; eauto; eapply IH; eauto; simpl in *; try lia.
+  - dependent destruction Isub1; simpl in SizeInd; eauto.
+    dependent destruction H.
+    pose proof (splitable_decrease_size _ _ _ H0).
+    destruct_conjs.
+    eapply Isub_And; eauto; eapply IH; eauto; simpl in *; try lia.
+Qed.    
 
 (** ** Specficiation *)
 

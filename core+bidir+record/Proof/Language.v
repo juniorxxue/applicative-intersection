@@ -13,6 +13,7 @@ What makes this calculus different from classical simply typed lambda calculus
 Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Coq.Strings.String.
+Require Import Tactical.
 
 Import ListNotations.
 
@@ -108,6 +109,20 @@ Fixpoint size_term (e : term) {struct e} : nat :=
   | Fld l e => 1 + (size_term e)
   | Prj e l => 1 + (size_term e)
   end.
+
+(** induction on size *)
+
+Ltac ind_type_size s :=
+  assert (SizeInd: exists i, s < i) by eauto;
+  destruct SizeInd as [i SizeInd];
+  repeat match goal with
+         | [ h : type |- _ ] => (gen h)
+         end;
+  induction i as [|i IH]; [
+      intros; match goal with
+              | [ H : _ < 0 |- _ ] => (dependent destruction H)
+              end
+    | intros ].
 
 (** * Substituion *)
 

@@ -111,12 +111,21 @@ Proof.
       dependent destruction Sub1; dependent destruction Sub2; eauto 1.
       constructor. eapply IH; eauto.
       simpl in SizeInd. lia.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
-    + admit.
+    + SCase "Rcd Eq".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
+      constructor. eapply IH; eauto.
+      simpl in SizeInd. lia.
+    + SCase "Rcd Neq".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
+      destruct H; eauto.      
+    + SCase "Int Rcd".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
+    + SCase "Rcd Int".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
+    + SCase "Arr Rcd".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
+    + SCase "Rcd Arr".
+      dependent destruction Sub1; dependent destruction Sub2; eauto 1.
   - Case "Split".
     destruct_conjs.
     dependent destruction Sub1; dependent destruction Sub2; eauto 1.
@@ -125,7 +134,7 @@ Proof.
     eapply splitable_toplike1; eauto 3.
     + eapply IH; eauto 3. lia.
     + eapply IH; eauto 3. lia.
-Admitted.
+Qed.
 
 (** ** Symmetry *)
 
@@ -152,8 +161,12 @@ Proof.
     eapply Dj_Arr_Arr. eapply IHA2. intros.
     assert (Tl: toplike (Arr (And A1 B1) C)) by (eapply H; eauto).
     now dependent destruction Tl.
-  - admit.
-Admitted.
+  - SCase "Rcd Rcd".
+    destruct (l == l0); eauto. subst.
+    eapply Dj_Rcd_Eq. eapply IHA. introv Sub1 Sub2.
+    assert (Tl: toplike (Rcd l0 C)) by (eapply H; eauto).
+    now dependent destruction Tl.
+Qed.
 
 (** ** Decidablility *)
 
@@ -184,8 +197,17 @@ Proof.
     destruct IH1; destruct IH2;
       try solve [right; destruct_conjs; eexists; eauto | eauto].
   - Case "Rcd".
-    admit.
-Admitted.
+    induction B; eauto.
+    + SCase "And".
+      destruct IHB1; destruct IHB2; eauto.
+      * right. destruct H0. exists x. destruct_conjs. repeat (split; eauto).
+      * right. destruct H. exists x. destruct_conjs. repeat (split; eauto).
+      * destruct H. right. exists x. destruct_conjs. repeat (split; eauto).
+    + SCase "Rcd".
+      destruct (l == l0); eauto. subst.
+      destruct (IHA B); eauto. destruct H.
+      right. exists (Rcd l0 x). destruct_conjs; repeat (split; eauto).
+Qed.
 
 (** * Disjoint & Toplike *)
 
@@ -227,7 +249,13 @@ Proof.
   - dependent destruction Spl; eauto.
     pose proof (IHDj _ _ Spl).
     destruct H; eauto.
-Admitted.
+  - dependent destruction Spl; eauto.
+    destruct (IHDj _ _ Spl); eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+Qed.
 
 Lemma disjoint_splitable_r :
   forall A A1 A2 B,
@@ -246,8 +274,13 @@ Proof.
   - dependent destruction Spl; eauto.
     pose proof (IHDj _ _ Spl).
     destruct H; eauto.
-Admitted.
-  
+  - dependent destruction Spl; eauto.
+    destruct (IHDj _ _ Spl); eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+  - dependent destruction Spl; eauto.
+Qed.  
 
 (** * Disjoint & Subtyping *)
 
@@ -282,11 +315,10 @@ Lemma disjoint_iso_l1 :
 Proof.
   introv Dj Isub.
   gen C2. dependent induction Isub; intros; eauto.
-  - dependent destruction Dj; eauto.
-    admit.
+  - dependent induction Dj; eauto.
   - eapply disjoint_splitable_l in Dj; eauto.
     intuition.
-Admitted.
+Qed.
 
 Lemma disjoint_iso_l2 :
   forall B C1 C2,
@@ -296,10 +328,10 @@ Lemma disjoint_iso_l2 :
 Proof.
   introv Dj Isub.
   gen C1. dependent induction Isub; intros; eauto.
-  - admit.
+  - dependent induction Dj; eauto.
   - eapply disjoint_splitable_r in Dj; eauto.
     intuition.
-Admitted.
+Qed.
 
 Lemma disjoint_iso_l :
   forall A B C1 C2,
@@ -343,7 +375,12 @@ Proof.
   - dependent destruction As1; eauto.
   - dependent destruction As2; eauto.
   - dependent destruction As1. dependent destruction As2. eauto.
-Admitted.
+  - dependent destruction As1; dependent destruction As2; eauto. 
+  - dependent destruction As1; dependent destruction As2; eauto.
+    now destruct H.
+  - dependent destruction As1; dependent destruction As2; eauto.
+  - dependent destruction As1; dependent destruction As2; eauto.
+Qed.
 
 (** * Automations *)
 

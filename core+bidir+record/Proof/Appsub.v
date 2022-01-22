@@ -186,7 +186,7 @@ Qed.
 
 (** ** Arguments *)
 
-Lemma auxas_iso1 :
+Lemma auxas_iso_v1 :
   forall A B H,
     auxas (Some (Avt A)) B ->
     isosub A H ->
@@ -210,7 +210,7 @@ Proof.
     + dependent destruction H; eauto.
 Qed.
 
-Lemma appsub_iso1 :
+Lemma appsub_iso_v1 :
   forall A B C H,
     appsub (Some (Avt A)) B C ->
     isosub H A ->
@@ -223,38 +223,197 @@ Proof.
   - eapply As_Arr; eauto.
     eapply sub_transitivity; eauto.
   - eapply As_And_L; eauto.
-    intros Contra. eapply auxas_iso1 in Contra; eauto.
+    intros Contra. eapply auxas_iso_v1 in Contra; eauto.
   - eapply As_And_R; eauto.
-    intros Contra. eapply auxas_iso1 in Contra; eauto.
+    intros Contra. eapply auxas_iso_v1 in Contra; eauto.
   - eapply As_And_P; eauto.
 Qed.
 
 (** ** Functions *)
 
-Lemma auxas_iso2 :
+Lemma auxas_iso_v2 :
   forall A B H,
-    auxas (Some A) B ->
+    auxas (Some (Avt A)) B ->
     isosub B H ->
-    auxas (Some A) H.
+    auxas (Some (Avt A)) H.
 Proof.
-Admitted.
+  introv As Isub. gen A H.
+  proper_ind B; intros; eauto.
+  - Case "Arr".
+    dependent destruction Isub. eauto.
+  - Case "Split".
+    dependent destruction H.
+    + SCase "And".
+      dependent destruction Isub.
+      * SSCase "Refl".
+        assumption.
+      * SSCase "Split".
+        (* H have two cases: arrow and intersection *)
+        dependent destruction H.
+        ** SSSCase "And".
+           dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1). eauto.
+           *** pose proof (IHPr2 _ As _ Isub2). eauto.
+        ** SSSCase "Arr".
+           eapply Aas_Arr; eauto.
+           dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1).
+               dependent destruction H0; eauto.
+           *** pose proof (IHPr2 _ As _ Isub2).
+               dependent destruction H0; eauto.
+        ** dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1) as IH1. inversion IH1.
+           *** pose proof (IHPr2 _ As _ Isub2) as IH2. inversion IH2.
+    + SCase "Arr".
+      dependent destruction Isub; eauto.
+    + SCase "Rcd".
+      inversion As.      
+Qed.
 
-Lemma appsub_iso2 :
+Lemma auxas_iso_l2 :
+  forall A l H,
+    auxas (Some (Alt l)) A ->
+    isosub A H ->
+    auxas (Some (Alt l)) H.
+Proof.
+  Proof.
+  introv As Isub. gen l H.
+  proper_ind A; intros; eauto.
+  - Case "Fld".
+    dependent destruction As.
+    dependent destruction Isub; eauto.
+  - Case "Split".
+    dependent destruction H.
+    + SCase "And".
+      dependent destruction Isub.
+      * SSCase "Refl".
+        assumption.
+      * SSCase "Split".
+        (* H have two cases: arrow and intersection *)
+        dependent destruction H.
+        ** SSSCase "And".
+           dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1). eauto.
+           *** pose proof (IHPr2 _ As _ Isub2). eauto.
+        ** SSSCase "Arr".
+           dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1) as IH1. inversion IH1.
+           *** pose proof (IHPr2 _ As _ Isub2) as IH2. inversion IH2.
+        ** SSSCase "Lbl".
+           dependent destruction As.
+           *** pose proof (IHPr1 _ As _ Isub1) as IH1.
+               dependent destruction IH1; eauto.
+           *** pose proof (IHPr2 _ As _ Isub2) as IH2.
+               dependent destruction IH2; eauto.
+    + SCase "Arr".
+      dependent destruction Isub; eauto.
+    + SCase "Rcd".
+      dependent destruction As; eauto.
+      dependent destruction Isub; eauto.
+Qed.
+
+Lemma appsub_iso_v2 :
   forall A B C H,
-    appsub (Some A) B C ->
+    appsub (Some (Avt A)) B C ->
     isosub H B ->
-    (exists D, appsub (Some A) H D /\ isosub D C).
+    (exists D, appsub (Some (Avt A)) H D /\ isosub D C).
 Proof.
-Admitted.
+  introv As Isub. gen A C H.
+  proper_ind B; intros; eauto.
+  - Case "Arrow".
+    dependent destruction Isub; eauto.
+  - Case "Split".
+    dependent destruction Isub; eauto.
+    subst_splitable.
+    eapply appsub_split_inversion in H0; eauto.
+    destruct H0.
+    + SCase "L".
+      destruct H.
+      pose proof (IHPr1 _ _ H _ Isub1).
+      destruct H1. destruct H1.
+      exists x. split; eauto. eapply As_And_L; eauto.
+      intros Hcontra. eapply auxas_iso_v2 in Hcontra; eauto.
+    + destruct H.
+      * SCase "R".
+        destruct H.
+        pose proof (IHPr2 _ _ H _ Isub2).
+        destruct H1. destruct H1.
+        exists x. split; eauto. eapply As_And_R; eauto.
+        intros Hcontra. eapply auxas_iso_v2 in Hcontra; eauto.
+      * SCase "P".
+        destruct H. destruct H. destruct H. destruct H0.
+        pose proof (IHPr1 _ _ H _ Isub1).
+        pose proof (IHPr2 _ _ H0 _ Isub2).
+        destruct H2. destruct H2. destruct H3. destruct H3.
+        exists (And x1 x2). split.
+        ** eapply As_And_P; eauto.
+        ** assert (isosub (And x1 x2) (And x x0)) by eauto.
+           eapply isosub_transitivity; eauto.
+Qed.
 
+Lemma appsub_iso_l2 :
+  forall A B H l,
+    appsub (Some (Alt l)) A B ->
+    isosub H A ->
+    (exists C, appsub (Some (Alt l)) H C /\ isosub C B).
+Proof.
+  introv As Isub. gen B H l.
+  proper_ind A; intros; eauto.
+  - Case "Fld".
+    dependent destruction As; eauto.
+    dependent destruction Isub; eauto.
+  - Case "Split".
+    dependent destruction Isub; eauto.
+    dependent destruction As; eauto.
+    subst_splitable.
+    eapply appsub_split_inversion in H0; eauto.
+    destruct H0.
+    + SCase "L".
+      destruct H.
+      pose proof (IHPr1 _ _ Isub1 _ H).
+      destruct H1. destruct H1.
+      exists x. split; eauto. eapply As_And_L; eauto.
+      intros Hcontra. eapply auxas_iso_l2 in Hcontra; eauto.
+    + destruct H.
+      * SCase "R".
+        destruct H.
+        pose proof (IHPr2 _ _ Isub2 _ H).
+        destruct H1. destruct H1.
+        exists x. split; eauto. eapply As_And_R; eauto.
+        intros Hcontra. eapply auxas_iso_l2 in Hcontra; eauto.
+      * SCase "P".
+        destruct H. destruct H. destruct H. destruct H0.
+        pose proof (IHPr1 _ _ Isub1 _ H).
+        pose proof (IHPr2 _ _ Isub2 _ H0).
+        destruct H2. destruct H2. destruct H3. destruct H3.
+        exists (And x1 x2). split.
+        ** eapply As_And_P; eauto.
+        ** assert (isosub (And x1 x2) (And x x0)) by eauto.
+           eapply isosub_transitivity; eauto.
+Qed.
 
 (** ** Generalization *)
 
-Lemma appsub_iso :
+Lemma appsub_iso_v :
   forall A B C H1 H2,
     appsub (Some (Avt A)) B C ->
     isosub H1 A ->
     isosub H2 B ->
     (exists D, appsub (Some (Avt H1)) H2 D /\ isosub D C).
 Proof.
-Admitted.
+  introv As Isub1 Isub2.
+  pose proof (appsub_iso_v1 A B C H1 As Isub1) as Iso1.
+  destruct Iso1. destruct H.
+  pose proof (appsub_iso_v2 _ _ _ _ H Isub2).
+  destruct_conjs. eexists. split; eauto.
+  eapply isosub_transitivity; eauto.
+Qed.
+
+Lemma appsub_iso_l :
+  forall A B H l,
+    appsub (Some (Alt l)) A B ->
+    isosub H A ->
+    (exists C, appsub (Some (Alt l)) H C /\ isosub C B).
+Proof.
+  eapply appsub_iso_l2.
+Qed.

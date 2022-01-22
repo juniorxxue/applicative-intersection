@@ -230,6 +230,13 @@ Hint Extern 5 => solve_value_anno_ordinary : core.
 
 (** ** Solve Value *)
 
+Lemma value_inv_rcd :
+  forall l v,
+    value (Fld l v) -> value v.
+Proof.
+  inversion 1; eauto.
+Qed.
+
 Lemma value_inv_merge_l :
   forall v1 v2,
     value (Mrg v1 v2) -> value v1.
@@ -240,6 +247,13 @@ Qed.
 Lemma value_inv_merge_r :
   forall v1 v2,
     value (Mrg v1 v2) -> value v2.
+Proof.
+  inversion 1; eauto.
+Qed.
+
+Lemma uvalue_inv_rcd :
+  forall l u,
+    uvalue (Fld l u) -> uvalue u.
 Proof.
   inversion 1; eauto.
 Qed.
@@ -258,8 +272,10 @@ Proof.
   inversion 1; eauto.
 Qed.
 
+(* Hint Resolve value_inv_rcd : core. *)
 Hint Resolve value_inv_merge_l : core.
 Hint Resolve value_inv_merge_r : core.
+(* Hint Resolve uvalue_inv_rcd : core. *)
 Hint Resolve uvalue_inv_merge_l : core.
 Hint Resolve uvalue_inv_merge_r : core.
 
@@ -295,9 +311,9 @@ Proof.
   dependent induction e; eauto; try solve [right; unfold not; intros; inversion H].
   - destruct IHe1; destruct IHe2; eauto;
       try solve [right; unfold not; intros; dependent destruction H1; contradiction].
-  - destruct IHe; eauto.
-    destruct (pvalue_decidable e);
-      destruct (ordinary_decidable t); eauto;
+  - destruct IHe; eauto.    
+    destruct (pvalue_decidable e); eauto.
+    destruct (ordinary_decidable t); eauto.
       try solve [right; intros Hcontra; inversion Hcontra; contradiction].
   - destruct IHe; eauto.
     right. intros Contra. dependent destruction Contra.

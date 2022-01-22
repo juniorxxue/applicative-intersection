@@ -284,7 +284,22 @@ Proof.
       dependent destruction Typ1. dependent destruction Typ2.
       assert (e' = e'0). eapply determinism; eauto. subst. econstructor; eauto.
       eapply step_lc; eauto.
-  - admit.
+  - Case "Rcd Rcd".
+    dependent destruction Uv1. dependent destruction Uv2.
+    dependent destruction Typ1. dependent destruction Typ2.
+    dependent destruction Sv1; dependent destruction Sv2; eauto.
+    + match goal with
+      | St: step _ _, Val: value (Fld _ _) |- _ => dependent destruction St; dependent destruction Val
+      end.
+      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'0); eauto. simpl in *. lia.
+    + match goal with
+      | St: step _ _, Val: value (Fld _ _) |- _ => dependent destruction St; dependent destruction Val
+      end.
+      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'0); eauto. simpl in *. lia.
+    + match goal with
+      | St1: step _ _, St2: step _ _ |- _ => dependent destruction St1; dependent destruction St2
+      end.
+      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'1); eauto. simpl in *. lia.
   - Case "Disjoint".    
     dependent destruction Sv1; dependent destruction Sv2; eauto.
     + pose proof (step_uvalue _ _ Uv2 H3).
@@ -323,7 +338,7 @@ Proof.
         match goal with
         | St: step (Mrg _ _) _ |- _ => dependent destruction St
         end; eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-Admitted.
+Qed.
     
 End step_consistent.
 
@@ -379,13 +394,17 @@ Proof.
     dependent destruction St.
     + admit.
     + eapply IH in St; eauto; try lia. destruct_conjs.
-      eapply appsub_iso in H0; eauto. destruct_conjs.
+      eapply appsub_iso_v in H0; eauto. destruct_conjs.
       eexists; eauto.
-    + eapply IH in St; eauto; try lia. destruct_conjs.
-      eapply appsub_iso in H0; eauto. destruct_conjs.
+    + eapply IH in St; eauto; try lia. destruct_conjs.      
+      eapply appsub_iso_v in H0; eauto. destruct_conjs.
       eexists; eauto.
   - Case "Prj".
-    admit.
+    dependent destruction St.
+    + admit.
+    + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply appsub_iso_l in H; eauto. destruct_conjs.
+      eexists; eauto.
   - Case "Merge".
     dependent destruction St.
     + eapply IH in St1; eauto; try lia.

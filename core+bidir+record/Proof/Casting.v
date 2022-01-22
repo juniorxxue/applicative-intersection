@@ -132,7 +132,8 @@ Proof.
       dependent destruction Val1. dependent destruction Val2.
       dependent destruction Ct1; dependent destruction Ct2; eauto.
       dependent destruction Typ1. dependent destruction Typ2.
-      admit.
+      f_equal. assert (Sz: size_type A < i) by (simpl in SizeInd; lia).
+      pose proof (IH A Sz _ _ _ Val1 Typ1 _ Val2 Typ2). eauto.
     + SCase "Disjoint".
       pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val1) Typ1).
       pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val2) Typ2).
@@ -161,7 +162,7 @@ Proof.
     pose proof (splitable_decrease_size _ _ _ H1) as SplSize. destruct SplSize.
     assert (size_type C1 < i) by lia. assert (size_type C2 < i) by lia.
     f_equal; eauto 3.
-Admitted.
+Qed.
 
 (** Then prove its determinism by directly applying [casting_determinism_gen] *)
 
@@ -227,6 +228,7 @@ Qed.
 
 (** * Progress *)
 
+
 Lemma casting_progress' :
   forall v A B,
     value v ->
@@ -257,7 +259,15 @@ Proof.
       dependent destruction H2; eauto. dependent destruction H3.
       assert (toplike D) by (eapply sub_toplike; eauto).
       contradiction.
-  - admit.
+  - destruct (toplike_decidable B); eauto.
+    + eexists; eauto.
+    + dependent destruction Typ; eauto.
+      * dependent destruction Val. destruct (IHSub e); eauto.
+      * dependent destruction Val.
+        assert (~ toplike A) by (eapply sub_not_toplike; eauto).
+        destruct H0.
+        repeat (dependent destruction Typ). dependent destruction H2; eauto.
+        repeat (dependent destruction Typ). dependent destruction H3; eauto.
   - Case "Sub-And".
     pose proof (IHSub1 _ Val Typ). pose proof (IHSub2 _ Val Typ).
     destruct_conjs; eauto.
@@ -273,7 +283,7 @@ Proof.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
     + dependent destruction Val.
       pose proof (IHSub _ Val2 Typ2). destruct_conjs; eauto.
-Admitted.
+Qed.
 
 Lemma casting_progress :
   forall v A ,
@@ -405,8 +415,16 @@ Proof.
     dependent destruction Typ2;
       eapply Con_Mrg_R; eapply IH; eauto; simpl in *; lia.
   - admit.
-  - admit.
-  - admit.
+  - dependent destruction Typ1. dependent destruction Typ2.
+    destruct (l == l0).
+    + subst. assert (consistent_spec v v0).
+      unfold consistent_spec in Cons.
+      admit.
+      eapply Con_Rcd. eapply (IH _ Val1 _ Val2 H); eauto; try lia.
+    + eapply Con_Dj; eauto.
+  - eapply consistent_spec_inv_merge_r in Cons. destruct_conjs.
+    dependent destruction Typ2;
+      eapply Con_Mrg_R; eapply IH; eauto; simpl in *; lia.
   - eapply consistent_spec_inv_merge_l in Cons. destruct_conjs.
     dependent destruction Typ1;
       eapply Con_Mrg_L; eapply IH; eauto; simpl in *; lia.
