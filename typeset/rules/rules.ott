@@ -27,10 +27,6 @@ exp, e {{ tex e }}, v {{ tex v }}, p {{ tex p }}, u {{ tex u }}, one_e {{ tex 1 
                    ::  :: abs     (+ bind x in e +)
                                   {{ com abstractions }}
                             {{ tex [[\]][[x]].\,[[e]][[:]][[A]][[->]][[B]] }}
-  | fix x . e : A  ::  :: fixpoint
-                                  (+ bind x in e +)
-                                  {{ com fixpoint }}
-                                  {{ tex [[fix]]~[[x]].\,[[e]][[:]][[A]] }}
   | e1 e2          ::  :: app     {{ com applications }}
   | e1 ,, e2       ::  :: merge   {{ com merge }}
   | e : A          ::  :: anno    {{ com annotation }}
@@ -71,11 +67,13 @@ arg, S {{ tex S }} :: 'arg_' ::= {{ com argument }} {{ coq option typ }}
   | []           ::  :: none      {{ coq None }}
                                    {{ tex \cdot }}
                                    {{ com empty context }}
-  | A            ::  :: some       {{ coq Some [[A]] }}
+  | A            ::  :: typ        {{ coq Some [[A]] }}
                                    {{ com assumption }}
+  | l            ::  :: lbl        {{ com label }}                                   
 
-dirflag :: '' ::= {{ com type assignment }}
-  | is             ::   :: typeof
+dirflag :: '' ::= {{ com checking direction }}
+  | =>             ::   :: Inf
+  | <=             ::   :: Chk
 
 
 vl :: 'vl_' ::=  {{ com value or projection label }}
@@ -168,6 +166,11 @@ value i
 value \x : A . e : B
 
 
+value v
+----------------------- :: rcd
+value {l=v}
+
+
 value v1
 value v2
 ----------------------- :: merge
@@ -212,6 +215,9 @@ topLike B
 ---------------- :: arr
 topLike A -> B
 
+topLike B
+---------------- :: rcd
+topLike {l:B}
 
 defns
 SplitType :: '' ::=
@@ -227,10 +233,14 @@ by
 split (A&B) (A) (B)
 
 
-split B C D
+split B B1 B2
 ----------------------------- :: arrow
-split (A->B) (A->C) (A->D)
+split (A->B) (A->B1) (A->B2)
 
+
+split B B1 B2
+-------------------------- :: rcd
+split {l:B} {l:B1} {l:B2}
 
 
 defns
@@ -256,6 +266,9 @@ ordinary B
 ordinary A->B
 
 
+ordinary B
+---------------- :: rcd
+ordinary {l:B}
 
 defns
 Disjoint :: '' ::=
@@ -296,6 +309,31 @@ A1 -> A2 * Int
 A2 * B2
 ---------------------- :: ArrArr
 A1 -> A2 * B1 -> B2
+
+A * B
+------------------------ :: rcdEq
+{ l : A } * { l : B }
+
+
+l1 <> l2
+------------------------- :: rcdNeq
+{ l1 : A } * { l2 : B }
+
+
+---------------------- :: IntRcd
+Int * { l : A }
+
+
+---------------------- :: RcdInt
+{ l : A } * Int
+
+
+---------------------- :: ArrRcd
+A1 -> A2 * { l : A }
+
+
+---------------------- :: RcdArr
+{ l : A } * A1 -> A2
 
 
 defns
@@ -390,6 +428,12 @@ C <: D
 A -> C <: B -> D
 
 
+ordinary D
+C <: D 
+------------------------ :: rcd
+{l:C} <: {l:D}
+
+
 ordinary C
 A <: C
 ------------------------- :: andl
@@ -480,6 +524,11 @@ A2 <<: B2
 A1 & A2 <<: B
 
 
+A <<: B 
+------------------------ :: rcd
+{l:A} <<: {l:B}
+
+
 defns
 AppsubBinary :: '' ::=
 
@@ -498,14 +547,18 @@ C <: A
 C |- A -> B
 
 
-C |- A
+------------------- :: lbl
+l |- {l:A} 
+
+
+S |- A
 ------------------- :: andL
-C |- A&B
+S |- A&B
 
 
-C |- B
+S |- B
 ------------------- :: andR
-C |- A&B
+S |- A&B
 
 
 defns
@@ -527,23 +580,26 @@ C <: A
 C |- A -> B <: B
 
 
-C |- A <: D
-not C |- B
+------------------- :: lbl
+l |- {l:A} <: A
+
+
+S |- A <: D
+not S |- B
 ------------------- :: andL
-C |- A&B <: D
+S |- A&B <: D
 
 
-C |- B <: D
-not C |- A
+S |- B <: D
+not S |- A
 ------------------- :: andR
-C |- A&B <: D
+S |- A&B <: D
 
 
-C |- A <: D1
-C |- B <: D2
+S |- A <: D1
+S |- B <: D2
 --------------------- :: andBoth
-C |- A&B <: D1&D2
-
+S |- A&B <: D1&D2
 
 
 defns
@@ -571,6 +627,12 @@ not topLike D
 E <: (C -> D)
 ----------------------------------------------------------- :: arrow
 (\ x : A . e : B):E  ->(C -> D)  (\ x : A . e : D): C -> D
+
+ordinary A
+not topLike A
+v ->A v'
+-------------------------- :: rcd
+{l=v} ->{l:A} {l=v'}
 
 
 ordinary A
@@ -612,12 +674,42 @@ pType (\x:A.e:B) (A->B)
 pType (e:A) A
 
 
+pType u A
+---------------------- :: rcd
+pType {l=u} {l:A} 
+
+
 pType u1 A
 pType u2 B
 ---------------------- :: merge
 pType (u1,,u2) (A&B)
 
 
+defns
+ArgumentalType :: '' ::=
+
+defn
+aType vl arg ::  :: aType :: AT_ {{ com }} {{ tex \mathsf{aType}~[[vl]]~[[S]] }}
+by
+
+
+---------------------- :: anno
+aType (e:A) A
+
+
+aType e A
+---------------------- :: rcd
+aType {l=e} {l:A} 
+
+
+aType e1 A
+aType e2 B
+---------------------- :: merge
+aType (e1,,e2) (A&B)
+
+
+---------------------- :: label
+aType l l
 
 
 defns
@@ -636,9 +728,24 @@ topLike B
 (i : A -> B) ; v --> one_e : B
 
 
+topLike A
+----------------------------------- :: intToplikeR
+(i : {l : A}) ; v --> one_e : A
+
+
 topLike D
 --------------------------------------- :: arrToplike
 (\x:A.e:B) : C -> D ; v --> one_e : D
+
+
+topLike C
+--------------------------------------- :: arrToplikeR
+(\x:A.e:B) : {l : C}; v --> one_e : C
+
+
+
+---------------------------------------- :: proj
+{l=v} ; l --> v
 
 
 v ->A v'
@@ -650,33 +757,33 @@ not topLike D
 
 pType v1 A1
 pType v2 A2
-pType v B
-B |- A1
-not B |- A2
-v1 ; v --> e
+aType vl S
+S |- A1
+not S |- A2
+v1 ; vl --> e
 ------------------------------- :: mergeL
-v1,,v2 ; v --> e
+v1,,v2 ; vl --> e
 
 
 pType v1 A1
 pType v2 A2
-pType v B
-not B |- A1
-B |- A2
-v2 ; v --> e
+aType vl S
+not S |- A1
+S |- A2
+v2 ; vl --> e
 ------------------------------- :: mergeR
-v1,,v2 ; v --> e
+v1,,v2 ; vl --> e
 
 
 pType v1 A1
 pType v2 A2
-pType v B
-B |- A1
-B |- A2
-v1 ; v --> e1
-v2 ; v --> e2
+aType vl S
+S |- A1
+S |- A2
+v1 ; vl --> e1
+v2 ; vl --> e2
 ------------------------------- :: mergeParallel
-v1,,v2 ; v --> e1,,e2
+v1,,v2 ; vl --> e1,,e2
 
 
 
@@ -693,18 +800,13 @@ by
 i --> i:Int
 
 
-split A A1 A2
----------------------- :: intAnnoSplit
-i:A --> i:A1 ,, i:A2
-
-
 ----------------------------------- :: arrowAnno
 (\x:A.e:B) --> (\x:A.e:B) : A -> B
 
 
-split C C1 C2
---------------------------------------- :: arrowAnnoSplit
-(\x:A.e:B) : C --> (\x:A.e:B):C1 ,, (\x:A.e:B):C2
+split A A1 A2
+--------------------------------------- :: pvalueSplit
+p:A --> p:A1 ,, p:A2
 
 
 value v1
@@ -712,6 +814,12 @@ value v2
 v1 ; v2 --> e
 ----------------------  :: papp
 v1 v2 --> e
+
+
+value v
+v ; l --> v'
+-------------------------------------- :: pproj
+v.l --> v'
 
 
 value v
@@ -755,6 +863,14 @@ e  -->  e'
 e : A  -->   e' : A
 
 
+e --> e'
+-------------------------------------- :: rcd
+{l=e} --> {l=e'}
+
+
+e --> e'
+-------------------------------------- :: proj
+e.l --> e'.l
 
 defns
 Consistent :: '' ::=
@@ -765,16 +881,17 @@ by
 
 
 
--------------------------- :: abs
-\x:A.e:B1 ~~ \x:A.e:B2
-
-
 ----------------------------------- :: absAnno
 (\x:A.e:B1):C ~~ (\x:A.e:B2):D
 
 
 -------------------------- :: anno
 e:A ~~ e:B
+
+
+u1 ~~ u2
+-------------------------- :: rcd
+{l=u1} ~~ {l=u2}
 
 
 pType u1 A
@@ -801,51 +918,65 @@ defns
 Typing :: '' ::=
 
 defn
-G |- e is A ::   :: Typing :: 'Typ_'
-{{ com Typing }}
+G |- e dirflag A ::   :: Typing :: 'Typ_'
+{{ com Bidirectional Typing }}
 by
 
 
 uniq G
 ----------------- :: lit
-G |- i is Int
+G |- i => Int
 
 
 uniq G
 x : A in G
 -------------------------- :: var
-G |- x is A
+G |- x => A
 
 
-G , x : A |- e is C
-C <: B
+G , x : A |- e <= B
 ------------------------------------------- :: abs
-G |- \x : A . e : B is A->B
+G |- \x : A . e : B => A->B
 
 
-G |- e1 is A
-G |- e2 is B
+G |- e => A
+----------------------- :: rcd
+G |- {l=e} => {l:A}
+
+
+G |- e1 => A
+G |- e2 => B
 B |- A <: C
 ----------------------- :: app
-G |- e1 e2 is C
+G |- e1 e2 => C
 
 
-G |- e1 is A
-G |- e2 is B
+G |- e => A
+l |- A <: B
+----------------------- :: proj
+G |- e.l => B
+
+
+G |- e1 => A
+G |- e2 => B
 A * B
 ------------------------------ :: merge
-G |- e1 ,, e2 is A&B
+G |- e1 ,, e2 => A&B
 
 
-G |- e is C
-C <: A
+G |- e <= A
 --------------------- :: anno
-G |- (e:A) is A
+G |- (e:A) => A
 
+
+G |- e => A
+A <: B
+--------------------- :: sub
+G |- e <= B
 
 uniq G
-[] |- u1 is A
-[] |- u2 is B
+[] |- u1 => A
+[] |- u2 => B
 u1 ~~ u2
 ------------------------------ :: mergev
-G |- u1 ,, u2 is A&B
+G |- u1 ,, u2 => A&B

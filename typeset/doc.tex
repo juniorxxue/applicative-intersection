@@ -69,14 +69,14 @@
 \section{Syntax}
 
 \begin{align*}
-  &\text{Type} &A, B&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> B]] ~|~ [[A&B]]\\
-  &\text{Oridinary Type} &O&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> O]]\\
-  &\text{Expressions} &e    &::= x ~|~ i ~|~ e:A ~|~ [[e1 e2]] ~|~ [[ \ x : A .e : B]]~|~ [[e_1,,e_2]] \\
+  &\text{Type} &A, B&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> B]] ~|~ [[A&B]] ~|~ [[{ l : A}]]\\
+  &\text{Oridinary Type} &O&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> O]] ~|~ [[{ l : O }]]\\
+  &\text{Expressions} &e    &::= x ~|~ i ~|~ e:A ~|~ [[e1 e2]] ~|~ [[ \ x : A .e : B]]~|~ [[e_1,,e_2]] ~|~ [[{l = e}]] \\
   &\text{Partial Values} &p   &::= i~|~ [[ \ x : A .e : B]] \\
-  &\text{Values} &v   &::= p:O ~|~ [[v_1,,v_2]] \\
-  &\text{Pre-Values} &[[u]] &::= [[p]] ~|~[[e:A]]~|~ [[u_1,,u_2]]\\
+  &\text{Values} &v   &::= p:O ~|~ [[v_1,,v_2]] ~|~ [[{l = v}]]\\
+  &\text{Pre-Values} &[[u]] &::= [[e:A]]~|~ [[u_1,,u_2]]\\
   &\text{Term contexts} &[[G]] &::=  [[ [] ]] ~|~ [[ G, x:A ]] \\
-  &\text{Arguments} &[[S]] &::= [[ [] ]] ~|~ A
+  &\text{Arguments} &[[S]] &::= [[ [] ]] ~|~ A ~|~ l
 \end{align*}
 
 \section{Subtyping}
@@ -90,6 +90,12 @@
 \ottdefnsSubSubtyping
 
 \ottdefnsAlgorithmicSubtyping
+
+\section{Applicative Subtyping}
+
+\begin{align*}
+  &[[S]] ::= [[ [] ]] ~|~ A ~|~ l
+\end{align*}
 
 \ottdefnsAppsubBinary
 
@@ -108,6 +114,8 @@
 \ottdefnsReduction
 
 \section{Consistent and Disjoint}
+
+\ottdefnsArgumentalType
 
 \ottdefnsPrincipalType
 
