@@ -278,13 +278,13 @@ syntax
 ---------
 
 A, B ::= ...
-p    ::= A | A ->?
+P    ::= A | A ->?
 R    ::= A | ∅
 
 -------------------
 A ⊗ B = A & B
-∅ ⊗ B = ∅
-A ⊗ ∅ = ∅
+A ⊗ ∅ = A
+∅ ⊗ B = B
 
 
 ------------------
@@ -322,15 +322,34 @@ B <: C ~> ∅   ordinary C
 A & B <: C ~> ∅
 
 
-A1 <: B ~> R1          A2 <: B ~> R2
---------------------------------------- S-Appsub-Parallel
-A1 & A2 <: B ->? ~> R1 ⊗ R2
-
-
 B <: A1 ~> ∅
 -------------------------- S-Appsub-Arrow
 A1 -> A2 <: B ->? A2
+
+
+not (B <: A1 ~> ∅)
+-------------------------- S-Appsub-Arrow-Neq (exprimental)
+A1 -> A2 <: B ->? ∅
+
+
+A1 <: B ~> R1          A2 <: B ~> R2
+--------------------------------------- S-Appsub-Parallel
+A1 & A2 <: B ->? ~> R1 ⊗ R2
 ```
+
+side-notes:
+
+consider examples of `(succ ,, not) 1`
+
+```
+
+Int -> Int <: Int ->? ~> Int
+Bool -> Bool <: Int ->? ~> ∅        <------- we need rule (failed cases) like this
+----------------------------------------------------------------------
+(Int -> Int) & (Bool -> Bool) <: Int ->? ~> Int
+```
+
+this is exactly similar to our negation premises in AS-And-L and AS-And-R
 
 # Disjoint
 
