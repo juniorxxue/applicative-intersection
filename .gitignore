@@ -23,3 +23,5 @@ core+bidir+record+unified/Proof/html/*
 *.swp
 Makefile.coq
 Makefile.coq.conf
+
+*.rkt~
