@@ -47,21 +47,32 @@
 ;; Dynamics
 ;; -----------------------------------------------------------------------
 
-(define (eval exp env)
+(define (pvalue? exp)
   (match exp
-    [(? symbol?)              (env-lookup env exp)]
-    [(? number?)              exp]
-    [`(λ (,x : ,A) ,e ,B)     `(closure ,exp ,env)]
-    [`(,f ,arg)               (apply-proc (eval f env) (eval arg env))]
-    [`(m ,e1 ,e2)             `(merge ,e1 ,e2)]
-    [`(: ,e ,A)               `(anno ,e ,A)]))
+    [(? number?)          #t]
+    [(? boolean?)         #t]
+    [`(λ (,x : ,A) ,e ,B)   #t]
+    [_                    #f]))
+    
+(define (value? exp)
+  (match exp
+    [`(: ,p ,t)         (pvalue? p)]
+    [`(m ,v1 ,v2)       (and (value? v1) (value? v2))]
+    [_                  #f]))
 
-(define (apply-proc f env)
-  (error "WIP"))
+(check-equal? (pvalue? '(λ (x : int) x int)) #t)
 
-(define (env-lookup env exp)
-  (error "WIP"))
+(define (eval e)
+  (if (value? e)
+      e
+      (eval (step e))))
 
-(eval '(λ (x : int) x int) '())
-(eval '(: 1 int) '())
-(eval '(m 1 1) '())
+(define (lambda? e)
+  1
+  )
+    
+
+(define (step e)
+  (match e
+    [(? number?)                `(: ,e int)]
+    [`(: ,(? pvalue? p) ,A)     'split-type]))
