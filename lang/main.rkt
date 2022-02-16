@@ -5,28 +5,51 @@
 ;; Statics
 ;; -----------------------------------------------------------------------
 
-(define (ordinary? t)
+(define (type? t)
+  (match t
+    ['int #t]
+    ['bool #t]
+    ['top #t]
+    [`(-> ,(? type?) ,(? type?)) #t]
+    [`(& ,(? type?) ,(? type?)) #t]
+    [_ #f]))
+
+(define (expr? e)
+  (match e
+    [(? symbol?) #t]
+    [(? number?) #t]
+    [`(λ (,(? symbol?) : ,(? type?)) ,(? expr?) ,(? type?)) #t]
+    [`(,(? expr?) ,(? expr?)) #t]
+    [`(m ,(? expr?) ,(? expr?)) #t]
+    [`(: ,(? expr?) ,(? type?)) #t]
+    [_ #f]))    
+
+(define/contract (ordinary? t)
+  (-> type? boolean?)
   (match t
     ['int           #t]
     ['bool          #t]
     ['top           #t]
-    [`(-> ,A ,B)    (ordinary? B)]
+    [`(-> ,_ ,B)    (ordinary? B)]
     [_              #f]))
 
-(define (split t)
+(define/contract (split t)
+  (-> type? (listof type?))
   (match t
     [`(-> ,A ,B)    (let ([Bs (split B)])
                       `((-> ,A ,(car Bs)) (-> ,A ,(cadr Bs))))]
     [`(& ,A ,B)     `(,A ,B)]))    
 
-(define (toplike? t)
+(define/contract (toplike? t)
+  (-> type? boolean?)
   (match t
     ['top          #t]
     [`(-> ,A ,B)   (toplike? B)]
     [`(& ,A ,B)    (and (toplike? A) (toplike? B))]
     [_             #f]))
 
-(define (sub? t1 t2)
+(define/contract (sub? t1 t2)
+  (-> type? type? boolean?)
   (match* (t1 t2)
     [('int 'int)                     #t]
     [('bool 'bool)                   #t]
@@ -37,14 +60,16 @@
     [(`(-> ,A1 ,A2) `(-> ,B1 ,B2))   (and (sub? B1 A1) (sub? A2 B2))]
     [(_ _)                           #f]))
 
-(define (appsub? s t)
+(define/contract (appsub? s t)
+  (-> (or/c symbol? type?) type? boolean?)
   (match* (s t)
     [('nil A)         #t]
     [(C `(-> ,A ,B))  (sub? C A)]
     [(C `(& ,A ,B))   (appsub? C A)]
     [(C `(& ,A ,B))   (appsub? C B)]))
 
-(define (appsub s t)
+(define/contract (appsub s t)
+  (-> (or/c symbol? type?) type? type?)
   (match* (s t)
     [('nil A) A]
     [(C `(-> ,A ,B)) #:when (sub? C A)           B]
@@ -52,7 +77,8 @@
     [(C `(& ,A ,B))  #:when (not (appsub? C A))  (appsub C B)]
     [(C `(& ,A ,B))                              `(& ,(appsub C A) ,(appsub C B))]))
 
-(define (disjoint? t1 t2)
+(define/contract (disjoint? t1 t2)
+  (-> type? type? boolean?)
   (match* (t1 t2)
     [('top _) #t]
     [(_ 'top) #t]
@@ -71,7 +97,8 @@
       (cadar env)
       (lookup (cdr env) var)))
 
-(define (infer e env)
+(define/contract (infer e env)
+  (-> expr? list? type?)
   (match e    
     [(? number?)                                                 'int]
     ['true                                                       'bool]
@@ -83,8 +110,8 @@
                                                                    (appsub B A))]
     [`(m ,e1 ,e2)                                                (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                    (if (disjoint? A B) `(& ,A ,B) #f))]))
-
-(define (check e t env)
+(define/contract (check e t env)
+  (-> expr? type? list? boolean?)
   (let ([A (infer e env)])
     (sub? A t)))
 
@@ -92,18 +119,29 @@
 ;; Dynamics
 ;; -----------------------------------------------------------------------
 
-(define (pvalue? exp)
-  (match exp
+(define (pvalue? e)
+  (match e
     [(? number?)            #t]
     [(? boolean?)           #t]
     [`(λ (,x : ,A) ,e ,B)   #t]
     [_                      #f]))
     
-(define (value? exp)
-  (match exp
+(define (value? e)
+  (match e
     [`(: ,p ,t)         (pvalue? p)]
     [`(m ,v1 ,v2)       (and (value? v1) (value? v2))]
     [_                  #f]))
+
+(define/contract (cast e t)
+  (-> value? any/c value?)
+  (match* (e t)
+    [(`(: ,n ,A) 'int) #:when (sub? A 'int) `(: ,n int)]
+    [(v (? (and/c ordinary? toplike?) A)) `(: 1 ,A)]
+    [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D))) #:when (sub? E `(-> ,C ,D)) `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
+    ))
+
+(cast '(: 1 int) 'int)
+(cast '(: (λ (x : int) x int) (-> int int)) '(-> int int))
 
 (define (eval e)
   (if (value? e) e (eval (step e))))
@@ -120,6 +158,8 @@
 
 (require rackunit)
 
+(check-equal? (type? '(& int int)) #t)
+(check-equal? (type? '(-> int (& int int))) #t)
 (check-equal? (split '(-> int (& int top))) '((-> int int) (-> int top)))
 (check-equal? (toplike? '(-> int (& top top))) #t)
 (check-equal? (ordinary? '(-> int (& int int))) #f)
@@ -142,6 +182,9 @@
 
 (define id-bool
   '(λ (x : bool) x bool))
+
+(check-equal? (expr? id-int) #t)
+(check-equal? (expr? `(m ,id-int ,id-bool)) #t)
  
 (check-equal? (infer `(m ,id-int ,id-bool) '()) '(& (-> int int) (-> bool bool)))
 (check-equal? (infer `((m ,id-int ,id-bool) 1) '()) 'int)
