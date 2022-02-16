@@ -7,22 +7,22 @@
 
 (define (type? t)
   (match t
-    ['int #t]
-    ['bool #t]
-    ['top #t]
-    [`(-> ,(? type?) ,(? type?)) #t]
-    [`(& ,(? type?) ,(? type?)) #t]
-    [_ #f]))
+    ['int                         #t]
+    ['bool                        #t]
+    ['top                         #t]
+    [`(-> ,(? type?) ,(? type?))  #t]
+    [`(& ,(? type?) ,(? type?))   #t]
+    [_                            #f]))
 
 (define (expr? e)
   (match e
-    [(? symbol?) #t]
-    [(? number?) #t]
+    [(? symbol?)                                            #t]
+    [(? number?)                                            #t]
     [`(λ (,(? symbol?) : ,(? type?)) ,(? expr?) ,(? type?)) #t]
-    [`(,(? expr?) ,(? expr?)) #t]
-    [`(m ,(? expr?) ,(? expr?)) #t]
-    [`(: ,(? expr?) ,(? type?)) #t]
-    [_ #f]))    
+    [`(,(? expr?) ,(? expr?))                               #t]
+    [`(m ,(? expr?) ,(? expr?))                             #t]
+    [`(: ,(? expr?) ,(? type?))                             #t]
+    [_                                                      #f]))
 
 (define/contract (ordinary? t)
   (-> type? boolean?)
@@ -103,7 +103,7 @@
     [(? number?)                                                 'int]
     ['true                                                       'bool]
     ['false                                                      'bool]
-    [(? symbol?)                                                 (lookup env e)]
+    [(? symbol?)                                                  (lookup env e)]
     [`(λ (,x : ,A) ,e ,B) #:when (check e B (cons `(,x ,A) env)) `(-> ,A ,B)]
     [`(: ,e ,A) #:when (check e A env)                           A]
     [`(,e1 ,e2)                                                  (let ([A (infer e1 env)] [B (infer e2 env)])
@@ -119,38 +119,82 @@
 ;; Dynamics
 ;; -----------------------------------------------------------------------
 
-(define (pvalue? e)
+(define/contract (pvalue? e)
+  (-> expr? boolean?)
   (match e
     [(? number?)            #t]
     [(? boolean?)           #t]
     [`(λ (,x : ,A) ,e ,B)   #t]
     [_                      #f]))
     
-(define (value? e)
+(define/contract (value? e)
+  (-> expr? boolean?)
   (match e
     [`(: ,p ,t)         (pvalue? p)]
     [`(m ,v1 ,v2)       (and (value? v1) (value? v2))]
     [_                  #f]))
 
 (define/contract (cast e t)
-  (-> value? any/c value?)
+  (-> value? type? value?)
   (match* (e t)
-    [(`(: ,n ,A) 'int) #:when (sub? A 'int) `(: ,n int)]
-    [(v (? (and/c ordinary? toplike?) A)) `(: 1 ,A)]
-    [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D))) #:when (sub? E `(-> ,C ,D)) `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
-    ))
+    [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                       `(: ,n int)]
+    [(v (? (and/c ordinary? toplike?) A))                                         `(: 1 ,A)]
+    [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D)))
+     #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
+    [(`(m ,v1 ,v2) (? ordinary? A))                                                (cast v1 A)]
+    [(`(m ,v1 ,v2) (? ordinary? A))                                                (cast v2 A)]
+    [(v (? (not/c ordinary?) A)) (let ([As (split A)])
+                                                                                  `(m ,(cast v (car As)) ,(cast v (cadr As))))]))
 
-(cast '(: 1 int) 'int)
-(cast '(: (λ (x : int) x int) (-> int int)) '(-> int int))
-
-(define (eval e)
-  (if (value? e) e (eval (step e))))
-
-(define (step e)
+(define/contract (subst e x u)
+  (-> expr? symbol? expr? expr?)
   (match e
-    [(? number?)                     `(: ,e int)]
-    [`(: ,(? pvalue? p) ,A)          'split-type]
-    [`(: ,(? (not/c pvalue?) e) ,A)  `(: ,(step e) ,A)]))
+    [(? symbol? y) (if (equal? y x) u y)]
+    [`(λ (,y : ,A) ,e ,B) `(λ (,y : ,A) ,(if (equal? y x) e (subst e x u)) ,B)]
+    [`(,e1 ,e2) `(,(subst e1 x u) ,(subst e2 x u))]
+    [`(m ,e1 ,e2) `(m ,(subst e1 x u) ,(subst e2 x u))]
+    [`(: ,e ,A) `(: ,(subst e x u) ,A)]
+    [_ e]))
+
+(define/contract (ptype e)
+  (-> expr? type?)
+  (match e
+    [(? number?) 'int]
+    [`(λ (,x : ,A) ,e ,B) `(-> ,A ,B)]
+    [`(: ,e ,A) A]
+    [`(m ,e1 ,e2) `(& ,(ptype e1) ,(ptype e2))]))
+  
+(define/contract (papp v vl)
+  (-> value? value? expr?)
+  (match v
+    [`(: ,n (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
+    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? toplike? D)))            `(: 1 ,D)]
+    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? (not/c toplike?) D)))    `(: ,(subst e x (cast vl A)) ,D)]
+    [`(m ,v1 ,v2) #:when (not (appsub? (ptype vl) (ptype v2)))    (papp v1 vl)]
+    [`(m ,v1 ,v2) #:when (not (appsub? (ptype vl) (ptype v1)))    (papp v2 vl)]
+    [`(m ,v1 ,v2) #:when (and (appsub? (ptype vl) (ptype v1)) (appsub? (ptype vl) (ptype v1)))
+                                                                 `(m ,(papp v1 vl) ,(papp v2 vl))]))
+
+;; possibly need not-value? as condition check
+(define/contract (step e)
+  (-> expr? expr?)
+  (match e
+    [(? number? n)                                  `(: ,n int)]
+    [`(λ (,x : ,A) ,e ,B)                           `(: (λ (,x : ,A) ,e ,B) (-> ,A ,B))]
+    [`(: ,(? pvalue? p) ,(? (not/c ordinary?) A)) (let ([As (split A)])
+                                                    `(m (: ,p ,(car As)) (: ,p ,(cadr As))))]
+    [`(,(? value? v) ,(? value? vl))                 (papp v vl)]
+    [`(: ,(? value? v) ,A)                           (cast v A)]
+    [`(: ,(? (not/c pvalue?) e) ,A)                 `(: ,(step e) ,A)]
+    [`(,(? (not/c value?) e1) ,e2)                  `(,(step e1) ,e2)]
+    [`(,(? value? v) ,e2)                           `(,v ,(step e2))]
+    [`(m ,e1 ,(? value? v))                         `(m ,(step e1) ,v)]
+    [`(m ,(? value? v) ,e2)                         `(m ,v ,(step e2))]
+    [`(m ,e1 ,e2)                                   `(m ,(step e1) ,(step e2))]))
+
+(define/contract (eval e)
+  (-> expr? value?)
+  (if (value? e) e (eval (step e))))
 
 ;; -----------------------------------------------------------------------
 ;; Tests
@@ -188,5 +232,16 @@
  
 (check-equal? (infer `(m ,id-int ,id-bool) '()) '(& (-> int int) (-> bool bool)))
 (check-equal? (infer `((m ,id-int ,id-bool) 1) '()) 'int)
+(check-equal? (ptype `(m ,id-int ,id-bool)) '(& (-> int int) (-> bool bool)))
+(check-equal? (ptype id-int) '(-> int int))
 
-(check-equal? (pvalue? '(λ (x : int) x int)) #t)
+(check-equal? (cast '(: 1 int) 'int) '(: 1 int))
+(check-equal? (cast '(: 1 int) '(& int int)) '(m (: 1 int) (: 1 int)))
+(check-equal? (cast '(: (λ (x : int) x int) (-> int int)) '(-> int int)) '(: (λ (x : int) x int) (-> int int)))
+
+(define annoed-id-int
+  '(: (λ (x : int) x int) (-> int int)))
+(define annoed-id-arr
+  '(: (λ (x : (-> int int)) x (-> int int))
+      (-> (-> int int) (-> int int))))
+(check-equal? (papp `(m ,annoed-id-int ,annoed-id-arr) '(: 1 int)) '(: (: 1 int) int))
