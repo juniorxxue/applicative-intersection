@@ -5,6 +5,9 @@
 ;; Statics
 ;; -----------------------------------------------------------------------
 
+(define (fail? t)
+  (not t))
+
 (define (type? t)
   (match t
     ['int                         #t]
@@ -159,16 +162,19 @@
     [_                  #f]))
 
 (define/contract (cast e t)
-  (-> value? type? value?)
+  (-> value? type? (or/c value? fail?))
   (match* (e t)
     [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                       `(: ,n int)]
+    [(`(: true ,A) 'bool) #:when (sub? A 'bool)                                   '(: true bool)]
+    [(`(: false ,A) 'bool) #:when (sub? A 'bool)                                  '(: false bool)]
     [(v (? (and/c ordinary? toplike?) A))                                         `(: 1 ,A)]
     [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D)))
      #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
-    [(`(m ,v1 ,v2) (? ordinary? A))                                                (cast v1 A)]
-    [(`(m ,v1 ,v2) (? ordinary? A))                                                (cast v2 A)]
-    [(v (? (not/c ordinary?) A)) (let ([As (split A)])
-                                                                                  `(m ,(cast v (car As)) ,(cast v (cadr As))))]))
+    [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v1 A)                             (cast v1 A)]
+    [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v2 A)                             (cast v2 A)]
+    [(v (? (not/c ordinary?) A))                                                   (let ([As (split A)])
+                                                                                     `(m ,(cast v (car As)) ,(cast v (cadr As))))]
+    [(_ _)                                                                         #f]))
 
 (define/contract (subst e x u)
   (-> expr? symbol? expr? expr?)
@@ -279,3 +285,4 @@
   '(λ (x : int) true bool))
 
 (check-equal? (eval `((m ,id-int ,always-true) 1)) '(m (: 1 int) (: true bool)))
+(check-equal? (eval '(: (m 1 true) bool)) '(: true bool))
