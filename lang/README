@@ -1,0 +1,17 @@
+e ::= x
+   |  n
+   |  true
+   |  false
+   |  (λ (x : t) e t)
+   |  (e1 e2)
+   |  (m e1 e2)
+   |  (: e t)
+   |  (~> l e)
+   |  (<~ e l)
+
+t ::= int
+   |  bool
+   |  top
+   |  (-> t1 t2)
+   |  (& t1 t2)
+   |  (* l t)

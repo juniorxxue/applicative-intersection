@@ -8,6 +8,9 @@
 (define (fail? t)
   (not t))
 
+(define label?
+  number?)  
+
 (define (type? t)
   (match t
     ['int                         #t]
@@ -15,6 +18,7 @@
     ['top                         #t]
     [`(-> ,(? type?) ,(? type?))  #t]
     [`(& ,(? type?) ,(? type?))   #t]
+    [`(* ,(? label?) ,(? type?))  #t] ;; record type
     [_                            #f]))
 
 (define (expr? e)
@@ -27,6 +31,8 @@
     [`(,(? expr?) ,(? expr?))                               #t]
     [`(m ,(? expr?) ,(? expr?))                             #t]
     [`(: ,(? expr?) ,(? type?))                             #t]
+    [`(~> ,(? label?) ,(? expr?))                           #t] ;; record term
+    [`(<~ ,(? expr?) ,(? label?))                           #t] ;; record projection
     [_                                                      #f]))
 
 (define/contract (ordinary? t)
@@ -36,14 +42,22 @@
     ['bool          #t]
     ['top           #t]
     [`(-> ,_ ,B)    (ordinary? B)]
+    [`(* ,_ ,A)     (ordinary? A)]
     [_              #f]))
+
+(check-true (ordinary? '(* 1 int)))
 
 (define/contract (split t)
   (-> type? (listof type?))
   (match t
-    [`(-> ,A ,B)    (let ([Bs (split B)])
-                      `((-> ,A ,(car Bs)) (-> ,A ,(cadr Bs))))]
-    [`(& ,A ,B)    `(,A ,B)]))    
+    [`(-> ,A ,(? (not/c ordinary?) B)) (let ([Bs (split B)])
+                                         `((-> ,A ,(car Bs)) (-> ,A ,(cadr Bs))))]
+    [`(* ,l ,(? (not/c ordinary?) A))  (let ([As (split A)])
+                                         `((* ,l ,(car As)) (* ,l ,(cadr As))))]
+    [`(& ,A ,B)                       `(,A ,B)]
+    [_                                 (error "fail to split" t)]))
+
+(check-equal? (split '(* 1 (& int int))) '((* 1 int) (* 1 int)))
 
 (define/contract (toplike? t)
   (-> type? boolean?)
@@ -51,36 +65,46 @@
     ['top          #t]
     [`(-> ,A ,B)   (toplike? B)]
     [`(& ,A ,B)    (and (toplike? A) (toplike? B))]
+    [`(* ,l ,A)    (toplike? A)]
     [_             #f]))
 
 (define/contract (sub? t1 t2)
   (-> type? type? boolean?)
   (match* (t1 t2)
     [('int 'int)                     #t]
-    [('bool 'bool)                   #t]
+    [('bool 'bool)                   #t]    
     [(_ (? toplike?))                #t]
+    [(`(* ,l ,A) `(* ,l ,B))         (sub? A B)]
     [(A (? (not/c ordinary?) B))     (let ([Bs (split B)])
                                        (and (sub? A (car Bs)) (sub? A (cadr Bs))))]
     [(`(& ,A1 ,A2) B)                (or (sub? A1 B) (sub? A2 B))]
     [(`(-> ,A1 ,A2) `(-> ,B1 ,B2))   (and (sub? B1 A1) (sub? A2 B2))]
     [(_ _)                           #f]))
 
+(check-true (sub? '(* 1 int) '(* 1 (& int int))))
+
 (define/contract (appsub? s t)
-  (-> (or/c symbol? type?) type? boolean?)
+  (-> (or/c symbol? type? label?) type? boolean?)
   (match* (s t)
-    [('nil A)         #t]
+    [('nil _)         #t]
     [(C `(-> ,A ,B))  (sub? C A)]
-    [(C `(& ,A ,B))   (appsub? C A)]
-    [(C `(& ,A ,B))   (appsub? C B)]))
+    [(l `(* ,l ,A))   #t]
+    [(S `(& ,A ,B))   (appsub? S A)]
+    [(S `(& ,A ,B))   (appsub? S B)]
+    [(_ _)            #f]))
 
 (define/contract (appsub s t)
-  (-> (or/c symbol? type?) type? type?)
+  (-> (or/c symbol? type? label?) type? type?)
   (match* (s t)
     [('nil A) A]
     [(C `(-> ,A ,B)) #:when (sub? C A)           B]
-    [(C `(& ,A ,B))  #:when (not (appsub? C B))  (appsub C A)]
-    [(C `(& ,A ,B))  #:when (not (appsub? C A))  (appsub C B)]
-    [(C `(& ,A ,B))                             `(& ,(appsub C A) ,(appsub C B))]))
+    [(l `(* ,l ,A))                              A]
+    [(S `(& ,A ,B))  #:when (not (appsub? S B))  (appsub S A)]
+    [(S `(& ,A ,B))  #:when (not (appsub? S A))  (appsub S B)]
+    [(S `(& ,A ,B))                             `(& ,(appsub S A) ,(appsub S B))]))
+
+(check-equal? (appsub 1 '(& (* 1 int) (* 2 bool))) 'int)
+(check-equal? (appsub 1 '(& (* 1 int) (* 1 bool))) '(& int bool))
 
 (define/contract (disjoint? t1 t2)
   (-> type? type? boolean?)
@@ -96,13 +120,23 @@
     [(`(-> ,A1 ,B1) `(-> ,A2 ,B2))   (disjoint? B1 B2)]
     [('int 'bool)                    #t]
     [('bool 'int)                    #t]
+    [(`(* ,l1 ,A) `(* ,l2 ,B))       (if (equal? l1 l2) (disjoint? A B) #t)]
+    [('int `(* ,_ ,_))               #t]
+    [(`(* ,_ ,_) 'int)               #t]
+    [('bool `(* ,_ ,_))              #t]
+    [(`(* ,_ ,_) 'bool)              #t]
+    [(`(-> ,_ ,_) `(* ,_ ,_))        #t]
+    [(`(* ,_ ,_) `(-> ,_ ,_))        #t]
     [(_ _)                           #f]))
+
+(check-true (disjoint? 'bool '(* 1 bool)))
 
 (define/contract (uvalue? e)
   (-> expr? boolean?)
   (match e
     [`(: ,e ,A)        #t]
-    [`(m ,u1 ,u2)      #t]
+    [`(m ,u1 ,u2)      (and (uvalue? u1) (uvalue? u2))]
+    [`(~> ,l ,u)       (uvalue? u)]
     [_                 #f]))
 
 (define/contract (consistent? e1 e2)
@@ -110,6 +144,7 @@
   (match* (e1 e2)
     [(`(: (λ (,x : ,A) ,e ,B1) ,C) `(: (λ (,x : ,A) ,e ,B2) ,D)) #t]
     [(`(: ,e ,A) `(: ,e ,B))                                     #t]
+    [(`(~> ,l ,u1) `(~> ,l ,u2))                                 (consistent? u1 u2)]
     [(u1 u2) #:when (disjoint? (ptype u1) (ptype u2))            #t]
     [(`(m ,u1 ,u2) u)                                            (and (consistent? u1 u) (consistent? u2 u))]
     [(u `(m ,u1 ,u2))                                            (and (consistent? u u1) (consistent? u u2))]))
@@ -127,9 +162,12 @@
     ['false                                                          'bool]
     [(? symbol?)                                                      (lookup env e)]
     [`(λ (,x : ,A) ,e ,B) #:when (check e B (cons `(,x ,A) env))     `(-> ,A ,B)]
+    [`(~> ,l ,e)                                                     `(* ,l ,(infer e env))]
     [`(: ,e ,A) #:when (check e A env)                                A]
     [`(,e1 ,e2)                                                       (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         (appsub B A))]
+    [`(<~ ,e ,l)                                                      (let ([A (infer e env)])
+                                                                        (appsub l A))]
     [`(m ,(? uvalue? u1) ,(? uvalue? u2)) #:when (consistent? u1 u2)  (let ([A (infer u1 '())] [B (infer u2 '())])
                                                                         `(& ,A ,B))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
@@ -140,6 +178,11 @@
   (-> expr? type? list? boolean?)
   (let ([A (infer e env)])
     (sub? A t)))
+
+(check-equal? (infer '(~> 1 true) '())
+              '(* 1 bool))
+(check-equal? (infer '(~> 1 (λ (x : int) x int)) '())
+              '(* 1 (-> int int)))
 
 ;; -----------------------------------------------------------------------
 ;; Dynamics
@@ -158,6 +201,7 @@
   (-> expr? boolean?)
   (match e
     [`(: ,p ,t)         (pvalue? p)]
+    [`(~> ,l ,v)        (value? v)]
     [`(m ,v1 ,v2)       (and (value? v1) (value? v2))]
     [_                  #f]))
 
@@ -170,11 +214,15 @@
     [(v (? (and/c ordinary? toplike?) A))                                         `(: 1 ,A)]
     [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D)))
      #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
+    [(`(~> ,l ,v) `(* ,l ,(? (and/c ordinary? (not/c toplike?)) A)))              `(~> ,l ,(cast v A))]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v1 A)                             (cast v1 A)]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v2 A)                             (cast v2 A)]
     [(v (? (not/c ordinary?) A))                                                   (let ([As (split A)])
                                                                                      `(m ,(cast v (car As)) ,(cast v (cadr As))))]
     [(_ _)                                                                         #f]))
+
+(check-equal? (cast '(~> 1 (: true bool)) '(* 1 (& bool bool)))
+              '(m (~> 1 (: true bool)) (~> 1 (: true bool))))
 
 (define/contract (subst e x u)
   (-> expr? symbol? expr? expr?)
@@ -184,6 +232,8 @@
     [`(,e1 ,e2)                       `(,(subst e1 x u) ,(subst e2 x u))]
     [`(m ,e1 ,e2)                     `(m ,(subst e1 x u) ,(subst e2 x u))]
     [`(: ,e ,A)                       `(: ,(subst e x u) ,A)]
+    [`(~> ,l ,e)                      `(~> ,l ,(subst e x u))]
+    [`(<~ ,e ,l)                      `(<~ ,(subst e x u) ,l)]
     [_                                 e]))
 
 (define/contract (ptype e)
@@ -193,19 +243,43 @@
     ['true                          'bool]
     ['false                         'bool]
     [`(λ (,x : ,A) ,e ,B)           `(-> ,A ,B)]
+    [`(~> ,l ,e)                    `(* ,l ,(ptype e))]
     [`(: ,e ,A)                      A]
     [`(m ,e1 ,e2)                   `(& ,(ptype e1) ,(ptype e2))]))
+
+(define/contract (atype vl)
+  (-> (or/c label? value?) (or/c label? type?))
+  (match vl
+    [`(: ,e ,A)                     A]
+    [`(~> ,l ,e)                   `(* ,l ,(atype e))]
+    [`(m ,e1 ,e2)                  `(& ,(atype e1) ,(atype e2))]
+    [(? label? l)                   l]))
   
 (define/contract (papp v vl)
-  (-> value? value? expr?)
+  (-> value? (or/c label? value?) expr?)
   (match v
     [`(: ,n (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
+    [`(: true (-> ,A ,(? toplike? B)))                           `(: 1 ,B)]
+    [`(: false (-> ,A ,(? toplike? B)))                          `(: 1 ,B)]
     [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? toplike? D)))            `(: 1 ,D)]
+    [`(: ,n (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
+    [`(: true (* ,l ,(? toplike? A)))                            `(: 1 ,A)]
+    [`(: false (* ,l ,(? toplike? A)))                           `(: 1 ,A)]
+    [`(: (λ (,x : ,A) ,e ,B) (* ,l ,(? toplike? C)))             `(: 1 ,C)]
     [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? (not/c toplike?) D)))    `(: ,(subst e x (cast vl A)) ,D)]
-    [`(m ,v1 ,v2) #:when (not (appsub? (ptype vl) (ptype v2)))    (papp v1 vl)]
-    [`(m ,v1 ,v2) #:when (not (appsub? (ptype vl) (ptype v1)))    (papp v2 vl)]
-    [`(m ,v1 ,v2) #:when (and (appsub? (ptype vl) (ptype v1))
-                              (appsub? (ptype vl) (ptype v1)))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
+    [`(~> ,l ,v)  #:when (equal? l vl)                            v]
+    [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v2)))    (papp v1 vl)]
+    [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v1)))    (papp v2 vl)]
+    [`(m ,v1 ,v2) #:when (and (appsub? (atype vl) (ptype v1))
+                              (appsub? (atype vl) (ptype v1)))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
+
+(define rcd-42
+  '(~> 42 (: true bool)))
+
+(define rcd-96
+  '(~> 94 (: false bool)))
+
+(check-equal? (papp `(m ,rcd-42 ,rcd-96) 42) '(: true bool))
 
 ;; possibly need not-value? as condition check
 (define/contract (step e)
@@ -217,6 +291,9 @@
     [`(λ (,x : ,A) ,e ,B)                           `(: (λ (,x : ,A) ,e ,B) (-> ,A ,B))]
     [`(: ,(? pvalue? p) ,(? (not/c ordinary?) A))    (let ([As (split A)])
                                                        `(m (: ,p ,(car As)) (: ,p ,(cadr As))))]
+    [`(<~ ,(? value? v) ,(? label? l))               (papp v l)]
+    [`(<~ ,(? (not/c value?) e) ,(? label? l))      `(<~ ,(step e) ,l)]
+    [`(~> ,(? label? l) ,(? (not/c value?) e))      `(~> ,l ,(step e))]
     [`(,(? value? v) ,(? value? vl))                 (papp v vl)]
     [`(: ,(? value? v) ,A)                           (cast v A)]
     [`(: ,(? (not/c pvalue?) e) ,A)                 `(: ,(step e) ,A)]
@@ -264,6 +341,7 @@
 
 (check-equal? (expr? id-int) #t)
 (check-equal? (expr? `(m ,id-int ,id-bool)) #t)
+(check-equal? (expr? '(<~ (~> 1 true) 1)) #t)
  
 (check-equal? (infer `(m ,id-int ,id-bool) '()) '(& (-> int int) (-> bool bool)))
 (check-equal? (infer `((m ,id-int ,id-bool) 1) '()) 'int)
@@ -271,18 +349,31 @@
 (check-equal? (ptype id-int) '(-> int int))
 
 (check-equal? (cast '(: 1 int) 'int) '(: 1 int))
-(check-equal? (cast '(: 1 int) '(& int int)) '(m (: 1 int) (: 1 int)))
-(check-equal? (cast '(: (λ (x : int) x int) (-> int int)) '(-> int int)) '(: (λ (x : int) x int) (-> int int)))
+(check-equal? (cast '(: 1 int) '(& int int))
+              '(m (: 1 int) (: 1 int)))
+(check-equal? (cast '(: (λ (x : int) x int) (-> int int)) '(-> int int))
+              '(: (λ (x : int) x int) (-> int int)))
 
 (define annoed-id-int
   '(: (λ (x : int) x int) (-> int int)))
 (define annoed-id-arr
   '(: (λ (x : (-> int int)) x (-> int int))
       (-> (-> int int) (-> int int))))
-(check-equal? (papp `(m ,annoed-id-int ,annoed-id-arr) '(: 1 int)) '(: (: 1 int) int))
+
+(check-equal? (papp `(m ,annoed-id-int ,annoed-id-arr) '(: 1 int))
+              '(: (: 1 int) int))
 
 (define always-true
   '(λ (x : int) true bool))
 
-(check-equal? (eval `((m ,id-int ,always-true) 1)) '(m (: 1 int) (: true bool)))
-(check-equal? (eval '(: (m 1 true) bool)) '(: true bool))
+(check-equal? (eval `((m ,id-int ,always-true) 1))
+              '(m (: 1 int) (: true bool)))
+(check-equal? (eval '(: (m 1 true) bool))
+              '(: true bool))
+
+(define rcd-1
+  '(~> 1 true))
+(define rcd-2
+  '(~> 2 1))
+
+(check-equal? (eval `(<~ (m ,rcd-1 ,rcd-2) 2)) '(: 1 int))
