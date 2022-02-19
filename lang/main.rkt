@@ -45,8 +45,6 @@
     [`(* ,_ ,A)     (ordinary? A)]
     [_              #f]))
 
-(check-true (ordinary? '(* 1 int)))
-
 (define/contract (split t)
   (-> type? (listof type?))
   (match t
@@ -56,8 +54,6 @@
                                          `((* ,l ,(car As)) (* ,l ,(cadr As))))]
     [`(& ,A ,B)                       `(,A ,B)]
     [_                                 (error "fail to split" t)]))
-
-(check-equal? (split '(* 1 (& int int))) '((* 1 int) (* 1 int)))
 
 (define/contract (toplike? t)
   (-> type? boolean?)
@@ -81,8 +77,6 @@
     [(`(-> ,A1 ,A2) `(-> ,B1 ,B2))   (and (sub? B1 A1) (sub? A2 B2))]
     [(_ _)                           #f]))
 
-(check-true (sub? '(* 1 int) '(* 1 (& int int))))
-
 (define/contract (appsub? s t)
   (-> (or/c symbol? type? label?) type? boolean?)
   (match* (s t)
@@ -102,9 +96,6 @@
     [(S `(& ,A ,B))  #:when (not (appsub? S B))  (appsub S A)]
     [(S `(& ,A ,B))  #:when (not (appsub? S A))  (appsub S B)]
     [(S `(& ,A ,B))                             `(& ,(appsub S A) ,(appsub S B))]))
-
-(check-equal? (appsub 1 '(& (* 1 int) (* 2 bool))) 'int)
-(check-equal? (appsub 1 '(& (* 1 int) (* 1 bool))) '(& int bool))
 
 (define/contract (disjoint? t1 t2)
   (-> type? type? boolean?)
@@ -128,8 +119,6 @@
     [(`(-> ,_ ,_) `(* ,_ ,_))        #t]
     [(`(* ,_ ,_) `(-> ,_ ,_))        #t]
     [(_ _)                           #f]))
-
-(check-true (disjoint? 'bool '(* 1 bool)))
 
 (define/contract (uvalue? e)
   (-> expr? boolean?)
@@ -179,11 +168,6 @@
   (let ([A (infer e env)])
     (sub? A t)))
 
-(check-equal? (infer '(~> 1 true) '())
-              '(* 1 bool))
-(check-equal? (infer '(~> 1 (λ (x : int) x int)) '())
-              '(* 1 (-> int int)))
-
 ;; -----------------------------------------------------------------------
 ;; Dynamics
 ;; -----------------------------------------------------------------------
@@ -220,9 +204,6 @@
     [(v (? (not/c ordinary?) A))                                                   (let ([As (split A)])
                                                                                      `(m ,(cast v (car As)) ,(cast v (cadr As))))]
     [(_ _)                                                                         #f]))
-
-(check-equal? (cast '(~> 1 (: true bool)) '(* 1 (& bool bool)))
-              '(m (~> 1 (: true bool)) (~> 1 (: true bool))))
 
 (define/contract (subst e x u)
   (-> expr? symbol? expr? expr?)
@@ -273,14 +254,6 @@
     [`(m ,v1 ,v2) #:when (and (appsub? (atype vl) (ptype v1))
                               (appsub? (atype vl) (ptype v1)))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
 
-(define rcd-42
-  '(~> 42 (: true bool)))
-
-(define rcd-96
-  '(~> 94 (: false bool)))
-
-(check-equal? (papp `(m ,rcd-42 ,rcd-96) 42) '(: true bool))
-
 ;; possibly need not-value? as condition check
 (define/contract (step e)
   (-> expr? expr?)
@@ -317,16 +290,22 @@
 (check-equal? (type? '(& int int)) #t)
 (check-equal? (type? '(-> int (& int int))) #t)
 (check-equal? (split '(-> int (& int top))) '((-> int int) (-> int top)))
+(check-equal? (split '(* 1 (& int int))) '((* 1 int) (* 1 int)))
 (check-equal? (toplike? '(-> int (& top top))) #t)
+(check-true (ordinary? '(* 1 int)))
 (check-equal? (ordinary? '(-> int (& int int))) #f)
 (check-equal? (sub? 'int 'top) #t)
 (check-equal? (sub? 'int '(-> int top)) #t)
 (check-equal? (sub? 'int '(& int int)) #t)
+(check-true (sub? '(* 1 int) '(* 1 (& int int))))
+(check-equal? (appsub 1 '(& (* 1 int) (* 2 bool))) 'int)
+(check-equal? (appsub 1 '(& (* 1 int) (* 1 bool))) '(& int bool))
 (check-equal? (appsub 'int '(& (-> int int) (-> bool bool))) 'int)
 (check-equal? (appsub 'int '(& (-> int int) (-> int bool)))  '(& int bool))
 (check-equal? (disjoint? 'int 'top) #t)
 (check-equal? (disjoint? 'int '(-> int int)) #t)
 (check-equal? (disjoint? 'int '(& top int)) #f)
+(check-true (disjoint? 'bool '(* 1 bool)))
 (check-equal? (lookup '((x int) (y bool)) 'x) 'int)
 (check-equal? (lookup '((x int) (y bool)) 'y) 'bool)
  
@@ -345,6 +324,10 @@
  
 (check-equal? (infer `(m ,id-int ,id-bool) '()) '(& (-> int int) (-> bool bool)))
 (check-equal? (infer `((m ,id-int ,id-bool) 1) '()) 'int)
+(check-equal? (infer '(~> 1 true) '())
+              '(* 1 bool))
+(check-equal? (infer '(~> 1 (λ (x : int) x int)) '())
+              '(* 1 (-> int int)))
 (check-equal? (ptype `(m ,id-int ,id-bool)) '(& (-> int int) (-> bool bool)))
 (check-equal? (ptype id-int) '(-> int int))
 
@@ -353,6 +336,8 @@
               '(m (: 1 int) (: 1 int)))
 (check-equal? (cast '(: (λ (x : int) x int) (-> int int)) '(-> int int))
               '(: (λ (x : int) x int) (-> int int)))
+(check-equal? (cast '(~> 1 (: true bool)) '(* 1 (& bool bool)))
+              '(m (~> 1 (: true bool)) (~> 1 (: true bool))))
 
 (define annoed-id-int
   '(: (λ (x : int) x int) (-> int int)))
@@ -362,6 +347,14 @@
 
 (check-equal? (papp `(m ,annoed-id-int ,annoed-id-arr) '(: 1 int))
               '(: (: 1 int) int))
+
+(define rcd-42
+  '(~> 42 (: true bool)))
+
+(define rcd-96
+  '(~> 94 (: false bool)))
+
+(check-equal? (papp `(m ,rcd-42 ,rcd-96) 42) '(: true bool))
 
 (define always-true
   '(λ (x : int) true bool))
