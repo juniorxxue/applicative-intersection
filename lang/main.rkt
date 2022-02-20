@@ -2,6 +2,30 @@
 (require racket/match)
 
 ;; -----------------------------------------------------------------------
+;; Syntax
+;; -----------------------------------------------------------------------
+
+;; e ::= x                   variable
+;;    |  n                   number
+;;    |  true                true
+;;    |  false               false
+;;    |  (λ (x : t) e t)     abstraction
+;;    |  (e1 e2)             application
+;;    |  (m e1 e2)           merge operator
+;;    |  (: e t)             annotation
+;;    |  (~> l e)            record creation
+;;    |  (<~ e l)            record projection
+
+;; t ::= int                 integer type
+;;    |  bool                boolean type
+;;    |  top                 top type
+;;    |  (-> t1 t2)          arrow type
+;;    |  (& t1 t2)           intersection type
+;;    |  (* l t)             record type
+
+;; l ::= n                   label
+
+;; -----------------------------------------------------------------------
 ;; Statics
 ;; -----------------------------------------------------------------------
 
@@ -161,7 +185,7 @@
                                                                         `(& ,A ,B))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         (if (disjoint? A B) `(& ,A ,B) #f))]
-    [_                                                                (error "type check error")]))
+    [_                                                                (error "cannot infer the type of" e "under" env)]))
 
 (define/contract (check e t env)
   (-> expr? type? list? boolean?)
