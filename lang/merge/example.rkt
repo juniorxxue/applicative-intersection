@@ -1,5 +1,14 @@
 #lang s-exp "main.rkt"
 
+#|
+TODO:
+1. better error guidance using syntax classes
+2. add more primitives like "+ - not" into calculus
+3. leverage meta-function like "sub? disjoint? ..." to programmers
+4. integrate ability of naming into calculus
+5. add "info.rkt" and then submit as a racket package
+|#
+
 ;; simple literals
 42
 #t
@@ -44,15 +53,16 @@
  (m 1 #t))
 
 ;; a expression can be annotated
-(: (λ (x : int) x int) (-> int int))
+(: (λ (x : int) x int)
+   (-> int int))
 
-;; annotate a value can force a downcast/upcast
+;; annotate a "value" can force a downcast/upcast
 (: (: 1 int)
-   (& int int)) ;; => generate a duplicate number
+   (& int int)) ;; => duplicate a number
 
 (: (: (λ (x : int) x int) (-> int int))
    (& (-> int int)
-      (-> int int))) ;; => generate a duplicate function
+      (-> int int))) ;; => duplicate a function
 
 (: (m (λ (x : int) x int)
       (λ (x : bool) x bool))
