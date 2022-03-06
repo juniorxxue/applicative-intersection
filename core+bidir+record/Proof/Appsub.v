@@ -137,15 +137,15 @@ Proof.
   congruence.
 Qed.
 
-(** ** Completeness *)
+(** ** Soundness *)
 
-(** After adding records to appsub, we lose the standard completeness property *)
-
-Lemma appsub_complete :
+Lemma appsub_sound :
   forall A B C,
     appsub (Some (Avt B)) A C -> sub A (Arr B C).
 Proof.
-Abort.
+  intros. dependent induction H; eauto.
+  eapply Sub_And; eauto.
+Qed.
 
 (** * Appsub & Isomorphic Subtyping *)
 
