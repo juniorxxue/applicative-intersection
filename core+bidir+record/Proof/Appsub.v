@@ -139,9 +139,17 @@ Qed.
 
 (** ** Soundness *)
 
-Lemma appsub_sound :
+Lemma appsub_sound_v :
   forall A B C,
     appsub (Some (Avt B)) A C -> sub A (Arr B C).
+Proof.
+  intros. dependent induction H; eauto.
+  eapply Sub_And; eauto.
+Qed.
+
+Lemma appsub_sound_l :
+  forall A B l,
+    appsub (Some (Alt l)) A B -> sub A (Rcd l B).
 Proof.
   intros. dependent induction H; eauto.
   eapply Sub_And; eauto.
