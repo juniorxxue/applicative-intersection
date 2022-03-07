@@ -646,6 +646,17 @@ Ltac solver2 := repeat match goal with
                            dependent destruction At
                        end.
 
+Lemma papp_preservation_v_formal :
+  forall v1 v2 A e,
+    value v1 -> value v2 ->
+    typing nil (App v1 v2) Inf A ->
+    papp v1 (Av v2) e ->
+    exists B, typing nil e Inf B /\ isosub B A.
+Proof.
+  inversion 3.
+  eapply papp_preservation_v; eauto.
+Qed.
+
 Lemma papp_preservation_l :
   forall v l e A B,
     value v ->
@@ -696,6 +707,17 @@ Proof.
       pose proof (papp_consistent_l _ _ _ _ _ _ _ Val1 Val2 Typ1 Typ2 Pa1 Pa2) as Pc.
       eapply Pc; eauto.
 Qed.
+
+Lemma papp_preservation_l_formal:
+  forall l v e A,
+    value v ->
+    typing nil (Prj v l) Inf A ->
+    papp v (Al l) e ->
+    exists B, typing nil e Inf B /\ isosub B A.
+Proof.
+  inversion 2.
+  eapply papp_preservation_l; eauto.
+Qed.  
 
 End papp_preservation.
 
@@ -748,6 +770,16 @@ Proof.
         eexists. eapply Pa_Mrg_P; eauto.
 Qed.
 
+Lemma papp_progress_v_formal :
+  forall v1 v2 A,
+    value v1 -> value v2 ->
+    typing nil (App v1 v2) Inf A ->
+    exists e, papp v1 (Av v2) e.
+Proof.
+  inversion 3; eauto.
+  eapply papp_progress_v; eauto.
+Qed.  
+
 Lemma papp_progress_l :
   forall v A B l,
     value v ->
@@ -787,4 +819,14 @@ Proof.
       * pose proof (IHVal1 _ Typ1 _ _ As1) as IH1. destruct IH1.
         pose proof (IHVal2 _ Typ2 _ _ As2) as IH2. destruct IH2.
         eexists. eapply Pa_Mrg_P; eauto.
+Qed.
+
+Lemma papp_progress_l_formal :
+  forall v l A,
+    value v ->
+    typing nil (Prj v l) Inf A ->
+    exists e, papp v (Al l) e.
+Proof.
+  inversion 2.
+  eapply papp_progress_l; eauto.
 Qed.
