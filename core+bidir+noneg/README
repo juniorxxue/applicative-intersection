@@ -1,0 +1,74 @@
+# Rules
+
+```
+----------------- :: Lit
+T |- i => Int
+
+x : A in T
+-------------------------- :: Var
+T |- x => A
+
+T , x : A |- e <= B
+------------------------------------------- :: Lam
+T |- \x : A . e : B => A -> B
+
+T |- e1 => A -> B
+T |- e2 <= A
+--------------------------------- :: App-Arr
+T |- e1 e2 => B
+
+T |- e1 => A1 & A2
+T |- e2 => B
+B |- A1 <: C
+not (B |- A2)
+--------------------------------- :: App-L
+T |- e1 e2 => C
+
+T |- e1 => A1 & A2
+T |- e2 => B
+B |- A2 <: C
+not (B |- A1)
+--------------------------------- :: App-R
+T |- e1 e2 => C
+
+T |- e1 => A1 & A2
+T |- e2 => B
+B |- A1 <: C1
+B |- A2 <: C2
+--------------------------------- :: App-P
+T |- e1 e2 => C1 & C2
+
+T |- e1 => A
+T |- e2 => B
+A * B
+------------------------------ :: Mrg
+T |- e1 ,, e2 => A & B
+
+[] |- u1 => A
+[] |- u2 => B
+u1 ~~ u2
+------------------------------ :: Mrg_Val
+T |- u1 ,, u2 => A & B
+
+T |- e <= A
+--------------------- :: Ann
+T |- e : A => A
+
+T |- e => A
+A <: B
+--------------------- :: Sub
+T |- e <= B
+```
+
+this is a wrong design for, typing-app should be a induction definition
+
+```
+((succ ,, isNumber) ,, not) => ((I -> I) & (I -> B)) & (B -> B)
+1 => I
+**I |- (I -> I) & (I -> B) <: ???????**
+not (I |- B -> B)
+------------------------------------------------------------------------- App-L
+((succ ,, isNumber) ,, not) 1  => I
+```
+
+this reminds me of a design with stack (it has a nice inductive definition)
