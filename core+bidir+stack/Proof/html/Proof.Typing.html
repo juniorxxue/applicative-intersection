@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Proof.Typing</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Metalib.Metatheory</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Program.Equality.html#"><span class="id" title="library">Program.Equality</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Language.html#"><span class="id" title="library">Language</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Tactical.html#"><span class="id" title="library">Tactical</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Subtyping.Subtyping.html#"><span class="id" title="library">Subtyping.Subtyping</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Appsub.html#"><span class="id" title="library">Appsub</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Disjoint.html#"><span class="id" title="library">Disjoint</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Value.html#"><span class="id" title="library">Value</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.PrincipalTyping.html#"><span class="id" title="library">PrincipalTyping</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Consistent.html#"><span class="id" title="library">Consistent</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="var">ListNotations</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab89"></a><h1 class="section">Definition</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="mode" class="idref" href="#mode"><span class="id" title="inductive">mode</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
+| <a id="Inf" class="idref" href="#Inf"><span class="id" title="constructor">Inf</span></a><br/>
+| <a id="Chk" class="idref" href="#Chk"><span class="id" title="constructor">Chk</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="typing" class="idref" href="#typing"><span class="id" title="inductive">typing</span></a> : <a class="idref" href="Proof.Language.html#ctx"><span class="id" title="definition">ctx</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#term"><span class="id" title="inductive">term</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Typing.html#mode"><span class="id" title="inductive">mode</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="Ty_Int" class="idref" href="#Ty_Int"><span class="id" title="constructor">Ty_Int</span></a> : <span class="id" title="keyword">forall</span> <a id="T:5" class="idref" href="#T:5"><span class="id" title="binder">T</span></a> <a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">uniq</span> <a class="idref" href="Proof.Typing.html#T:5"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:5"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Lit"><span class="id" title="constructor">Lit</span></a> <a class="idref" href="Proof.Typing.html#n:6"><span class="id" title="variable">n</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a><br/>
+| <a id="Ty_Var" class="idref" href="#Ty_Var"><span class="id" title="constructor">Ty_Var</span></a> : <span class="id" title="keyword">forall</span> <a id="T:7" class="idref" href="#T:7"><span class="id" title="binder">T</span></a> <a id="x:8" class="idref" href="#x:8"><span class="id" title="binder">x</span></a> <a id="A:9" class="idref" href="#A:9"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">uniq</span> <a class="idref" href="Proof.Typing.html#T:7"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">binds</span> <a class="idref" href="Proof.Typing.html#x:8"><span class="id" title="variable">x</span></a> <a class="idref" href="Proof.Typing.html#A:9"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#T:7"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:7"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Fvar"><span class="id" title="constructor">Fvar</span></a> <a class="idref" href="Proof.Typing.html#x:8"><span class="id" title="variable">x</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:9"><span class="id" title="variable">A</span></a><br/>
+| <a id="Ty_Lam" class="idref" href="#Ty_Lam"><span class="id" title="constructor">Ty_Lam</span></a> : <span class="id" title="keyword">forall</span> <a id="L:10" class="idref" href="#L:10"><span class="id" title="binder">L</span></a> <a id="T:11" class="idref" href="#T:11"><span class="id" title="binder">T</span></a> <a id="A:12" class="idref" href="#A:12"><span class="id" title="binder">A</span></a> <a id="B:13" class="idref" href="#B:13"><span class="id" title="binder">B</span></a> <a id="e:14" class="idref" href="#e:14"><span class="id" title="binder">e</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><span class="id" title="keyword">forall</span> <a id="x:15" class="idref" href="#x:15"><span class="id" title="binder">x</span></a>, <a class="idref" href="Proof.Typing.html#x:15"><span class="id" title="variable">x</span></a> <span class="id" title="notation">\</span><span class="id" title="notation">notin</span> <a class="idref" href="Proof.Typing.html#L:10"><span class="id" title="variable">L</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">(</span></a><span class="id" title="definition">one</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Typing.html#x:15"><span class="id" title="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="Proof.Typing.html#A:12"><span class="id" title="variable">A</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="Proof.Typing.html#T:11"><span class="id" title="variable">T</span></a>) (<a class="idref" href="Proof.Language.html#open"><span class="id" title="definition">open</span></a> <a class="idref" href="Proof.Typing.html#e:14"><span class="id" title="variable">e</span></a> (<a class="idref" href="Proof.Language.html#Fvar"><span class="id" title="constructor">Fvar</span></a> <a class="idref" href="Proof.Typing.html#x:15"><span class="id" title="variable">x</span></a>)) <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <a class="idref" href="Proof.Typing.html#B:13"><span class="id" title="variable">B</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:11"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Lam"><span class="id" title="constructor">Lam</span></a> <a class="idref" href="Proof.Typing.html#A:12"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#e:14"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#B:13"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Typing.html#A:12"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:13"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Ty_Ann" class="idref" href="#Ty_Ann"><span class="id" title="constructor">Ty_Ann</span></a> : <span class="id" title="keyword">forall</span> <a id="T:16" class="idref" href="#T:16"><span class="id" title="binder">T</span></a> <a id="A:17" class="idref" href="#A:17"><span class="id" title="binder">A</span></a> <a id="e:18" class="idref" href="#e:18"><span class="id" title="binder">e</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:16"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:18"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <a class="idref" href="Proof.Typing.html#A:17"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:16"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Ann"><span class="id" title="constructor">Ann</span></a> <a class="idref" href="Proof.Typing.html#e:18"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#A:17"><span class="id" title="variable">A</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:17"><span class="id" title="variable">A</span></a><br/>
+| <a id="Ty_App" class="idref" href="#Ty_App"><span class="id" title="constructor">Ty_App</span></a> : <span class="id" title="keyword">forall</span> <a id="T:19" class="idref" href="#T:19"><span class="id" title="binder">T</span></a> <a id="A:20" class="idref" href="#A:20"><span class="id" title="binder">A</span></a> <a id="B:21" class="idref" href="#B:21"><span class="id" title="binder">B</span></a> <a id="C:22" class="idref" href="#C:22"><span class="id" title="binder">C</span></a> <a id="e1:23" class="idref" href="#e1:23"><span class="id" title="binder">e1</span></a> <a id="e2:24" class="idref" href="#e2:24"><span class="id" title="binder">e2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:19"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e1:23"><span class="id" title="variable">e1</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:20"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:19"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e2:24"><span class="id" title="variable">e2</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#B:21"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Appsub.html#appsub"><span class="id" title="inductive">appsub</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="Proof.Typing.html#B:21"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Typing.html#A:20"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#C:22"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:19"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#App"><span class="id" title="constructor">App</span></a> <a class="idref" href="Proof.Typing.html#e1:23"><span class="id" title="variable">e1</span></a> <a class="idref" href="Proof.Typing.html#e2:24"><span class="id" title="variable">e2</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#C:22"><span class="id" title="variable">C</span></a><br/>
+| <a id="Ty_Mrg" class="idref" href="#Ty_Mrg"><span class="id" title="constructor">Ty_Mrg</span></a> : <span class="id" title="keyword">forall</span> <a id="T:25" class="idref" href="#T:25"><span class="id" title="binder">T</span></a> <a id="A:26" class="idref" href="#A:26"><span class="id" title="binder">A</span></a> <a id="B:27" class="idref" href="#B:27"><span class="id" title="binder">B</span></a> <a id="e1:28" class="idref" href="#e1:28"><span class="id" title="binder">e1</span></a> <a id="e2:29" class="idref" href="#e2:29"><span class="id" title="binder">e2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Disjoint.html#disjoint"><span class="id" title="inductive">disjoint</span></a> <a class="idref" href="Proof.Typing.html#A:26"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:27"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:25"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e1:28"><span class="id" title="variable">e1</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:26"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:25"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e2:29"><span class="id" title="variable">e2</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#B:27"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:25"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Mrg"><span class="id" title="constructor">Mrg</span></a> <a class="idref" href="Proof.Typing.html#e1:28"><span class="id" title="variable">e1</span></a> <a class="idref" href="Proof.Typing.html#e2:29"><span class="id" title="variable">e2</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Typing.html#A:26"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:27"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Ty_Mrg_Uv" class="idref" href="#Ty_Mrg_Uv"><span class="id" title="constructor">Ty_Mrg_Uv</span></a> : <span class="id" title="keyword">forall</span> <a id="T:30" class="idref" href="#T:30"><span class="id" title="binder">T</span></a> <a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> <a id="B:32" class="idref" href="#B:32"><span class="id" title="binder">B</span></a> <a id="u1:33" class="idref" href="#u1:33"><span class="id" title="binder">u1</span></a> <a id="u2:34" class="idref" href="#u2:34"><span class="id" title="binder">u2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">uniq</span> <a class="idref" href="Proof.Typing.html#T:30"><span class="id" title="variable">T</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Value.html#uvalue"><span class="id" title="inductive">uvalue</span></a> <a class="idref" href="Proof.Typing.html#u1:33"><span class="id" title="variable">u1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Value.html#uvalue"><span class="id" title="inductive">uvalue</span></a> <a class="idref" href="Proof.Typing.html#u2:34"><span class="id" title="variable">u2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Consistent.html#consistent"><span class="id" title="inductive">consistent</span></a> <a class="idref" href="Proof.Typing.html#u1:33"><span class="id" title="variable">u1</span></a> <a class="idref" href="Proof.Typing.html#u2:34"><span class="id" title="variable">u2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="Proof.Typing.html#u1:33"><span class="id" title="variable">u1</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="Proof.Typing.html#u2:34"><span class="id" title="variable">u2</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#B:32"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:30"><span class="id" title="variable">T</span></a> (<a class="idref" href="Proof.Language.html#Mrg"><span class="id" title="constructor">Mrg</span></a> <a class="idref" href="Proof.Typing.html#u1:33"><span class="id" title="variable">u1</span></a> <a class="idref" href="Proof.Typing.html#u2:34"><span class="id" title="variable">u2</span></a>) <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Typing.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:32"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Ty_Sub" class="idref" href="#Ty_Sub"><span class="id" title="constructor">Ty_Sub</span></a> : <span class="id" title="keyword">forall</span> <a id="T:35" class="idref" href="#T:35"><span class="id" title="binder">T</span></a> <a id="e:36" class="idref" href="#e:36"><span class="id" title="binder">e</span></a> <a id="A:37" class="idref" href="#A:37"><span class="id" title="binder">A</span></a> <a id="B:38" class="idref" href="#B:38"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:35"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:36"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:37"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Typing.html#A:37"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:38"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing:3"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:35"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:36"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <a class="idref" href="Proof.Typing.html#B:38"><span class="id" title="variable">B</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="0bc664e72147551be1e612aea87b035f" class="idref" href="#0bc664e72147551be1e612aea87b035f"><span class="id" title="notation">&quot;</span></a>T ⊢ e ⇒ A" := (<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <span class="id" title="var">T</span> <span class="id" title="var">e</span> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <span class="id" title="var">A</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 50).<br/>
+<span class="id" title="keyword">Notation</span> <a id="33ee18a25a50883a097a344aee360275" class="idref" href="#33ee18a25a50883a097a344aee360275"><span class="id" title="notation">&quot;</span></a>T ⊢ e ⇐ A" := (<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <span class="id" title="var">T</span> <span class="id" title="var">e</span> <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <span class="id" title="var">A</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 50).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab90"></a><h1 class="section">Typing &amp; PrincipalTyping</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="typing_to_ptype" class="idref" href="#typing_to_ptype"><span class="id" title="lemma">typing_to_ptype</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="u:39" class="idref" href="#u:39"><span class="id" title="binder">u</span></a> <a id="A:40" class="idref" href="#A:40"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Value.html#uvalue"><span class="id" title="inductive">uvalue</span></a> <a class="idref" href="Proof.Typing.html#u:39"><span class="id" title="variable">u</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="Proof.Typing.html#u:39"><span class="id" title="variable">u</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:40"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.PrincipalTyping.html#ptype"><span class="id" title="inductive">ptype</span></a> <a class="idref" href="Proof.Typing.html#u:39"><span class="id" title="variable">u</span></a> <a class="idref" href="Proof.Typing.html#A:40"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Uval</span> <span class="id" title="var">Typ</span>. <span class="id" title="var">gen</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Uval</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Typ</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Typ</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">typing_to_ptype</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab91"></a><h1 class="section">Typing &amp; Consistent</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab92"></a><h2 class="section">Reflexivity</h2>
+
+<div class="paragraph"> </div>
+
+ Well-typed values are consistent with themselves 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="consistent_reflexivity" class="idref" href="#consistent_reflexivity"><span class="id" title="lemma">consistent_reflexivity</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="v:41" class="idref" href="#v:41"><span class="id" title="binder">v</span></a> <a id="A:42" class="idref" href="#A:42"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="Proof.Typing.html#v:41"><span class="id" title="variable">v</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:42"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Value.html#value"><span class="id" title="inductive">value</span></a> <a class="idref" href="Proof.Typing.html#v:41"><span class="id" title="variable">v</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Consistent.html#consistent"><span class="id" title="inductive">consistent</span></a> <a class="idref" href="Proof.Typing.html#v:41"><span class="id" title="variable">v</span></a> <a class="idref" href="Proof.Typing.html#v:41"><span class="id" title="variable">v</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Typ</span> <span class="id" title="var">Val</span>. <span class="id" title="var">gen</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Val</span>; <span class="id" title="tactic">eauto</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">Case</span> "Merge".<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Typ</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">SCase</span> "Disjoint".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="Proof.Consistent.html#consistent"><span class="id" title="inductive">consistent</span></a> <span class="id" title="var">v1</span> <span class="id" title="var">v2</span>) <span class="id" title="tactic">by</span> (<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Consistent.html#Con_Dj"><span class="id" title="constructor">Con_Dj</span></a>; <span class="id" title="tactic">eauto</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Consistent.html#Con_Mrg_L"><span class="id" title="constructor">Con_Mrg_L</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Consistent.html#Con_Mrg_R"><span class="id" title="constructor">Con_Mrg_R</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Proof.Consistent.html#consistent_symmetry"><span class="id" title="lemma">consistent_symmetry</span></a>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">SCase</span> "Consistent".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Consistent.html#Con_Mrg_L"><span class="id" title="constructor">Con_Mrg_L</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Consistent.html#Con_Mrg_R"><span class="id" title="constructor">Con_Mrg_R</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">now</span> <span class="id" title="tactic">apply</span> <a class="idref" href="Proof.Consistent.html#consistent_symmetry"><span class="id" title="lemma">consistent_symmetry</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">consistent_reflexivity</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab93"></a><h1 class="section">Typing &amp; LC</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="typing_to_lc" class="idref" href="#typing_to_lc"><span class="id" title="lemma">typing_to_lc</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="T:43" class="idref" href="#T:43"><span class="id" title="binder">T</span></a> <a id="e:44" class="idref" href="#e:44"><span class="id" title="binder">e</span></a> <a id="A:45" class="idref" href="#A:45"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:43"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:44"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Inf"><span class="id" title="constructor">Inf</span></a> <a class="idref" href="Proof.Typing.html#A:45"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Value.html#lc"><span class="id" title="inductive">lc</span></a> <a class="idref" href="Proof.Typing.html#e:44"><span class="id" title="variable">e</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Typ</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Typ</span>; <span class="id" title="tactic">eauto</span> 3; <span class="id" title="tactic">try</span> <span class="id" title="tactic">solve</span> [<span class="id" title="tactic">econstructor</span>; <span class="id" title="tactic">eauto</span>].<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">typing_to_lc</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab94"></a><h1 class="section">Check Subsumption</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="typing_chk_sub" class="idref" href="#typing_chk_sub"><span class="id" title="lemma">typing_chk_sub</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:46" class="idref" href="#A:46"><span class="id" title="binder">A</span></a> <a id="B:47" class="idref" href="#B:47"><span class="id" title="binder">B</span></a> <a id="e:48" class="idref" href="#e:48"><span class="id" title="binder">e</span></a> <a id="T:49" class="idref" href="#T:49"><span class="id" title="binder">T</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:49"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:48"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <a class="idref" href="Proof.Typing.html#A:46"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Typing.html#A:46"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Typing.html#B:47"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.12.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Typing.html#typing"><span class="id" title="inductive">typing</span></a> <a class="idref" href="Proof.Typing.html#T:49"><span class="id" title="variable">T</span></a> <a class="idref" href="Proof.Typing.html#e:48"><span class="id" title="variable">e</span></a> <a class="idref" href="Proof.Typing.html#Chk"><span class="id" title="constructor">Chk</span></a> <a class="idref" href="Proof.Typing.html#B:47"><span class="id" title="variable">B</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Typ</span> <span class="id" title="var">Sub</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Typ</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Typing.html#Ty_Sub"><span class="id" title="constructor">Ty_Sub</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.Subtyping.html#sub_transitivity"><span class="id" title="lemma">sub_transitivity</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
