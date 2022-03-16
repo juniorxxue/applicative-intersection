@@ -66,6 +66,9 @@ Inductive unisub : type -> partype -> result -> Prop :=
 
 Hint Constructors unisub : core.
 
+Notation "A <: B ~> ∅" := (unisub A (T B) None) (at level 40).
+Notation "A <: B ->? ~> C" := (unisub A (P B) (Some C)) (at level 40).
+
 (** * Unified Subtyping & Normal Subtyping *)
 
 (** ** Soundness *)

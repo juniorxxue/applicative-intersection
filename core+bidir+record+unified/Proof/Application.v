@@ -10,6 +10,7 @@ Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
 Require Import Subtyping.Toplike.
+Require Import Subtyping.Unisub.
 Require Import Appsub.
 
 Require Import Value.
@@ -499,13 +500,17 @@ Proof.
   - Case "App".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
+    eapply unisub_sound_appsub in H.
     eapply appsub_iso_v in H; eauto. destruct H. destruct H.
-    exists x2. split; eauto.
+    exists x2. split; eauto. eapply Ty_App; eauto.
+    eapply unisub_complete_appsub; eauto.
   - Case "Prj".
     pose proof (IHTyp F) as IH. exploit IH; eauto. intros IH'.
     destruct IH'. destruct H0.
+    eapply unisub_sound_appsub in H.
     eapply appsub_iso_l in H; eauto. destruct H. destruct H.
-    exists x1. split; eauto.                           
+    exists x1. split; eauto. eapply Ty_Prj; eauto.
+    eapply unisub_complete_appsub; eauto.
   - Case "Merge".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
