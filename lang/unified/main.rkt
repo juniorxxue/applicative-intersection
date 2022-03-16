@@ -1,4 +1,56 @@
 #lang racket
+
+;; -----------------------------------------------------------------------
+;; Bootstrap
+;; -----------------------------------------------------------------------
+
+(provide
+  (except-out (all-from-out racket) #%module-begin #%app #%datum)
+  (rename-out [module-begin #%module-begin]
+              [app          #%app]
+              [datum        #%datum])
+  λ m : ~> <~)
+
+(require
+  (for-syntax
+     racket/base
+     syntax/stx
+     syntax/parse))
+
+(define-syntax-rule (module-begin expr ...)
+  (#%module-begin
+   expr ...))
+
+(define-syntax (λ stx)
+  (syntax-parse stx
+    #:datum-literals (:)
+    [(_ (x : A) e B) #'(eval '(λ (x : A) e B))]))
+
+(define-syntax (: stx)
+  (syntax-parse stx
+    [(_ e A) #'(eval '(: e A))]))
+
+(define-syntax (app stx)
+  (syntax-parse stx
+    [(_ e1 e2) #'(eval '(e1 e2))]))
+
+(define-syntax (m stx)
+  (syntax-parse stx
+    #:datum-literals (m)
+    [(_ e1 e2) #'(eval '(m e1 e2))]))
+
+(define-syntax (datum stx)
+  (syntax-parse stx
+    [(_ . d) #'(eval 'd)]))       
+
+(define-syntax (~> stx)
+  (syntax-parse stx
+    [(_ l e) #'(eval '(~> l e))]))
+
+(define-syntax (<~ stx)
+  (syntax-parse stx
+    [(_ e l) #'(eval '(<~ e l))]))
+
 (require racket/match)
 
 ;; -----------------------------------------------------------------------
@@ -7,8 +59,8 @@
 
 ;; e ::= x                   variable
 ;;    |  n                   number
-;;    |  true                true
-;;    |  false               false
+;;    |  #t                  true
+;;    |  #f                  false
 ;;    |  (λ (x : t) e t)     abstraction
 ;;    |  (e1 e2)             application
 ;;    |  (m e1 e2)           merge operator
@@ -49,8 +101,8 @@
   (match e
     [(? symbol?)                                            #t]
     [(? number?)                                            #t]
-    ['true                                                  #t]
-    ['false                                                 #t]
+    ['#t                                                    #t]
+    ['#f                                                    #t]
     [`(λ (,(? symbol?) : ,(? type?)) ,(? expr?) ,(? type?)) #t]
     [`(,(? expr?) ,(? expr?))                               #t]
     [`(m ,(? expr?) ,(? expr?))                             #t]
@@ -171,8 +223,8 @@
   (-> expr? list? type?)
   (match e    
     [(? number?)                                                     'int]
-    ['true                                                           'bool]
-    ['false                                                          'bool]
+    ['#t                                                             'bool]
+    ['#f                                                             'bool]
     [(? symbol?)                                                      (lookup env e)]
     [`(λ (,x : ,A) ,e ,B) #:when (check e B (cons `(,x ,A) env))     `(-> ,A ,B)]
     [`(~> ,l ,e)                                                     `(* ,l ,(infer e env))]
@@ -200,8 +252,8 @@
   (-> expr? boolean?)
   (match e
     [(? number?)            #t]
-    ['true                  #t]
-    ['false                 #t]
+    ['#t                    #t]
+    ['#f                    #t]
     [`(λ (,x : ,A) ,e ,B)   #t]
     [_                      #f]))
     
@@ -217,8 +269,8 @@
   (-> value? type? (or/c value? fail?))
   (match* (e t)
     [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                       `(: ,n int)]
-    [(`(: true ,A) 'bool) #:when (sub? A 'bool)                                   '(: true bool)]
-    [(`(: false ,A) 'bool) #:when (sub? A 'bool)                                  '(: false bool)]
+    [(`(: #t ,A) 'bool) #:when (sub? A 'bool)                                     '(: #t bool)]
+    [(`(: #f ,A) 'bool) #:when (sub? A 'bool)                                     '(: #f bool)]
     [(v (? (and/c ordinary? toplike?) A))                                         `(: 1 ,A)]
     [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D)))
      #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
@@ -245,8 +297,8 @@
   (-> expr? type?)
   (match e
     [(? number?)                    'int]
-    ['true                          'bool]
-    ['false                         'bool]
+    ['#t                            'bool]
+    ['#f                            'bool]
     [`(λ (,x : ,A) ,e ,B)           `(-> ,A ,B)]
     [`(~> ,l ,e)                    `(* ,l ,(ptype e))]
     [`(: ,e ,A)                      A]
@@ -264,12 +316,12 @@
   (-> value? (or/c label? value?) expr?)
   (match v
     [`(: ,n (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
-    [`(: true (-> ,A ,(? toplike? B)))                           `(: 1 ,B)]
-    [`(: false (-> ,A ,(? toplike? B)))                          `(: 1 ,B)]
+    [`(: #t (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
+    [`(: #f (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
     [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? toplike? D)))            `(: 1 ,D)]
     [`(: ,n (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
-    [`(: true (* ,l ,(? toplike? A)))                            `(: 1 ,A)]
-    [`(: false (* ,l ,(? toplike? A)))                           `(: 1 ,A)]
+    [`(: #t (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
+    [`(: #f (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
     [`(: (λ (,x : ,A) ,e ,B) (* ,l ,(? toplike? C)))             `(: 1 ,C)]
     [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? (not/c toplike?) D)))    `(: ,(subst e x (cast vl A)) ,D)]
     [`(~> ,l ,v)  #:when (equal? l vl)                            v]
@@ -283,8 +335,8 @@
   (-> expr? expr?)
   (match e
     [(? number? n)                                  `(: ,n int)]
-    ['true                                          '(: true bool)]
-    ['false                                         '(: false bool)]                             
+    ['#t                                            '(: #t bool)]
+    ['#f                                            '(: #f bool)]                             
     [`(λ (,x : ,A) ,e ,B)                           `(: (λ (,x : ,A) ,e ,B) (-> ,A ,B))]
     [`(: ,(? pvalue? p) ,(? (not/c ordinary?) A))    (let ([As (split A)])
                                                        `(m (: ,p ,(car As)) (: ,p ,(cadr As))))]
@@ -304,93 +356,3 @@
   (-> expr? value?)
   (when (infer e '())
     (if (value? e) e (eval (step e)))))
-
-;; -----------------------------------------------------------------------
-;; Tests
-;; -----------------------------------------------------------------------
-
-(require rackunit)
-
-(check-equal? (type? '(& int int)) #t)
-(check-equal? (type? '(-> int (& int int))) #t)
-(check-equal? (split '(-> int (& int top))) '((-> int int) (-> int top)))
-(check-equal? (split '(* 1 (& int int))) '((* 1 int) (* 1 int)))
-(check-equal? (toplike? '(-> int (& top top))) #t)
-(check-true (ordinary? '(* 1 int)))
-(check-equal? (ordinary? '(-> int (& int int))) #f)
-(check-equal? (sub? 'int 'top) #t)
-(check-equal? (sub? 'int '(-> int top)) #t)
-(check-equal? (sub? 'int '(& int int)) #t)
-(check-true (sub? '(* 1 int) '(* 1 (& int int))))
-(check-equal? (appsub 1 '(& (* 1 int) (* 2 bool))) 'int)
-(check-equal? (appsub 1 '(& (* 1 int) (* 1 bool))) '(& int bool))
-(check-equal? (appsub 'int '(& (-> int int) (-> bool bool))) 'int)
-(check-equal? (appsub 'int '(& (-> int int) (-> int bool)))  '(& int bool))
-(check-equal? (disjoint? 'int 'top) #t)
-(check-equal? (disjoint? 'int '(-> int int)) #t)
-(check-equal? (disjoint? 'int '(& top int)) #f)
-(check-true (disjoint? 'bool '(* 1 bool)))
-(check-equal? (lookup '((x int) (y bool)) 'x) 'int)
-(check-equal? (lookup '((x int) (y bool)) 'y) 'bool)
- 
-(check-equal? (infer '(λ (x : int) x int) '()) '(-> int int))
-(check-equal? (infer '((λ (x : int) x int) 1) '()) 'int)
-
-(define id-int
-  '(λ (x : int) x int))
-
-(define id-bool
-  '(λ (x : bool) x bool))
-
-(check-equal? (expr? id-int) #t)
-(check-equal? (expr? `(m ,id-int ,id-bool)) #t)
-(check-equal? (expr? '(<~ (~> 1 true) 1)) #t)
- 
-(check-equal? (infer `(m ,id-int ,id-bool) '()) '(& (-> int int) (-> bool bool)))
-(check-equal? (infer `((m ,id-int ,id-bool) 1) '()) 'int)
-(check-equal? (infer '(~> 1 true) '())
-              '(* 1 bool))
-(check-equal? (infer '(~> 1 (λ (x : int) x int)) '())
-              '(* 1 (-> int int)))
-(check-equal? (ptype `(m ,id-int ,id-bool)) '(& (-> int int) (-> bool bool)))
-(check-equal? (ptype id-int) '(-> int int))
-
-(check-equal? (cast '(: 1 int) 'int) '(: 1 int))
-(check-equal? (cast '(: 1 int) '(& int int))
-              '(m (: 1 int) (: 1 int)))
-(check-equal? (cast '(: (λ (x : int) x int) (-> int int)) '(-> int int))
-              '(: (λ (x : int) x int) (-> int int)))
-(check-equal? (cast '(~> 1 (: true bool)) '(* 1 (& bool bool)))
-              '(m (~> 1 (: true bool)) (~> 1 (: true bool))))
-
-(define annoed-id-int
-  '(: (λ (x : int) x int) (-> int int)))
-(define annoed-id-arr
-  '(: (λ (x : (-> int int)) x (-> int int))
-      (-> (-> int int) (-> int int))))
-
-(check-equal? (papp `(m ,annoed-id-int ,annoed-id-arr) '(: 1 int))
-              '(: (: 1 int) int))
-
-(define rcd-42
-  '(~> 42 (: true bool)))
-
-(define rcd-96
-  '(~> 94 (: false bool)))
-
-(check-equal? (papp `(m ,rcd-42 ,rcd-96) 42) '(: true bool))
-
-(define always-true
-  '(λ (x : int) true bool))
-
-(check-equal? (eval `((m ,id-int ,always-true) 1))
-              '(m (: 1 int) (: true bool)))
-(check-equal? (eval '(: (m 1 true) bool))
-              '(: true bool))
-
-(define rcd-1
-  '(~> 1 true))
-(define rcd-2
-  '(~> 2 1))
-
-(check-equal? (eval `(<~ (m ,rcd-1 ,rcd-2) 2)) '(: 1 int))

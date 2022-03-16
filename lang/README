@@ -1,7 +1,7 @@
 e ::= x
    |  n
-   |  true
-   |  false
+   |  #t
+   |  #f
    |  (λ (x : t) e t)
    |  (e1 e2)
    |  (m e1 e2)
