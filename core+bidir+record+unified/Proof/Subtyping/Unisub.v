@@ -116,3 +116,135 @@ Proof.
   eapply Us_As_Arr.
   now eapply unisub_complete_normal.
 Qed.
+
+
+(** * Ultimate Unisubtyping *)
+
+Inductive upartype : Set :=
+| uT : type -> upartype
+| uV : arg -> upartype
+| uP : arg -> upartype.
+
+Inductive uunisub : type -> upartype -> result -> Prop :=
+| UUs_Int :
+    uunisub Int (uT Int) None
+| UUs_Top : forall A B,
+    ordinary B -> toplike B ->
+    uunisub A (uT B) None
+| UUs_Arr : forall A B C D,
+    uunisub C (uT A) None ->
+    uunisub B (uT D) None ->
+    uunisub (Arr A B) (uT (Arr C D)) None
+| UUs_Rcd : forall A B l,
+    ordinary B ->
+    uunisub A (uT B) None ->
+    uunisub (Rcd l A) (uT (Rcd l B)) None
+| UUs_And : forall A B B1 B2,
+    splitable B B1 B2 ->
+    uunisub A (uT B1) None ->
+    uunisub A (uT B2) None ->
+    uunisub A (uT B) None
+| UUs_And_L : forall A B C,
+    ordinary C ->
+    uunisub A (uT C) None ->
+    uunisub (And A B) (uT C) None
+| UUs_And_R : forall A B C,
+    ordinary C ->
+    uunisub B (uT C) None ->
+    uunisub (And A B) (uT C) None
+| UUs_As_Arr : forall A1 A2 B,
+    uunisub B (uT A1) None ->
+    uunisub (Arr A1 A2) (uP (Avt B)) (Some A2)
+| UUs_As_Lbl : forall l A,    
+    uunisub (Rcd l A) (uP (Alt l)) (Some A)
+| UUs_As_L : forall A1 A2 S C,
+    uunisub A1 (uP S) (Some C) ->
+    ~ (auxas (Some S) A2) ->
+    uunisub (And A1 A2) (uP S) (Some C)
+| UUs_As_R : forall A1 A2 S C,
+    uunisub A2 (uP S) (Some C) ->
+    ~ (auxas (Some S) A1) ->
+    uunisub (And A1 A2) (uP S) (Some C)
+| UUs_As_P : forall A1 A2 S C1 C2,
+    uunisub A1 (uP S) (Some C1) ->
+    uunisub A2 (uP S) (Some C2) ->
+    uunisub (And A1 A2) (uP S) (Some (And C1 C2))
+| UUs_V_As_Arr : forall A1 A2 B,
+    uunisub B (uT A1) None ->
+    uunisub (Arr A1 A2) (uV (Avt B)) None
+| UUs_V_As_Lbl : forall l A,
+    uunisub (Rcd l A) (uV (Alt l)) None    
+| UUs_V_As_L : forall A1 A2 S,
+    uunisub A1 (uV S) None ->
+    uunisub (And A1 A2) (uV S) None
+| UUs_V_As_R : forall A1 A2 S,
+    uunisub A2 (uV S) None ->
+    uunisub (And A1 A2) (uV S) None.
+
+Hint Constructors uunisub : core.
+    
+(** ** Soundness *)
+
+Lemma uunisub_sound_normal :
+  forall A B,
+    uunisub A (uT B) None ->
+    sub A B.
+Proof.
+  introv Uusub.
+  dependent induction Uusub; eauto.
+Qed.
+
+Lemma uunisub_sound_appsub :
+  forall A S C,
+    uunisub A (uP S) (Some C) ->
+    appsub (Some S) A C.
+Proof.
+  introv UUsub.
+  dependent induction UUsub; eauto.
+  eapply As_Arr.
+  now eapply uunisub_sound_normal.
+Qed.
+
+Lemma uunisub_sound_auxas :
+  forall A S,
+    uunisub A (uV S) None ->
+    auxas (Some S) A.
+Proof.
+  introv Uusub.
+  dependent induction Uusub; eauto.
+  eapply Aas_Arr.
+  now eapply uunisub_sound_normal.
+Qed.
+
+(** ** Completeness *)
+
+Lemma uunisub_complete_normal :
+  forall A B,
+    sub A B ->
+    uunisub A (uT B) None.
+Proof.
+  introv Sub.
+  dependent induction Sub; eauto.
+Qed.
+
+Lemma uunisub_complete_appsub :
+  forall A S B,
+    appsub (Some S) A B ->
+    uunisub A (uP S) (Some B).
+Proof.
+  introv As.
+  dependent induction As; eauto.
+  eapply UUs_As_Arr.
+  now eapply uunisub_complete_normal.
+Qed.
+
+Lemma uunisub_complete_auxas :
+  forall A S,
+    auxas (Some S) A ->
+    uunisub A (uV S) None.
+Proof.
+  introv Aas.
+  dependent induction Aas; eauto.
+  eapply UUs_V_As_Arr.
+  now eapply uunisub_complete_normal.
+Qed.
