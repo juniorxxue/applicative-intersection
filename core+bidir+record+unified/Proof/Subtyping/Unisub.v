@@ -248,3 +248,64 @@ Proof.
   eapply UUs_V_As_Arr.
   now eapply uunisub_complete_normal.
 Qed.
+
+(** * Automations *)
+
+Lemma uunisub_auxas_false1 :
+  forall B S,
+    ~ uunisub B (uV S) None ->
+    auxas (Some S) B ->
+    False.
+Proof.
+  introv nUs Aux.
+  eapply uunisub_complete_auxas in Aux. contradiction.
+Qed.
+
+
+Lemma uunisub_auxas_false2 :
+  forall S B,
+    uunisub B (uV S) None ->
+    ~ auxas (Some S) B ->
+    False.
+Proof.
+  introv Us nAux.
+  eapply nAux. now eapply uunisub_sound_auxas.
+Qed.
+
+
+Lemma uunisub_appsub_false :
+  forall S B C,
+    ~ uunisub B (uV S) None ->
+    appsub (Some S) B C ->
+    False.
+Proof.
+  introv nUs As.
+  eapply appsub_to_auxas in As.
+  eapply uunisub_auxas_false1; eauto.
+Qed.
+
+
+
+Ltac contra_uunisub :=
+  match goal with
+  | H1: ~ uunisub ?B (uV ?S) _, H2: auxas (Some ?S) ?B |- _ =>
+      pose proof (uunisub_auxas_false1 _ _ H1 H2) as Contra; inversion Contra
+  | H1: uunisub ?B (uV ?S) _, H2: ~ auxas (Some ?S) ?B |- _ =>
+      pose proof (uunisub_auxas_false2 _ _ H1 H2) as Contra; inversion Contra
+  | H1: ~ uunisub ?B (uV ?S) _, H2: appsub (Some ?S) ?B _ |- _ =>
+      pose proof (uunisub_appsub_false _ _ _ H1 H2) as Contra; inversion Contra
+  end.
+
+Hint Extern 5 => contra_uunisub : core.
+
+Lemma appsub_to_uunisub :
+  forall S A C,
+    appsub (Some S) A C ->
+    uunisub A (uV S) None.
+Proof.
+  introv As.
+  eapply appsub_to_auxas in As.
+  now eapply uunisub_complete_auxas.
+Qed.
+
+Hint Resolve appsub_to_uunisub : core.

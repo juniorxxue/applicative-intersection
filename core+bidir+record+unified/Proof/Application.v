@@ -86,20 +86,20 @@ Inductive papp : term -> vl -> term -> Prop :=
 | Pa_Mrg_L : forall v1 v2 A B vl TA e,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    not (auxas (Some TA) B) ->
+    not (uunisub B (uV TA) None) ->
     papp v1 vl e ->
     papp (Mrg v1 v2) vl e
 | Pa_Mrg_R : forall v1 v2 A B vl TA e,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    not (auxas (Some TA) A) ->
+    not (uunisub A (uV TA) None) ->
     papp v2 vl e ->
     papp (Mrg v1 v2) vl e
 | Pa_Mrg_P : forall v1 v2 A B vl TA e1 e2,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    auxas (Some TA) A ->
-    auxas (Some TA) B ->
+    uunisub A (uV TA) None ->
+    uunisub B (uV TA) None ->
     papp v1 vl e1 ->
     papp v2 vl e2 ->
     papp (Mrg v1 v2) vl (Mrg e1 e2).
@@ -500,17 +500,17 @@ Proof.
   - Case "App".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
-    eapply unisub_sound_appsub in H.
+    eapply uunisub_sound_appsub in H.
     eapply appsub_iso_v in H; eauto. destruct H. destruct H.
     exists x2. split; eauto. eapply Ty_App; eauto.
-    eapply unisub_complete_appsub; eauto.
+    eapply uunisub_complete_appsub; eauto.
   - Case "Prj".
     pose proof (IHTyp F) as IH. exploit IH; eauto. intros IH'.
     destruct IH'. destruct H0.
-    eapply unisub_sound_appsub in H.
+    eapply uunisub_sound_appsub in H.
     eapply appsub_iso_l in H; eauto. destruct H. destruct H.
     exists x1. split; eauto. eapply Ty_Prj; eauto.
-    eapply unisub_complete_appsub; eauto.
+    eapply uunisub_complete_appsub; eauto.
   - Case "Merge".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
