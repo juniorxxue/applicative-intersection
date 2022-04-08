@@ -26,3 +26,5 @@ Makefile.coq.conf
 
 *.rkt~
 compiled/
+
+*.~undo-tree~
