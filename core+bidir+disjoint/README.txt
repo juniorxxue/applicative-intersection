@@ -122,29 +122,6 @@ Definition disjoint_spec A B :=
 the side-condition Ordinary C is because
 if A is Int -> Int, B is Bool -> Int, we can always find Int & Bool to let both branches hold
 
-
-----------------------------------------
-Appendix: lemmas required to be proven
-----------------------------------------
-disjoint A B
-x ~= B
------------
-disjoint A x
-
-
-disjoint A B
-x ~= A
--------------
-disjoint x B
-
-
-disjoint A B
-x1 ~= A
-x2 ~= B
--------------
-disjoint x1 x2
-
-
 --------------------------------------------------------------
 disjoint should be transferred via subtyping? or iso-subtyping?
 --------------------------------------------------------------
@@ -155,3 +132,12 @@ A <: C
 disjoint C B
 
 gubtyping broken when C is Top (it's not a function-type)
+
+
+one breaking example would be
+
+f,,g v type checks, the result type is Bool & Bool
+
+f : (Int -> Int) -> Bool
+g : (Bool -> Bool) -> Bool
+v : (Int -> Int) & (Bool -> Bool)
