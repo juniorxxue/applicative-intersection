@@ -3,13 +3,14 @@ Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Strings.String.
-Require Import Psatz.
+Require Import Lia.
 
 Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
 Require Import Subtyping.Toplike.
+Require Import Appsub.
 
 Require Import Value.
 Require Import Disjoint.
@@ -124,12 +125,10 @@ Proof.
       pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val2) Typ2).
       repeat (subst_ptype).
       pose proof (disjoint_complete _ _ H2).
+      unfold disjoint_spec in *.
       pose proof (casting_super _ _ _ _ Val1 Typ1 Ct1).
       pose proof (casting_super _ _ _ _ Val2 Typ2 Ct2).
-      assert (Tl: toplike C). admit.
-      pose proof (casting_ordinary_toplike _ _ _ H Tl Ct1).
-      pose proof (casting_ordinary_toplike _ _ _ H Tl Ct2).
-      now subst.
+      admit.
     + SCase "Merge L".
       dependent destruction Ct1; eauto.
       * symmetry. eapply casting_ordinary_toplike; eauto.
@@ -350,9 +349,9 @@ Proof.
   - Case "Anno~Anno".
     repeat inv.
     destruct (toplike_decidable B0); destruct (toplike_decidable B).
-    + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
-    + eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
-    + eapply consistent_symmetry; eauto. eapply Con_Dj; eauto; eapply disjoint_toplike; eauto.
+    + admit.
+    + admit.
+    + admit.
     + destruct H; destruct H1.
       * SCase "Lit Lit".
         repeat inv.

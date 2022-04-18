@@ -13,8 +13,16 @@ Set Printing Parentheses.
 
 (** * Specification *)
 
+(* this specification doesn't exclude cases when A is not a arrow-like type *)
+
 Definition disjoint_spec A B :=
   forall (C : type), ordinary C -> ~ (auxas (Some C) A /\ auxas (Some C) B).
+
+(* if A and B are disjoint, A and B should be arrow-like types,
+   then for any ordinary types, if one branch can accpet it,  another branch should reject it *)
+
+Definition disjoint_spec' A B :=
+  forall (C : type), ordinary C -> auxas (Some C) A -> auxas (Some C) B -> False.
 
 Definition cost_spec A B :=
   exists C, ordinary C -> sub C A /\ sub C B.
@@ -42,14 +50,16 @@ Inductive cost : type -> type -> Prop :=
 | Cst_Arr : forall A1 A2 B1 B2,
     cost B1 B2 ->
     cost (Arr A1 B1) (Arr A2 B2)
-| Cst_And_L : forall A1 A2 B,
+| Cst_And_L : forall A A1 A2 B,
+    splitable A A1 A2 ->
     cost A1 B ->
     cost A2 B ->
-    cost (And A1 A2) B
-| Cst_And_R : forall A B1 B2,
+    cost A B
+| Cst_And_R : forall A B B1 B2,
+    splitable B B1 B2 ->
     cost A B1 ->
     cost A B2 ->
-    cost A (And B1 B2).
+    cost A B.
 
 Hint Constructors cost : core.
 
@@ -102,28 +112,22 @@ Proof.
   unfold cost_spec. intros. destruct H. gen B x.
   induction A; intros.
   - induction B; eauto.
-Admitted.
-
-Lemma cost_splitable :
-  forall A B B1 B2,
-    splitable B B1 B2 ->
-    cost A B1 ->
-    cost A B2 ->
-    cost A B.
-Proof.
-  introv Spl Cst1 Cst2.
-  gen B2. dependent induction Cst1; intros.
-Admitted.
-  
+Abort.
 
 Lemma cost_sound_alternative :
   forall A, ordinary A -> forall B, sub A B -> forall C, sub A C -> cost B C.
 Proof.
   introv Ord Sub1.
   dependent induction Sub1; introv Sub2.
-  - dependent induction Sub2; eauto. eapply cost_splitable; eauto.
-  - dependent induction Sub2; eauto. eapply cost_splitable; eauto.
-Admitted.
+  - dependent induction Sub2; eauto.
+  - dependent induction Sub2; eauto.
+  - dependent induction Sub2; eauto.
+    dependent destruction Ord.
+    eapply Cst_Arr; eauto.
+  - dependent destruction H; eauto.
+  - inversion Ord.
+  - inversion Ord.
+Qed.
 
 Theorem disjoint_complete :
   forall A B, disjoint A B -> disjoint_spec A B.
@@ -131,7 +135,7 @@ Proof.
   intros A B Dj C Ord Ass. destruct Ass.
   dependent induction Dj.
   - dependent destruction H0. dependent destruction H1.
-    destruct H. eapply cost_sound. unfold cost_spec. exists C; eauto.
+    destruct H. eapply cost_sound_alternative; eauto.
   - dependent destruction H; eauto.
   - dependent destruction H0; eauto.
 Qed.
@@ -164,7 +168,23 @@ Lemma disjoint_soundness :
 Proof.
   introv. unfold disjoint_spec.
   intros Spec.
-Admitted.
+  gen B. induction A; intros.
+  - induction B; eauto.
+    + 
+Abort.
+
+Lemma disjoint_soundness_alternative :
+  forall A, ordinary A -> forall B, auxas (Some A) B -> forall C, auxas (Some A) C -> cost A B.
+Proof.
+Abort.
+
+Lemma disjoint_soundness' :
+  forall A B,
+    disjoint_spec' A B -> disjoint A B.
+Proof.
+  introv. unfold disjoint_spec'. intros Spec.
+  gen B. induction A; intros.
+Abort.
 
 (** ** Decidablility *)
 
@@ -185,18 +205,27 @@ Proof.
   introv Tl.
   unfold disjoint_spec.
   introv Sub1 Sub2.
-Admitted.
+Abort.
 
-Lemma disjoint_toplike :
-  forall A B,
-    toplike A -> disjoint A B.
-Proof.
-  introv Tl.
-  assert (disjoint_spec A B) by (eapply disjoint_spec_toplike; eauto).
-  now eapply disjoint_soundness in H.
-Qed.
 
 (** * Disjoint & Splitable *)
+
+Lemma disjoint_splitable :
+  forall A A1 A2 B,
+    splitable A A1 A2 ->
+    disjoint A1 B -> disjoint A2 B ->
+    disjoint A B.
+Proof.
+  introv Spl Dj1 Dj2. gen B.
+  dependent induction Spl; intros.
+  - eapply Ol_And_L; eauto.
+  - dependent induction Dj1.
+    + eapply Ol_Arr; eauto.
+    + dependent destruction Dj2.
+      eapply Ol_And_R.
+      * eapply IHDj1_1; eauto.
+      * eapply IHDj1_2; eauto.
+Qed.
 
 Lemma disjoint_splitable_l :
   forall A A1 A2 B,
@@ -206,7 +235,19 @@ Lemma disjoint_splitable_l :
 Proof.
   introv Spl Dj. gen A1 A2.
   dependent induction Dj; intros; eauto.
-Admitted.
+  - dependent destruction Spl.
+    split; eauto.
+    + eapply Ol_Arr; eauto.
+    + eapply Ol_Arr; eauto.
+  - dependent destruction Spl.
+    split; eauto.
+  - pose proof (IHDj1 _ _ Spl).
+    pose proof (IHDj2 _ _ Spl).
+    destruct_conjs.
+    split.
+    + eapply Ol_And_R; eauto.
+    + eapply Ol_And_R; eauto.
+Qed.
 
 Lemma disjoint_splitable_r :
   forall A A1 A2 B,
@@ -214,10 +255,19 @@ Lemma disjoint_splitable_r :
     disjoint B A ->
     disjoint B A1 /\ disjoint B A2.
 Proof.
-Proof.
   introv Spl Dj. gen A1 A2.
   dependent induction Dj; intros; eauto.
-Admitted.
+  - dependent destruction Spl.
+    split; eapply Ol_Arr; eauto.
+  - pose proof (IHDj1 _ _ Spl).
+    pose proof (IHDj2 _ _ Spl).
+    destruct_conjs.
+    split.
+    + eapply Ol_And_L; eauto.
+    + eapply Ol_And_L; eauto.
+  - dependent destruction Spl.
+    split; eauto.
+Qed.
 
 (** * Disjoint & Subtyping *)
 
@@ -225,11 +275,11 @@ Lemma disjoint_sub :
   forall A B C,
     disjoint A B -> sub A C -> disjoint C B.
 Proof.
-  introv Dj Sub.
-  eapply disjoint_complete in Dj.
-  eapply disjoint_soundness.
-  unfold disjoint_spec in *. intros.
-Admitted.
+  introv Dj Sub. gen C.
+  dependent induction Dj; intros.
+  - dependent induction Sub.
+Abort.
+
 
 (** * Disjoint & Isomorphic Subtyping *)
 
@@ -238,8 +288,17 @@ Lemma disjoint_isosub :
     disjoint A B -> isosub A C -> disjoint C B.
 Proof.
   introv Dj Isub.
-  eapply isosub_to_sub1 in Isub.
-  eapply disjoint_sub; eauto.
+  dependent induction Isub; eauto.
+  dependent induction Dj; eauto.
+  - pose proof (IHIsub1 Dj1).
+    pose proof (IHIsub2 Dj2).
+    eapply disjoint_splitable; eauto.
+  - eapply disjoint_splitable_l in Dj1; eauto.
+    eapply disjoint_splitable_l in Dj2; eauto.
+    destruct_conjs.
+    eapply disjoint_splitable; eauto.
+    eapply IHIsub1. eapply Ol_And_R; eauto.
+    eapply IHIsub2. eapply Ol_And_R; eauto.
 Qed.
 
 Lemma disjoint_iso_l1 :
@@ -252,7 +311,10 @@ Proof.
   gen C2. dependent induction Hiso; intros; eauto.
   eapply disjoint_splitable_l in Hdisj; eauto.
   destruct Hdisj; eauto.
-Admitted.
+  eapply Ol_And_L; eauto.
+  - eapply IHHiso1; eauto.
+  - eapply IHHiso2; eauto.
+Qed.
 
 Lemma disjoint_iso_l2 :
   forall B C1 C2,
@@ -264,7 +326,10 @@ Proof.
   gen C1. dependent induction Hiso; intros; eauto.
   eapply disjoint_splitable_r in Hdisj; eauto.
   destruct Hdisj; eauto.
-Admitted.
+  eapply Ol_And_R.
+  - eapply IHHiso1; eauto.
+  - eapply IHHiso2; eauto.
+Qed.
 
 Lemma disjoint_iso_l :
   forall A B C1 C2,
@@ -275,8 +340,8 @@ Lemma disjoint_iso_l :
 Proof.
   introv Hdisj Hiso1 Hiso2.
   assert (disjoint A C2).
-  eapply disjoint_iso_l1; eauto.
-  eapply disjoint_iso_l2; eauto.
+  - eapply disjoint_iso_l1; eauto.
+  - eapply disjoint_iso_l2; eauto.
 Qed.
 
 Lemma disjoint_iso_r :
@@ -306,13 +371,4 @@ Proof.
   introv Dj As1 As2. gen C D1 D2.
   induction Dj; intros; eauto.
   - dependent destruction As1; eauto.
-Admitted.
-
-(** * Automations *)
-
-Ltac solve_disjoint :=
-  match goal with
-  | [H: disjoint (Arr _ ?A) (Arr _ ?B) |- disjoint ?A ?B] => (dependent destruction H; assumption)
-  end.
-
-Hint Extern 5 => solve_disjoint : core.
+Abort.

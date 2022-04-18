@@ -353,7 +353,7 @@ Proof.
   - Case "Merge".
     dependent destruction St.
     + eapply IH in St1; eauto; try lia.
-      eapply IH in St2; eauto; try lia. destruct_conjs.      
+      eapply IH in St2; eauto; try lia. destruct_conjs.
       eapply disjoint_iso_l in H; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply disjoint_iso_l in H0; eauto.

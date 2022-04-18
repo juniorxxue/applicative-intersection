@@ -144,8 +144,8 @@ Lemma papp_consistent :
     consistent v1 v2 ->
     consistent e1 e2.
 Proof.
-  Ltac solver1 := try solve [eapply Con_Dj; eauto; eapply disjoint_toplike; eauto 3].
-  Ltac solver2 := try solve [eapply Con_Dj; eauto; eapply disjoint_symmetry; eapply disjoint_toplike; eauto 3].
+  Ltac solver1 := try solve [eapply Con_Dj; eauto].
+  Ltac solver2 := try solve [eapply Con_Dj; eauto].
   Ltac solver3 :=  try solve [match goal with
                               | [Val: value (Mrg ?v1 ?v2),
                                  Con: consistent _ (Mrg ?v1 ?v2),
@@ -161,15 +161,17 @@ Proof.
   introv Val1 Val2 Vall Typ1 Typ2 Typl P1 P2 Con. gen A B C.
   dependent induction P1.  
   - Case "Lit-Toplike".
-    dependent induction P2; intros; solver1; solver3.
+    admit.
   - Case "Lam-Toplike".
-    dependent induction P2; intros; solver1; solver3.
+    admit.
   - Case "Lam".
     dependent induction P2; intros; solver2; solver3.
-    dependent destruction Con; eauto.
-    + assert (vl' = vl'0). eapply casting_determinism; eauto. subst. eapply Con_Ann; eauto 4.
-    + assert (vl' = vl'0). eapply casting_determinism; eauto. subst. eapply Con_Ann; eauto 4.
-    + repeat (dependent destruction Typ1; dependent destruction Typ2).
+    + admit.
+    + admit.
+    + dependent destruction Con; eauto.
+      *  assert (vl' = vl'0). eapply casting_determinism; eauto. subst. eapply Con_Ann; eauto 4.
+      * assert (vl' = vl'0). eapply casting_determinism; eauto. subst. eapply Con_Ann; eauto 4.
+      * repeat (dependent destruction Typ1; dependent destruction Typ2).
       repeat match goal with
                [H: ptype _ _ |- _] => (dependent destruction H)
              end.
@@ -399,8 +401,8 @@ Proof.
       pose proof (IHPa2 Val2 Vall _ Typ2 _ Typl _ As2).
       destruct_conjs. exists (And H H0). split; eauto.
       eapply Ty_Mrg; eauto.
-      assert (disjoint D1 D2). eapply disjoint_appsub; eauto.
-      eapply disjoint_iso_l; eauto.
+      eapply disjoint_complete in H4. unfold disjoint_spec in H4. assert (ordinary B1). admit.
+      exfalso. eapply H4. eapply H8. split; eauto.
     + solver1.
       dependent destruction As; eauto.
       pose proof (IHPa1 Val1 Vall _ Typ1 _ Typl _ As1).
@@ -410,8 +412,8 @@ Proof.
       pose proof (papp_uvalue _ _ _ _ _ Val2 Vall Typ2 Typl Pa2).
       eapply Ty_Mrg_Uv; eauto 3.
       pose proof (papp_consistent v1 v2 vl e1 e2 A0 B0 B1) as Pc.
-      eapply Pc; eauto.    
-Qed.
+      eapply Pc; eauto.
+Admitted.
 
 End papp_preservation.
     
