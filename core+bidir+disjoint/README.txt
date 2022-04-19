@@ -123,7 +123,7 @@ the side-condition Ordinary C is because
 if A is Int -> Int, B is Bool -> Int, we can always find Int & Bool to let both branches hold
 
 --------------------------------------------------------------
-disjoint should be transferred via subtyping? or iso-subtyping?
+disjoint should be transferred via subtyping?
 --------------------------------------------------------------
 
 disjoint A B

@@ -401,8 +401,9 @@ Proof.
       pose proof (IHPa2 Val2 Vall _ Typ2 _ Typl _ As2).
       destruct_conjs. exists (And H H0). split; eauto.
       eapply Ty_Mrg; eauto.
-      eapply disjoint_complete in H4. unfold disjoint_spec in H4. assert (ordinary B1). admit.
-      exfalso. eapply H4. eapply H8. split; eauto.
+      eapply disjoint_complete in H4. unfold disjoint_spec in H4.
+      unfold disjoint_spec_forall in H4.
+      exfalso. admit.
     + solver1.
       dependent destruction As; eauto.
       pose proof (IHPa1 Val1 Vall _ Typ1 _ Typl _ As1).

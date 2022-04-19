@@ -2,7 +2,7 @@ Require Import Metalib.Metatheory.
 Require Import Coq.Program.Equality.
 Require Import Strings.String.
 Require Import Program.Tactics.
-Require Import Psatz. (* lia *)
+Require Import Lia.
 Require Import Language Tactical.
 Require Import Subtyping.Toplike.
 Require Import Subtyping.Splitable.
@@ -15,14 +15,28 @@ Set Printing Parentheses.
 
 (* this specification doesn't exclude cases when A is not a arrow-like type *)
 
-Definition disjoint_spec A B :=
-  forall (C : type), ordinary C -> ~ (auxas (Some C) A /\ auxas (Some C) B).
+Definition disjoint_spec_forall A B :=
+  forall C, ~ (ordinary C -> (auxas (Some C) A /\ auxas (Some C) B)).
 
 (* if A and B are disjoint, A and B should be arrow-like types,
    then for any ordinary types, if one branch can accpet it,  another branch should reject it *)
 
-Definition disjoint_spec' A B :=
-  forall (C : type), ordinary C -> auxas (Some C) A -> auxas (Some C) B -> False.
+Definition disjoint_spec_exist A B :=
+  ~ (exists C, ordinary C -> auxas (Some C) A /\ auxas (Some C) B).
+
+Definition disjoint_spec := disjoint_spec_forall.
+
+Lemma disjoint_spec_equal :
+  forall A B,
+    disjoint_spec_forall A B <-> disjoint_spec_exist A B.
+Proof.
+  introv.
+  split.
+  - intros. unfold disjoint_spec_exist. unfold disjoint_spec_forall in H.
+    intros Contra. destruct Contra. pose proof (H x). contradiction.
+  - intros. unfold disjoint_spec_exist in H. unfold disjoint_spec_forall.
+    introv Contra. apply H. exists C. auto.
+Qed.
 
 Definition cost_spec A B :=
   exists C, ordinary C -> sub C A /\ sub C B.
@@ -106,14 +120,6 @@ Proof.
   Unshelve. all: auto.
 Qed.
 
-Lemma cost_sound :
-  forall A B, cost_spec A B -> cost A B.
-Proof.
-  unfold cost_spec. intros. destruct H. gen B x.
-  induction A; intros.
-  - induction B; eauto.
-Abort.
-
 Lemma cost_sound_alternative :
   forall A, ordinary A -> forall B, sub A B -> forall C, sub A C -> cost B C.
 Proof.
@@ -129,16 +135,21 @@ Proof.
   - inversion Ord.
 Qed.
 
-Theorem disjoint_complete :
+Lemma disjoint_sound :
+  forall A B, disjoint_spec A B -> disjoint A B.
+Proof.
+  introv Dj. unfold disjoint_spec in Dj. unfold disjoint_spec_forall in Dj.
+  gen B. induction A; intros.
+  - 
+Admitted.
+
+Lemma disjoint_complete :
   forall A B, disjoint A B -> disjoint_spec A B.
 Proof.
-  intros A B Dj C Ord Ass. destruct Ass.
-  dependent induction Dj.
-  - dependent destruction H0. dependent destruction H1.
-    destruct H. eapply cost_sound_alternative; eauto.
-  - dependent destruction H; eauto.
-  - dependent destruction H0; eauto.
-Qed.
+  introv Dj. unfold disjoint_spec. introv Contra. gen C.
+  dependent induction Dj; intros.
+  -   
+Admitted.
 
 (** ** Symmetry *)
 
@@ -171,20 +182,7 @@ Proof.
   gen B. induction A; intros.
   - induction B; eauto.
     + 
-Abort.
-
-Lemma disjoint_soundness_alternative :
-  forall A, ordinary A -> forall B, auxas (Some A) B -> forall C, auxas (Some A) C -> cost A B.
-Proof.
-Abort.
-
-Lemma disjoint_soundness' :
-  forall A B,
-    disjoint_spec' A B -> disjoint A B.
-Proof.
-  introv. unfold disjoint_spec'. intros Spec.
-  gen B. induction A; intros.
-Abort.
+Admitted.
 
 (** ** Decidablility *)
 
@@ -204,7 +202,6 @@ Lemma disjoint_spec_toplike :
 Proof.
   introv Tl.
   unfold disjoint_spec.
-  introv Sub1 Sub2.
 Abort.
 
 
@@ -369,6 +366,10 @@ Lemma disjoint_appsub :
     disjoint D1 D2.
 Proof.
   introv Dj As1 As2. gen C D1 D2.
-  induction Dj; intros; eauto.
-  - dependent destruction As1; eauto.
-Abort.
+  eapply disjoint_complete in Dj.
+  unfold disjoint_spec in Dj.
+  unfold disjoint_spec_forall in Dj. intros.
+  pose proof (Dj C).
+  destruct H. intros.
+  split; eauto.
+Qed.
