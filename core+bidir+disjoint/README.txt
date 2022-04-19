@@ -10,13 +10,55 @@ but reject succ,,pred
 succ : Int -> String
 pred : Int -> String
 
+-------------------------------------------------------------
+some possible specification of disjoint
+
+1)
+Definition disjoint_spec_forall A B :=
+  forall C, ~ (ordinary C -> (auxas (Some C) A /\ auxas (Some C) B)).
+
+Definition disjoint_spec_exist A B :=
+  ~ (exists C, ordinary C -> auxas (Some C) A /\ auxas (Some C) B).
+
+two definition are exactly the same
+
+
+STATUS: completenss NOT proven (not easy), soundness NOT proven (not easy, and I conjecture that it suffer from the same problem with the next specification)
+
+2)
+
+Definition disjoint_spec_alter A B :=
+  forall C, (auxas (Some C) A /\ auxas (Some C) B) -> ~ ordinary C.
+
+
+disjoint_spec_forall -> disjoint_spec_alter is okay, but not in the reverse direction
+
+
+STATUS: completenss proven, soundness broken
+
+
+-------------------------------------------------------------
+some possible specification of cost
+
+1)
+Definition cost_spec A B :=
+  exists C, ordinary C -> sub C A /\ sub C B.
+
+2)
+Lemma cost_sound_alternative :
+  forall A, ordinary A -> forall B, sub A B -> forall C, sub A C -> cost B C.
+
+
+
+--------------------------------------------------------------
+ALGO RULES
+--------------------------------------------------------------
 
 T |- e1 => A
 T |- e2 => B
 A ** B
 ----------------------
 T |- e1 ,, e2 => A & B
-
 
 
 ------------------------
@@ -83,14 +125,8 @@ cost A C
 cost A (B & C)
 
 
-Lemma cost_sound_alternative :
-  forall A, ordinary A -> forall B, sub A B -> forall C, sub A C -> cost B C.
-
-Definition cost_spec A B :=
-  exists C, ordinary C -> sub C A /\ sub C B.
-
-
-Problems
+--------------------------------------------
+Problems in TYPE SYSTEM
 
 there are some lemma has been broken
 
@@ -122,9 +158,9 @@ Definition disjoint_spec A B :=
 the side-condition Ordinary C is because
 if A is Int -> Int, B is Bool -> Int, we can always find Int & Bool to let both branches hold
 
---------------------------------------------------------------
-disjoint should be transferred via subtyping?
---------------------------------------------------------------
+------------------------------------------------------------------
+disjoint should be transferred via subtyping? (it's currently not)
+------------------------------------------------------------------
 
 disjoint A B
 A <: C
@@ -141,3 +177,18 @@ f,,g v type checks, the result type is Bool & Bool
 f : (Int -> Int) -> Bool
 g : (Bool -> Bool) -> Bool
 v : (Int -> Int) & (Bool -> Bool)
+
+
+-------------------------------
+some notes on soundness/completeness
+-------------------------------
+completenss can be held
+
+soundness is always broken:
+
+
+Indeed, when A B are not function types, the premise is false then this spec always holds,
+but we cannot say they's algo-disojoint, soundness is broken
+
+Definition disjoint_spec_alter A B :=
+  forall C, (auxas (Some C) A /\ auxas (Some C) B) -> ~ ordinary C.
