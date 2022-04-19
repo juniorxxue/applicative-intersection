@@ -21,6 +21,23 @@ Definition disjoint_spec_forall A B :=
 (* if A and B are disjoint, A and B should be arrow-like types,
    then for any ordinary types, if one branch can accpet it,  another branch should reject it *)
 
+Definition disjoint_spec_alter A B :=
+  forall C, (auxas (Some C) A /\ auxas (Some C) B) -> ~ ordinary C.
+
+Lemma disjoint_spec_equality :
+  forall A B,
+    disjoint_spec_forall A B <-> disjoint_spec_alter A B.
+Proof.
+  introv. split.
+  - intros. unfold disjoint_spec_forall in H. unfold disjoint_spec_alter.
+    introv Ass. pose proof (H C). intros Ord.
+    apply H0. intros. auto.
+  - intros. unfold disjoint_spec_forall. unfold disjoint_spec_alter in H.
+    intros. specialize (H C). intros Contra.
+    admit.
+Abort.
+
+
 Definition disjoint_spec_exist A B :=
   ~ (exists C, ordinary C -> auxas (Some C) A /\ auxas (Some C) B).
 
@@ -150,6 +167,26 @@ Proof.
   dependent induction Dj; intros.
   -   
 Admitted.
+
+Lemma disjoint_complete_alter :
+  forall A B, disjoint A B -> disjoint_spec_alter A B.
+Proof.
+  introv Dj.
+  dependent induction Dj; unfold disjoint_spec_alter.
+  - intros. intros Ord. apply H.
+    destruct H0. dependent destruction H0.  dependent destruction H1.
+    eapply cost_sound_alternative; eauto.
+  - unfold disjoint_spec_alter in *. intros. destruct H.
+    dependent destruction H; eauto.
+  - unfold disjoint_spec_alter in *. intros. destruct H.
+    dependent destruction H0; eauto.
+Qed.
+
+Lemma disjoint_sound_alter :
+  forall A B, disjoint_spec_alter A B -> disjoint A B.
+Proof.
+Abort.
+
 
 (** ** Symmetry *)
 
