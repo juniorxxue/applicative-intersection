@@ -192,3 +192,17 @@ but we cannot say they's algo-disojoint, soundness is broken
 
 Definition disjoint_spec_alter A B :=
   forall C, (auxas (Some C) A /\ auxas (Some C) B) -> ~ ordinary C.
+
+
+f : Int -> Int
+g : Bool -> Int
+
+(f,,g) : (Int & Bool) -> Int
+
+
+f : (Int -> Int) -> Int
+g : (Bool -> Bool) -> Int
+
+(f,,g) : ((Int -> Int) & (Bool -> Bool)) -> Int
+
+
