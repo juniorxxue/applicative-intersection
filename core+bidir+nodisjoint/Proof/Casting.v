@@ -194,7 +194,9 @@ Proof.
   eapply casting_progress'; eauto.
 Qed.
 
-(** * Preservation *)
+Print Assumptions casting_progress.
+
+ (** * Preservation *)
 
 Lemma casting_preservation :
   forall v v' A B,

@@ -101,20 +101,19 @@ Proof.
     + econstructor; eapply Lc_Ann; eapply lc_pvalue; eauto.
     + eapply casting_lc; eauto.
     + econstructor. eauto.
-Qed. 
+Qed.
 
-Lemma step_uvalue :
-  forall u u',
-    uvalue u -> step u u' -> uvalue u'.
+Lemma step_value :
+  forall v v',
+    value v -> step v v' -> value v'.
 Proof.
-  introv Uv St. gen u'.
-  induction Uv; intros.
+  introv Val St. gen v'.
+  induction Val; intros.
   - dependent destruction St; eauto.
-    eapply Uv_Ann. eapply step_lc; eauto.
   - dependent destruction St; eauto.
 Qed.
 
-Hint Resolve step_uvalue : core.
+Hint Resolve step_value : core.
 
 (** * Preservation *)
 
@@ -202,3 +201,4 @@ Proof.
   - Case "Merge".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
 Qed.
+

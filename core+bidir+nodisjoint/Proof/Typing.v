@@ -54,12 +54,12 @@ Notation "T ⊢ e ⇐ A" := (typing T e Chk A) (at level 50).
 
 Lemma typing_to_ptype :
   forall u A,
-    uvalue u ->
+    value u ->
     typing nil u Inf A ->
     ptype u A.
 Proof.
-  introv Uval Typ. gen A.
-  induction Uval; intros.
+  introv Val Typ. gen A.
+  induction Val; intros.
   - dependent destruction Typ; eauto.
   - dependent destruction Typ; eauto.
 Qed.

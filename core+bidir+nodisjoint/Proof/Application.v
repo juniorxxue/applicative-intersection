@@ -210,18 +210,6 @@ Qed.
 
 Section papp_preservation.
 
-Lemma papp_uvalue :
-  forall v vl e A B,
-    value v -> value vl ->
-    typing nil v Inf A -> typing nil vl Inf B ->
-    papp v vl e ->
-    uvalue e.
-Proof.
-  introv Val Vall Typ Typl Pa. gen A B.
-  induction Pa; intros; eauto 5;
-    try solve [dependent destruction Val; dependent destruction Typ; eauto].
-Qed.  
-
 Lemma papp_preservation :
   forall v vl e A B C,
     value v -> value vl ->
@@ -233,7 +221,7 @@ Lemma papp_preservation :
 Proof.
   Ltac solver1 := repeat match goal with
                          | [Typ: typing nil ?v Inf ?A, Val: value ?v, Pt: ptype ?v _ |- _] =>
-                             (pose proof (typing_to_ptype _ _ (value_is_uvalue _ Val) Typ); subst_ptype; clear Pt)
+                             (pose proof (typing_to_ptype _ _ Val Typ); subst_ptype; clear Pt)
                          end.
   introv Val Vall Typ Typl As Pa. gen A B C.
   induction Pa; intros.
