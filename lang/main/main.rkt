@@ -131,21 +131,12 @@
     [`(& ,A ,B)                       `(,A ,B)]
     [_                                 (error "fail to split" t)]))
 
-(define/contract (toplike? t)
-  (-> type? boolean?)
-  (match t
-    ['top          #t]
-    [`(-> ,A ,B)   (toplike? B)]
-    [`(& ,A ,B)    (and (toplike? A) (toplike? B))]
-    [`(* ,l ,A)    (toplike? A)]
-    [_             #f]))
-
 (define/contract (sub? t1 t2)
   (-> type? type? boolean?)
   (match* (t1 t2)
     [('int 'int)                     #t]
     [('bool 'bool)                   #t]    
-    [(_ (? toplike?))                #t]
+    [(_ 'top)                        #t]
     [(`(* ,l ,A) `(* ,l ,B))         (sub? A B)]
     [(A (? (not/c ordinary?) B))     (let ([Bs (split B)])
                                        (and (sub? A (car Bs)) (sub? A (cadr Bs))))]
@@ -228,10 +219,10 @@
     [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                       `(: ,n int)]
     [(`(: #t ,A) 'bool) #:when (sub? A 'bool)                                     '(: #t bool)]
     [(`(: #f ,A) 'bool) #:when (sub? A 'bool)                                     '(: #f bool)]
-    [(v (? (and/c ordinary? toplike?) A))                                         `(: 1 ,A)]
-    [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? (and/c (not/c toplike?) ordinary?) D)))
+    [(v  'top)                                                                    '(: 1 top)]
+    [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? ordinary? D)))
      #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
-    [(`(~> ,l ,v) `(* ,l ,(? (and/c ordinary? (not/c toplike?)) A)))              `(~> ,l ,(cast v A))]
+    [(`(~> ,l ,v) `(* ,l ,(? ordinary? A)))                                       `(~> ,l ,(cast v A))]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v1 A)                             (cast v1 A)]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v2 A)                             (cast v2 A)]
     [(v (? (not/c ordinary?) A))                                                   (let ([As (split A)])
@@ -272,15 +263,7 @@
 (define/contract (papp v vl)
   (-> value? (or/c label? value?) expr?)
   (match v
-    [`(: ,n (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
-    [`(: #t (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
-    [`(: #f (-> ,A ,(? toplike? B)))                             `(: 1 ,B)]
-    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? toplike? D)))            `(: 1 ,D)]
-    [`(: ,n (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
-    [`(: #t (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
-    [`(: #f (* ,l ,(? toplike? A)))                              `(: 1 ,A)]
-    [`(: (λ (,x : ,A) ,e ,B) (* ,l ,(? toplike? C)))             `(: 1 ,C)]
-    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,(? (not/c toplike?) D)))    `(: ,(subst e x (cast vl A)) ,D)]
+    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))      `(: ,(subst e x (cast vl A)) ,D)]
     [`(~> ,l ,v)  #:when (equal? l vl)                            v]
     [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v2)))    (papp v1 vl)]
     [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v1)))    (papp v2 vl)]
