@@ -202,3 +202,35 @@ Proof.
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
 Qed.
 
+(** * Soundness *)
+
+Definition relation (X : Type) := X -> X -> Prop.
+
+Inductive multi {X : Type} (R : relation X) : relation X :=
+| multi_refl : forall (x : X), multi R x x
+| multi_step : forall (x y z : X), R x y -> multi R y z -> multi R x z.
+
+Notation multistep := (multi step).
+
+Definition normal_form {X : Type} (R : relation X) (e : X) : Prop :=
+  not (exists e', R e e').
+
+Definition stuck (e : term) : Prop :=
+  (normal_form step) e /\ ~ value e.
+
+Corollary soundness :
+  forall e e' A,
+    typing nil e Inf A ->
+    multistep e e' ->
+    ~ (stuck e').
+Proof.
+  introv Typ Mult. unfold stuck.
+  intros [Nf Nval]. unfold normal_form in Nf. gen A.
+  dependent induction Mult; intros.
+  - pose proof (progress _ _ _ Typ). destruct H; eauto.
+  - pose proof (preservation _ _ _ Typ H) as Prv.
+    destruct Prv. destruct H0.
+    eapply IHMult; eauto.
+Qed.
+
+Print Assumptions soundness.
