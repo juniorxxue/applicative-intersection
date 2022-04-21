@@ -177,6 +177,31 @@ Proof.
     + eapply IH in St; eauto; try lia. destruct_conjs. eauto.
 Qed.
 
+Theorem preservation_chk :
+  forall e e' A,
+    typing nil e Chk A ->
+    step e e' ->
+    typing nil e' Chk A.
+Proof.
+  introv Typ St.
+  dependent destruction Typ.
+  pose proof (preservation _ _ _ Typ St). destruct_conjs.
+  eapply Ty_Sub; eauto. eapply isosub_to_sub1 in H2. eapply sub_transitivity; eauto.
+Qed.
+
+Theorem preservation_gen :
+  forall e e' A dir,
+    typing nil e dir A ->
+    step e e' ->
+    typing nil e' Chk A.
+Proof.
+  introv Typ St.
+  destruct dir.
+  - pose proof (preservation _ _ _ Typ St). destruct_conjs.
+    eapply Ty_Sub; eauto. eapply isosub_to_sub1 in H1. auto.
+  - eapply preservation_chk; eauto.
+Qed.
+
 (** * Progress *)
 
 Theorem progress :
@@ -219,18 +244,22 @@ Definition stuck (e : term) : Prop :=
   (normal_form step) e /\ ~ value e.
 
 Corollary soundness :
-  forall e e' A,
-    typing nil e Inf A ->
+  forall e e' A dir,
+    typing nil e dir A ->
     multistep e e' ->
     ~ (stuck e').
 Proof.
   introv Typ Mult. unfold stuck.
-  intros [Nf Nval]. unfold normal_form in Nf. gen A.
+  intros [Nf Nval]. unfold normal_form in Nf. gen A dir.
   dependent induction Mult; intros.
   - pose proof (progress _ _ _ Typ). destruct H; eauto.
-  - pose proof (preservation _ _ _ Typ H) as Prv.
-    destruct Prv. destruct H0.
-    eapply IHMult; eauto.
+  - destruct dir.
+    + pose proof (preservation _ _ _ Typ H) as Prv.
+      destruct Prv. destruct H0.
+      eapply IHMult; eauto.
+    + pose proof (preservation_chk _ _ _ Typ H) as Prv.
+      dependent destruction Prv.
+      eapply IHMult; eauto.      
 Qed.
 
 Print Assumptions soundness.
