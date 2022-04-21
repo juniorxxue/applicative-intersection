@@ -53,47 +53,7 @@ Hint Constructors casting : core.
 
 Notation "e ⇝ [ A ] e'" := (casting e A e') (at level 68).
 
-(** * Determinism *)
-
-(** Under toplike and ordinary type A, value v is always casted to a constant *)
-
-Lemma casting_ordinary_toplike :
-  forall v v' A,
-    ordinary A ->
-    toplike A ->
-    casting v A v' ->
-    v' = (Ann (Lit 1) A).
-Proof.
-  introv Ord Tl Ct.
-  induction Ct; eauto.
-Qed.
-
-(** Value v can only be casted by its super type *)
-
-Lemma casting_super :
-  forall A B v v',
-    value v ->
-    typing nil v Inf B ->
-    casting v A v' ->
-    sub B A.
-Proof.
-  introv Val Typ Ct. gen B.
-  induction Ct; eauto; intros.
-  - Case "Lit".
-    repeat (dependent destruction Typ).
-    assumption.
-  - Case "Lam".
-    dependent destruction Typ.
-    assumption.
-  - Case "Merge L".
-    dependent destruction Val.
-    dependent destruction Typ;
-      eapply sub_and_l; eauto.
-  - Case "Merge R".
-    dependent destruction Val.
-    dependent destruction Typ;
-      eapply sub_and_r; eauto.
-Qed.
+(** * Casting & LC & Value *)
 
 Lemma casting_lc :
   forall v v' A,
