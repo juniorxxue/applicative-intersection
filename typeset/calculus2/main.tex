@@ -1,0 +1,107 @@
+\documentclass[a4paper]{article}
+
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=2.5cm,bottom=2.5cm}
+
+% Basics
+\usepackage{fixltx2e}
+\usepackage{url}
+\usepackage{fancyvrb}
+\usepackage{mdwlist}  % Miscellaneous list-related commands
+\usepackage{xspace}   % Smart spacing
+\usepackage{supertabular}
+
+% https://www.nesono.com/?q=book/export/html/347
+% Package for inserting TODO statements in nice colorful boxes - so that you
+% won’t forget to ﬁx/remove them. To add a todo statement, use something like
+% \todo{Find better wording here}.
+\usepackage{todonotes}
+
+%% Math
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{bm}       % Bold symbols in maths mode
+\usepackage{wasysym}  % LHD and RHD
+
+% http://tex.stackexchange.com/questions/114151/how-do-i-reference-in-appendix-a-theorem-given-in-the-body
+\usepackage{thmtools, thm-restate}
+
+%% Theoretical computer science
+\usepackage{stmaryrd}
+\usepackage{mathtools}  % For "::=" ( \Coloneqq )
+
+%% Code listings
+\usepackage{listings}
+
+%% Font
+\usepackage[euler-digits,euler-hat-accent]{eulervm}
+
+% circle (use tikz package)
+\newcommand{\ascriptionnode}[1]{
+  \tikz{
+  \node[shape=circle,draw=black,inner sep=1.5pt,scale=0.3] at (2em, 2em) {#1}; }}
+
+
+\newcommand{\ascriptioncircle}[2][black,fill=black]{\tikz[baseline=-0.5ex]\draw[#1,radius=#2] (0,0) circle;}
+
+\newcommand{\whitecircle}{\ascriptioncircle[black,fill=white]{2pt}}
+\newcommand{\blackcircle}{\ascriptioncircle{2pt}}
+\newcommand*\circled[1]{\tikz[baseline=(char.base)]{
+    \node[shape=circle,fill,inner sep=1pt] (char) {\textcolor{white}{#1}};}}
+
+%% Ott
+\usepackage{ottalt}
+\newcommand{\hlmath}[2][gray!40]{%
+	\colorbox{#1}{$\displaystyle#2$}}
+
+% Ott includes
+\inputott{ott-rules}
+
+
+\title{Applicative Intersection Types}
+\author{Xu Xue}
+
+\begin{document}
+
+\maketitle
+
+\section{Syntax}
+
+\begin{align*}
+  &\text{Type} &A, B&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> B]] ~|~ [[ A & B ]]\\
+  &\text{Oridinary Type} &O&::= [[Int]] ~|~ [[Top]] ~|~ [[A-> O]]\\
+  &\text{Expressions} &e    &::= x ~|~ i ~|~ e:A ~|~ [[e1 e2]] ~|~ [[ \ x : A .e : B]]~|~ [[e_1,,e_2]] \\
+  &\text{Partial Values} &p   &::= i~|~ [[ \ x : A .e : B]] \\
+  &\text{Values} &v   &::= p:O ~|~ [[v_1,,v_2]]\\
+  &\text{Term contexts} &[[T]] &::=  [[ [] ]] ~|~ [[ T, x:A ]] \\
+  &\text{Arguments} &[[S]] &::= [[ [] ]] ~|~ A \\
+\end{align*}
+
+\section{Subtyping}
+
+\ottdefnsOrdinaryType
+
+\ottdefnsSplitType
+
+\section{Applicative Subtyping}
+
+\ottdefnsUnifiedSubtyping
+
+\section{Typing}
+
+\ottdefnsTyping
+
+\section{Reduction}
+
+\ottdefnsCasting
+
+\ottdefnsParallelApplication
+
+\ottdefnsReduction
+
+% \ottdefnsArgumentalTyping
+
+% \ottdefnsPrincipalTyping
+
+\end{document}
