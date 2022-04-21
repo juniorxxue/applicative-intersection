@@ -9,7 +9,6 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
-Require Import Subtyping.Toplike.
 Require Import Appsub.
 
 Require Import Value.
@@ -21,18 +20,9 @@ Require Import LocallyNameless.
 (** * Definition *)
 
 Inductive papp : term -> term -> term -> Prop :=
-| Pa_Lit_Tl : forall (A B : type) (v vl : term) (n : nat),
-    toplike B ->
-    papp (Ann (Lit n) (Arr A B)) vl (Ann (Lit 1) B)
-| Pa_Lam_Tl : forall (A B C D : type) (e vl: term),
-    lc (Lam A e B) ->
-    toplike D ->
-    papp (Ann (Lam A e B) (Arr C D)) vl
-         (Ann (Lit 1) D)
 | Pa_Lam : forall (A B C D : type) (e vl vl' : term),
     lc (Lam A e B) ->
     casting vl A vl' ->
-    not (toplike D) ->
     papp (Ann (Lam A e B) (Arr C D)) vl
          (Ann (open e vl') D)
 | Pa_Mrg_L : forall (A B C : type) (v1 v2 vl e: term),
@@ -225,16 +215,6 @@ Proof.
                          end.
   introv Val Vall Typ Typl As Pa. gen A B C.
   induction Pa; intros.
-  - Case "Lit Toplike".
-    dependent destruction Typ. exists B. split.
-    + eapply Ty_Ann; eauto. eapply typing_chk_sub; eauto.
-      eapply sub_toplike_super; eauto.
-    + dependent destruction As; eauto.
-  - Case "Lam Toplike".
-    dependent destruction Typ. exists D. split.
-    + eapply Ty_Ann; eauto. eapply typing_chk_sub; eauto.
-      eapply sub_toplike_super; eauto.
-    + dependent destruction As; eauto.
   - Case "Lam".
     repeat dependent destruction Typ. dependent destruction As.
     dependent destruction Val.
@@ -247,12 +227,12 @@ Proof.
     end.
     pick fresh y. rewrite (subst_intro y); eauto.
     assert (Fr': y `notin` L) by eauto.
-    pose proof (H4 y Fr').
-    rewrite_env (nil ++ [(y, A)] ++ nil) in H8.
+    pose proof (H3 y Fr').
+    rewrite_env (nil ++ [(y, A)] ++ nil) in H7.
     pose proof (substitution_lemma nil nil y vl' (open e y) A B x Chk) as Sl.
     destruct Sl as [x' Sl']; eauto. destruct Sl'.
     eapply Ty_Ann; eauto.
-    eapply isosub_to_sub1 in H10; eauto.
+    eapply isosub_to_sub1 in H9; eauto.
     eapply typing_chk_sub; eauto.
     eapply sub_transitivity; eauto 3.
   - Case "Merge L".
@@ -287,16 +267,14 @@ Proof.
     destruct H.
     + SCase "Lit".
       repeat dependent destruction Typ.
-      dependent destruction H1; eauto. dependent destruction As; eauto.
+      dependent destruction H1; eauto.
     + SCase "Lam".
       repeat dependent destruction Typ.
       dependent destruction H2; eauto.
-      * dependent destruction As; eauto.
-      * destruct (toplike_decidable D); eauto.
-        dependent destruction As; eauto.
-        assert (Sub: sub B1 A1) by (eapply sub_transitivity; eauto).
-        pose proof (casting_progress' _ _ _ Vall Typl Sub) as Ct. destruct Ct.
-        eexists. eapply Pa_Lam; eauto.
+      dependent destruction As; eauto.
+      assert (Sub: sub B1 A1) by (eapply sub_transitivity; eauto).
+      pose proof (casting_progress' _ _ _ Vall Typl Sub) as Ct. destruct Ct.
+      eexists. eapply Pa_Lam; eauto.
   - Case "Merge".
     dependent destruction As.
     + inversion Typ.

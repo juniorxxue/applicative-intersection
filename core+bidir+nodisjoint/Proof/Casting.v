@@ -9,7 +9,6 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
-Require Import Subtyping.Toplike.
 Require Import Appsub.
 
 Require Import Value.
@@ -22,14 +21,11 @@ Inductive casting : term -> type -> term -> Prop :=
 | Ct_Lit : forall n A,
     sub A Int ->
     casting (Ann (Lit n) A) Int (Ann (Lit n) Int)
-| Ct_Top : forall A v,
+| Ct_Top : forall v,
     lc v ->
-    toplike A ->
-    ordinary A ->
-    casting v A (Ann (Lit 1) A)
+    casting v Top (Ann (Lit 1) Top)
 | Ct_Lam : forall A B C D E e,
     lc (Lam A e B) ->
-    not (toplike D) ->
     sub E (Arr C D) ->
     ordinary D ->
     casting (Ann (Lam A e B) E)
@@ -91,6 +87,8 @@ Proof.
   introv Val Ct1 Ct2. gen B v2.
   induction Ct1; intros; try solve [dependent induction Ct2; eauto].
   - dependent induction Ct2; eauto.
+    dependent destruction H0; eauto.
+  - dependent induction Ct2; eauto.
     eapply Ct_Lam; eauto. eapply sub_transitivity; eauto.
   - dependent destruction Val.
     dependent induction Ct2; eauto.
@@ -121,15 +119,9 @@ Proof.
     dependent destruction Typ; eauto.
   - Case "Sub-Arr".
     dependent destruction Typ; eauto.
-    destruct (toplike_decidable D).
-    + SCase "Toplike".
-      eexists; eauto.
-    + SCase "Not Toplike".
-      dependent destruction Val. dependent destruction H0; eauto.
-      dependent destruction Typ. dependent destruction Typ.
-      dependent destruction H2; eauto. dependent destruction H3.
-      assert (toplike D) by (eapply sub_toplike; eauto).
-      contradiction.
+    dependent destruction Val. dependent destruction H0; eauto.
+    dependent destruction Typ. dependent destruction Typ.
+    dependent destruction H2; eauto.
   - Case "Sub-And".
     pose proof (IHSub1 _ Val Typ). pose proof (IHSub2 _ Val Typ).
     destruct_conjs; eauto.
@@ -167,8 +159,6 @@ Lemma casting_preservation :
 Proof.
   introv Val Typ Ct. gen B.
   induction Ct; intros; try solve [eexists; eauto].
-  - Case "Lit".
-    exists A. split; eauto.
   - Case "Lam".
     exists (Arr C D). split; eauto 3.
     repeat (dependent destruction Typ).
