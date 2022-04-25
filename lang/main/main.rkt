@@ -141,6 +141,8 @@
     [`(->? ,(? label?))   #t]
     [_                    #f]))
 
+(require racket/trace)
+
 (define/contract (usub? t pt)
   (-> type? (or/c selector? type?) (or/c boolean? type?))
   (if (type? pt)
@@ -152,8 +154,7 @@
         [(`(* ,l ,A) `(* ,l ,(? ordinary? B)))                                 (usub? A B)]
         [(A (? (not/c ordinary?) B))                                           (let ([Bs (split B)])
                                                                                  (and (usub? A (car Bs)) (usub? A (cadr Bs))))]
-        [(`(& ,A ,B) (? ordinary? C))                                          (usub? A C)]
-        [(`(& ,A ,B) (? ordinary? C))                                          (usub? B C)]
+        [(`(& ,A ,B) (? ordinary? C))                                          (or (usub? A C) (usub? B C))]
         [(_ _)                                                                 #f])
       (match* (t pt)
         [(`(-> ,A1 ,A2) `(-> ,B))                                              (usub? B A1)]
