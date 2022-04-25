@@ -131,38 +131,41 @@
     [`(& ,A ,B)                       `(,A ,B)]
     [_                                 (error "fail to split" t)]))
 
-(define/contract (sub? t1 t2)
-  (-> type? type? boolean?)
-  (match* (t1 t2)
-    [('int 'int)                     #t]
-    [('bool 'bool)                   #t]    
-    [(_ 'top)                        #t]
-    [(`(* ,l ,A) `(* ,l ,B))         (sub? A B)]
-    [(A (? (not/c ordinary?) B))     (let ([Bs (split B)])
-                                       (and (sub? A (car Bs)) (sub? A (cadr Bs))))]
-    [(`(& ,A1 ,A2) B)                (or (sub? A1 B) (sub? A2 B))]
-    [(`(-> ,A1 ,A2) `(-> ,B1 ,B2))   (and (sub? B1 A1) (sub? A2 B2))]
-    [(_ _)                           #f]))
 
-(define/contract (appsub? s t)
-  (-> (or/c symbol? type? label?) type? boolean?)
-  (match* (s t)
-    [('nil _)         #t]
-    [(C `(-> ,A ,B))  (sub? C A)]
-    [(l `(* ,l ,A))   #t]
-    [(S `(& ,A ,B))   (appsub? S A)]
-    [(S `(& ,A ,B))   (appsub? S B)]
-    [(_ _)            #f]))
+(define/contract (selector? s)
+  (-> any/c boolean?)
+  (match s
+    [`(-> ,(? type?))     #t]
+    [`(-> ,(? label?))    #t]
+    [`(->? ,(? type?))    #t]
+    [`(->? ,(? label?))   #t]
+    [_                    #f]))
 
-(define/contract (appsub s t)
-  (-> (or/c symbol? type? label?) type? type?)
-  (match* (s t)
-    [('nil A) A]
-    [(C `(-> ,A ,B)) #:when (sub? C A)           B]
-    [(l `(* ,l ,A))                              A]
-    [(S `(& ,A ,B))  #:when (not (appsub? S B))  (appsub S A)]
-    [(S `(& ,A ,B))  #:when (not (appsub? S A))  (appsub S B)]
-    [(S `(& ,A ,B))                             `(& ,(appsub S A) ,(appsub S B))]))
+(define/contract (usub? t pt)
+  (-> type? (or/c selector? type?) (or/c boolean? type?))
+  (if (type? pt)
+      (match* (t pt)
+        [('int 'int)                                                           #t]
+        [('bool 'bool)                                                         #t]
+        [(_ 'top)                                                              #t]
+        [(`(-> ,A ,B) `(-> ,C ,D))                                             (and (usub? C A) (usub? B D))]
+        [(`(* ,l ,A) `(* ,l ,(? ordinary? B)))                                 (usub? A B)]
+        [(A (? (not/c ordinary?) B))                                           (let ([Bs (split B)])
+                                                                                 (and (usub? A (car Bs)) (usub? A (cadr Bs))))]
+        [(`(& ,A ,B) (? ordinary? C))                                          (usub? A C)]
+        [(`(& ,A ,B) (? ordinary? C))                                          (usub? B C)]
+        [(_ _)                                                                 #f])
+      (match* (t pt)
+        [(`(-> ,A1 ,A2) `(-> ,B))                                              (usub? B A1)]
+        [(`(* ,l ,A) `(-> ,l))                                                 #t]
+        [(`(& ,A1 ,A2) `(-> ,S))                                               (usub? A1 `(-> ,S))]
+        [(`(& ,A1 ,A2) `(-> ,S))                                               (usub? A2 `(-> ,S))]
+        [(`(-> ,A1 ,A2) `(->? ,B)) #:when (usub? B A1)                         A2]
+        [(`(* ,l ,A) `(->? ,l))                                                A]
+        [(`(& ,A1 ,A2) `(->? ,S)) #:when (not (usub? A2 `(-> ,S)))             (usub? A1 `(->? ,S))]
+        [(`(& ,A1 ,A2) `(->? ,S)) #:when (not (usub? A1 `(-> ,S)))             (usub? A2 `(->? ,S))]
+        [(`(& ,A1 ,A2) `(->? ,S))                                             `(& ,(usub? A1 `(->? ,S)) ,(usub? A2 `(->? ,S)))]
+        [(_ _)                                                                 #f])))
 
 (define (lookup env var)
   (if (equal? (caar env) var)
@@ -180,9 +183,9 @@
     [`(~> ,l ,e)                                                     `(* ,l ,(infer e env))]
     [`(: ,e ,A) #:when (check e A env)                                A]
     [`(,e1 ,e2)                                                       (let ([A (infer e1 env)] [B (infer e2 env)])
-                                                                        (appsub B A))]
+                                                                        (usub? A `(->? ,B)))]
     [`(<~ ,e ,l)                                                      (let ([A (infer e env)])
-                                                                        (appsub l A))]
+                                                                        (usub? A `(->? ,l)))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         `(& ,A ,B))]
     [_                                                                (error "cannot infer the type of" e "under" env)]))
@@ -190,7 +193,7 @@
 (define/contract (check e t env)
   (-> expr? type? list? boolean?)
   (let ([A (infer e env)])
-    (sub? A t)))
+    (usub? A t)))
 
 ;; -----------------------------------------------------------------------
 ;; Dynamics
@@ -216,12 +219,12 @@
 (define/contract (cast e t)
   (-> value? type? (or/c value? fail?))
   (match* (e t)
-    [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                       `(: ,n int)]
-    [(`(: #t ,A) 'bool) #:when (sub? A 'bool)                                     '(: #t bool)]
-    [(`(: #f ,A) 'bool) #:when (sub? A 'bool)                                     '(: #f bool)]
+    [(`(: ,n ,A) 'int) #:when (usub? A 'int)                                      `(: ,n int)]
+    [(`(: #t ,A) 'bool) #:when (usub? A 'bool)                                    '(: #t bool)]
+    [(`(: #f ,A) 'bool) #:when (usub? A 'bool)                                    '(: #f bool)]
     [(v  'top)                                                                    '(: 1 top)]
     [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? ordinary? D)))
-     #:when (sub? E `(-> ,C ,D))                                                  `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
+     #:when (usub? E `(-> ,C ,D))                                                 `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
     [(`(~> ,l ,v) `(* ,l ,(? ordinary? A)))                                       `(~> ,l ,(cast v A))]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v1 A)                             (cast v1 A)]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v2 A)                             (cast v2 A)]
@@ -265,10 +268,10 @@
   (match v
     [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))      `(: ,(subst e x (cast vl A)) ,D)]
     [`(~> ,l ,v)  #:when (equal? l vl)                            v]
-    [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v2)))    (papp v1 vl)]
-    [`(m ,v1 ,v2) #:when (not (appsub? (atype vl) (ptype v1)))    (papp v2 vl)]
-    [`(m ,v1 ,v2) #:when (and (appsub? (atype vl) (ptype v1))
-                              (appsub? (atype vl) (ptype v1)))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
+    [`(m ,v1 ,v2) #:when (not (usub? (ptype v2) `(-> ,(atype vl))))    (papp v1 vl)]
+    [`(m ,v1 ,v2) #:when (not (usub? (ptype v1) `(-> ,(atype vl))))    (papp v2 vl)]
+    [`(m ,v1 ,v2) #:when (and (usub? (ptype v1) `(-> ,(atype vl)))
+                              (usub? (ptype v2) `(-> ,(atype vl))))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
 
 ;; possibly need not-value? as condition check
 (define/contract (step e)
