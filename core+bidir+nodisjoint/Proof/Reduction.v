@@ -161,13 +161,18 @@ Proof.
   - Case "App".
     dependent destruction St.
     + pose proof (papp_preservation e1 e2 e) as P.
+      eapply uunisub_sound_appsub in H2.
       eapply P; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply uunisub_sound_appsub in H0.
       eapply appsub_iso in H0; eauto. destruct_conjs.
-      eexists; eauto.
+      eexists; split; eauto. eapply Ty_App; eauto.
+      eapply uunisub_complete_appsub; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply uunisub_sound_appsub in H0.
       eapply appsub_iso in H0; eauto. destruct_conjs.
-      eexists; eauto.
+      eexists; split; eauto. eapply Ty_App; eauto.
+      eapply uunisub_complete_appsub; eauto.
   - Case "Merge".
     dependent destruction St.
     + eapply IH in St1; eauto; try lia.
@@ -222,6 +227,7 @@ Proof.
   - Case "App".
     right. destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
     pose proof (papp_progress e1 e2 A B C) as P. destruct P; eauto.
+    eapply uunisub_sound_appsub; eauto.
   - Case "Merge".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
 Qed.

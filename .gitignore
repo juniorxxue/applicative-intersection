@@ -15,10 +15,8 @@ typeset/*.pdf
 typeset/*.tex
 *.coq.d
 
-core/Proof/html/*
-core+bidir/Proof/html/*
-core+bidir+record/Proof/html/*
-core+bidir+record+unified/Proof/html/*
+
+html
 
 *.swp
 Makefile.coq

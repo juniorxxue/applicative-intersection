@@ -27,18 +27,18 @@ Inductive papp : term -> term -> term -> Prop :=
          (Ann (open e vl') D)
 | Pa_Mrg_L : forall (A B C : type) (v1 v2 vl e: term),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    not (auxas (Some C) B) ->
+    not (auxas (Some (Avt C)) B) ->
     papp v1 vl e ->
     papp (Mrg v1 v2) vl e
 | Pa_Mrg_R : forall (A B C : type) (v1 v2 vl e : term),
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    not (auxas (Some C) A) ->
+    not (auxas (Some (Avt C)) A) ->
     papp v2 vl e ->
     papp (Mrg v1 v2) vl e
-| Pa_Mrg_P : forall (A B C : type) (v1 v2 vl e1 e2 : term),
+| Pa_Mrg_P : forall A B C v1 v2 vl e1 e2,
     ptype v1 A -> ptype v2 B -> ptype vl C ->
-    auxas (Some C) A ->
-    auxas (Some C) B ->
+    auxas (Some (Avt C)) A ->
+    auxas (Some (Avt C)) B ->
     papp v1 vl e1 ->
     papp v2 vl e2 ->
     papp (Mrg v1 v2) vl (Mrg e1 e2).
@@ -184,8 +184,10 @@ Proof.
   - Case "App".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
+    eapply uunisub_sound_appsub in H.
     eapply appsub_iso in H; eauto. destruct H. destruct H.
-    exists x2. split; eauto.
+    exists x2. split; eauto. eapply Ty_App; eauto.
+    eapply uunisub_complete_appsub; eauto.
   - Case "Merge".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
@@ -205,7 +207,7 @@ Lemma papp_preservation :
     value v -> value vl ->
     typing nil v Inf A ->
     typing nil vl Inf B ->
-    appsub (Some B) A C ->
+    appsub (Some (Avt B)) A C ->
     papp v vl e ->
     (exists D, typing nil e Inf D /\ isosub D C).
 Proof.
@@ -258,7 +260,7 @@ Lemma papp_progress :
   forall v vl A B C,
     value v -> value vl ->
     typing nil v Inf A -> typing nil vl Inf B ->
-    appsub (Some B) A C ->
+    appsub (Some (Avt B)) A C ->
     exists e, papp v vl e.
 Proof.
   introv Val Vall Typ Typl As. gen A B C vl.

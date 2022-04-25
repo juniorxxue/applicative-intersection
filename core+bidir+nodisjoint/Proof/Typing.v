@@ -34,7 +34,7 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
 | Ty_App : forall T A B C e1 e2,
     typing T e1 Inf A ->
     typing T e2 Inf B ->
-    appsub (Some B) A C ->
+    uunisub A (uP (Avt B)) (Some C) ->
     typing T (App e1 e2) Inf C
 | Ty_Mrg : forall T A B e1 e2,
     typing T e1 Inf A ->
