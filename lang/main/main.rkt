@@ -9,7 +9,7 @@
   (rename-out [module-begin #%module-begin]
               [app          #%app]
               [datum        #%datum])
-  λ m : ~> <~)
+  λ m : ~> <~ int+ flo+)
 
 (require
   (for-syntax
@@ -51,6 +51,14 @@
   (syntax-parse stx
     [(_ e l) #'(eval '(<~ e l))]))
 
+(define-syntax (int+ stx)
+    (syntax-parse stx
+      [(_ e1 e2) #'(eval '(int+ e1 e2))]))
+
+(define-syntax (flo+ stx)
+    (syntax-parse stx
+      [(_ e1 e2) #'(eval '(flo+ e1 e2))]))
+
 (require racket/match)
 
 ;; -----------------------------------------------------------------------
@@ -90,6 +98,7 @@
 (define (type? t)
   (match t
     ['int                         #t]
+    ['float                       #t]
     ['bool                        #t]
     ['top                         #t]
     [`(-> ,(? type?) ,(? type?))  #t]
@@ -100,7 +109,8 @@
 (define (expr? e)
   (match e
     [(? symbol?)                                            #t]
-    [(? number?)                                            #t]
+    [(? exact-integer?)                                           #t]
+    [(? flonum?)                                            #t]
     ['#t                                                    #t]
     ['#f                                                    #t]
     [`(λ (,(? symbol?) : ,(? type?)) ,(? expr?) ,(? type?)) #t]
@@ -110,12 +120,14 @@
     [`(~> ,(? label?) ,(? expr?))                           #t] ;; record term
     [`(<~ ,(? expr?) ,(? label?))                           #t] ;; record projection
     [`(int+ ,(? expr?) ,(? expr?))                          #t] ;; int+ primitive
+    [`(flo+ ,(? expr?) ,(? expr?))                          #t] ;; flo+ primitive
     [_                                                      #f]))
 
 (define/contract (ordinary? t)
   (-> type? boolean?)
   (match t
     ['int           #t]
+    ['float         #t]
     ['bool          #t]
     ['top           #t]
     [`(-> ,_ ,B)    (ordinary? B)]
@@ -149,6 +161,7 @@
   (if (type? pt)
       (match* (t pt)
         [('int 'int)                                                           #t]
+        [('float 'float)                                                       #t]
         [('bool 'bool)                                                         #t]
         [(_ 'top)                                                              #t]
         [(`(-> ,A ,B) `(-> ,C ,D))                                             (and (usub? C A) (usub? B D))]
@@ -177,7 +190,8 @@
 (define/contract (infer e env)
   (-> expr? list? type?)
   (match e    
-    [(? number?)                                                     'int]
+    [(? exact-integer?)                                                    'int]
+    [(? flonum?)                                                     'float]
     ['#t                                                             'bool]
     ['#f                                                             'bool]
     [(? symbol?)                                                      (lookup env e)]
@@ -192,6 +206,8 @@
                                                                         `(& ,A ,B))]
     [`(int+ ,e1 ,e2) #:when (and (check e1 'int env)
                                  (check e2 'int env))                'int]
+    [`(flo+ ,e1 ,e2) #:when (and (check e1 'float env)
+                                 (check e2 'float env))              'float]
     [_                                                                (error "cannot infer the type of" e "under" env)]))
 
 (define/contract (check e t env)
@@ -206,7 +222,8 @@
 (define/contract (pvalue? e)
   (-> expr? boolean?)
   (match e
-    [(? number?)            #t]
+    [(? exact-integer?)           #t]
+    [(? flonum?)            #t]
     ['#t                    #t]
     ['#f                    #t]
     [`(λ (,x : ,A) ,e ,B)   #t]
@@ -224,6 +241,7 @@
   (-> value? type? (or/c value? fail?))
   (match* (e t)
     [(`(: ,n ,A) 'int) #:when (usub? A 'int)                                      `(: ,n int)]
+    [(`(: ,n ,A) 'float) #:when (usub? A 'float)                                  `(: ,n float)]
     [(`(: #t ,A) 'bool) #:when (usub? A 'bool)                                    '(: #t bool)]
     [(`(: #f ,A) 'bool) #:when (usub? A 'bool)                                    '(: #f bool)]
     [(v  'top)                                                                    '(: 1 top)]
@@ -247,12 +265,14 @@
     [`(~> ,l ,e)                      `(~> ,l ,(subst e x u))]
     [`(<~ ,e ,l)                      `(<~ ,(subst e x u) ,l)]
     [`(int+ ,e1 ,e2)                  `(int+ ,(subst e1 x u) ,(subst e2 x u))]
+    [`(flo+ ,e1 ,e2)                  `(flo+ ,(subst e1 x u) ,(subst e2 x u))]
     [_                                 e]))
 
 (define/contract (ptype e)
   (-> expr? type?)
   (match e
-    [(? number?)                    'int]
+    [(? exact-integer?)                   'int]
+    [(? flonum?)                    'float]
     ['#t                            'bool]
     ['#f                            'bool]
     [`(λ (,x : ,A) ,e ,B)           `(-> ,A ,B)]
@@ -271,8 +291,8 @@
 (define/contract (papp v vl)
   (-> value? (or/c label? value?) expr?)
   (match v
-    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))      `(: ,(subst e x (cast vl A)) ,D)]
-    [`(~> ,l ,v)  #:when (equal? l vl)                            v]
+    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))                              `(: ,(subst e x (cast vl A)) ,D)]
+    [`(~> ,l ,v)  #:when (equal? l vl)                                 v]
     [`(m ,v1 ,v2) #:when (not (usub? (ptype v2) `(-> ,(atype vl))))    (papp v1 vl)]
     [`(m ,v1 ,v2) #:when (not (usub? (ptype v1) `(-> ,(atype vl))))    (papp v2 vl)]
     [`(m ,v1 ,v2) #:when (and (usub? (ptype v1) `(-> ,(atype vl)))
@@ -281,14 +301,16 @@
 (define/contract (plus v1 v2)
   (-> value? value? value?)
   (match* (v1 v2)
-    [(`(: ,n1 int) `(: ,n2 int))    `(: ,(+ n1 n2) int)]
-    [(_ _)                       (error "error when doing primitive plus")]))
+    [(`(: ,n1 int) `(: ,n2 int))     `(: ,(+ n1 n2) int)]
+    [(`(: ,n1 float) `(: ,n2 float)) `(: ,(+ n1 n2) float)]
+    [(_ _)                            (error "error when doing primitive plus")]))
 
 ;; possibly need not-value? as condition check
 (define/contract (step e)
   (-> expr? expr?)
   (match e
-    [(? number? n)                                  `(: ,n int)]
+    [(? exact-integer? n)                                 `(: ,n int)]
+    [(? flonum? n)                                  `(: ,n float)]
     ['#t                                            '(: #t bool)]
     ['#f                                            '(: #f bool)]                             
     [`(λ (,x : ,A) ,e ,B)                           `(: (λ (,x : ,A) ,e ,B) (-> ,A ,B))]
@@ -308,6 +330,9 @@
     [`(int+ ,(? (not/c value?) e1) ,e2)             `(int+ ,(step e1) ,e2)]
     [`(int+ ,(? value? v) ,(? (not/c value?) e2))   `(int+ ,v ,(step e2))]
     [`(int+ ,(? value? v1) ,(? value? v2))           (plus v1 v2)]
+    [`(flo+ ,(? (not/c value?) e1) ,e2)             `(flo+ ,(step e1) ,e2)]
+    [`(flo+ ,(? value? v) ,(? (not/c value?) e2))   `(flo+ ,v ,(step e2))]
+    [`(flo+ ,(? value? v1) ,(? value? v2))           (plus v1 v2)]
     ))
 
 (define/contract (eval e)

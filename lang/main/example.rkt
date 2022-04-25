@@ -2,6 +2,7 @@
 
 ;; simple literals
 42
+42.2
 #t
 #f
 
@@ -62,4 +63,19 @@
 ;; we introduce some primitives
 
 ;; use int+ to add integers
+(int+ 1 3)
+;; use flo+ to add floats
+(flo+ 1.0 2.1)
+
 ((λ (x : int) (int+ x x) int) 1)
+((λ (x : float) (flo+ x x) float) 1.1)
+
+;; overload int and flo+ to create a polymorphic "double" function
+
+((m (λ (x : int) (int+ x x) int)
+    (λ (x : float) (flo+ x x) float))
+ 1)
+
+((m (λ (x : int) (int+ x x) int)
+    (λ (x : float) (flo+ x x) float))
+ 4.2)
