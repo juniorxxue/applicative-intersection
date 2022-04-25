@@ -109,6 +109,7 @@
     [`(: ,(? expr?) ,(? type?))                             #t]
     [`(~> ,(? label?) ,(? expr?))                           #t] ;; record term
     [`(<~ ,(? expr?) ,(? label?))                           #t] ;; record projection
+    [`(int+ ,(? expr?) ,(? expr?))                          #t] ;; int+ primitive
     [_                                                      #f]))
 
 (define/contract (ordinary? t)
@@ -189,6 +190,8 @@
                                                                         (usub? A `(->? ,l)))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         `(& ,A ,B))]
+    [`(int+ ,e1 ,e2) #:when (and (check e1 'int env)
+                                 (check e2 'int env))                'int]
     [_                                                                (error "cannot infer the type of" e "under" env)]))
 
 (define/contract (check e t env)
@@ -243,6 +246,7 @@
     [`(: ,e ,A)                       `(: ,(subst e x u) ,A)]
     [`(~> ,l ,e)                      `(~> ,l ,(subst e x u))]
     [`(<~ ,e ,l)                      `(<~ ,(subst e x u) ,l)]
+    [`(int+ ,e1 ,e2)                  `(int+ ,(subst e1 x u) ,(subst e2 x u))]
     [_                                 e]))
 
 (define/contract (ptype e)
@@ -274,6 +278,12 @@
     [`(m ,v1 ,v2) #:when (and (usub? (ptype v1) `(-> ,(atype vl)))
                               (usub? (ptype v2) `(-> ,(atype vl))))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
 
+(define/contract (plus v1 v2)
+  (-> value? value? value?)
+  (match* (v1 v2)
+    [(`(: ,n1 int) `(: ,n2 int))    `(: ,(+ n1 n2) int)]
+    [(_ _)                       (error "error when doing primitive plus")]))
+
 ;; possibly need not-value? as condition check
 (define/contract (step e)
   (-> expr? expr?)
@@ -294,9 +304,15 @@
     [`(,(? value? v) ,e2)                           `(,v ,(step e2))]
     [`(m ,e1 ,(? value? v))                         `(m ,(step e1) ,v)]
     [`(m ,(? value? v) ,e2)                         `(m ,v ,(step e2))]
-    [`(m ,e1 ,e2)                                   `(m ,(step e1) ,(step e2))]))
+    [`(m ,e1 ,e2)                                   `(m ,(step e1) ,(step e2))]
+    [`(int+ ,(? (not/c value?) e1) ,e2)             `(int+ ,(step e1) ,e2)]
+    [`(int+ ,(? value? v) ,(? (not/c value?) e2))   `(int+ ,v ,(step e2))]
+    [`(int+ ,(? value? v1) ,(? value? v2))           (plus v1 v2)]
+    ))
 
 (define/contract (eval e)
   (-> expr? value?)
   (when (infer e '())
     (if (value? e) e (eval (step e)))))
+
+;; (trace eval)

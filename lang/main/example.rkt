@@ -58,3 +58,8 @@
 (: (m (λ (x : int) x int)
       (λ (x : bool) x bool))
    (-> bool bool)) ;; => downcast to a boolean identity function
+
+;; we introduce some primitives
+
+;; use int+ to add integers
+((λ (x : int) (int+ x x) int) 1)
