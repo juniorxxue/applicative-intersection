@@ -190,7 +190,7 @@
 (define/contract (infer e env)
   (-> expr? list? type?)
   (match e    
-    [(? exact-integer?)                                                    'int]
+    [(? exact-integer?)                                              'int]
     [(? flonum?)                                                     'float]
     ['#t                                                             'bool]
     ['#f                                                             'bool]
@@ -199,7 +199,9 @@
     [`(~> ,l ,e)                                                     `(* ,l ,(infer e env))]
     [`(: ,e ,A) #:when (check e A env)                                A]
     [`(,e1 ,e2)                                                       (let ([A (infer e1 env)] [B (infer e2 env)])
-                                                                        (usub? A `(->? ,B)))]
+                                                                        (if (usub? A `(->? ,B))
+                                                                            (usub? A `(->? ,B))
+                                                                            (error "error when checking the application")))]
     [`(<~ ,e ,l)                                                      (let ([A (infer e env)])
                                                                         (usub? A `(->? ,l)))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])

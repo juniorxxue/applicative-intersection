@@ -1,5 +1,13 @@
 #lang s-exp "main.rkt"
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;; TODO ;;;;;;;;;;;;;;;;;;
+
+;; 1. better error message
+;; 2. define or let-binding
+;; 3. better lambda-syntax
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 ;; simple literals
 42
 42.2
@@ -78,4 +86,4 @@
 
 ((m (λ (x : int) (int+ x x) int)
     (λ (x : float) (flo+ x x) float))
- 4.2)
+ #f)
