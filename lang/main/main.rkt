@@ -9,7 +9,7 @@
   (rename-out [module-begin #%module-begin]
               [app          #%app]
               [datum        #%datum])
-  λ m : ~> <~ int+ flo+)
+  λ m mm : ~> <~ int+ flo+)
 
 (require
   (for-syntax
@@ -34,6 +34,12 @@
   (syntax-parse stx
     [(_ e1 e2) #'(eval '(e1 e2))]))
 
+(define-syntax (mm stx)
+  (syntax-parse stx
+    #:datum-literals (mm)
+    [(_ e1) #'e1]
+    [(_ e1 e2 ...) #'(list 'm e1 (m e2 ...))]))
+
 (define-syntax (m stx)
   (syntax-parse stx
     #:datum-literals (m)
@@ -49,7 +55,7 @@
 
 (define-syntax (<~ stx)
   (syntax-parse stx
-    [(_ e l) #'(eval '(<~ e l))]))
+    [(_ e l) #'(eval `(<~ ,e l))]))
 
 (define-syntax (int+ stx)
     (syntax-parse stx
@@ -173,13 +179,16 @@
       (match* (t pt)
         [(`(-> ,A1 ,A2) `(-> ,B))                                              (usub? B A1)]
         [(`(* ,l ,A) `(-> ,l))                                                 #t]
-        [(`(& ,A1 ,A2) `(-> ,S))                                               (usub? A1 `(-> ,S))]
-        [(`(& ,A1 ,A2) `(-> ,S))                                               (usub? A2 `(-> ,S))]
+        [(`(& ,A1 ,A2) `(-> ,S))                                               (or (usub? A1 `(-> ,S))
+                                                                                   (usub? A2 `(-> ,S)))]
         [(`(-> ,A1 ,A2) `(->? ,B)) #:when (usub? B A1)                         A2]
         [(`(* ,l ,A) `(->? ,l))                                                A]
-        [(`(& ,A1 ,A2) `(->? ,S)) #:when (not (usub? A2 `(-> ,S)))             (usub? A1 `(->? ,S))]
-        [(`(& ,A1 ,A2) `(->? ,S)) #:when (not (usub? A1 `(-> ,S)))             (usub? A2 `(->? ,S))]
-        [(`(& ,A1 ,A2) `(->? ,S))                                             `(& ,(usub? A1 `(->? ,S)) ,(usub? A2 `(->? ,S)))]
+        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (not (usub? A2 `(-> ,S)))
+                                              (usub? A1 `(-> ,S)))             (usub? A1 `(->? ,S))]
+        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (not (usub? A1 `(-> ,S)))
+                                              (usub? A2 `(-> ,S)))             (usub? A2 `(->? ,S))]
+        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (usub? A1 `(-> ,S))
+                                              (usub? A2 `(-> ,S)))            `(& ,(usub? A1 `(->? ,S)) ,(usub? A2 `(->? ,S)))]
         [(_ _)                                                                 #f])))
 
 (define (lookup env var)
@@ -203,7 +212,9 @@
                                                                             (usub? A `(->? ,B))
                                                                             (error "error when checking the application")))]
     [`(<~ ,e ,l)                                                      (let ([A (infer e env)])
-                                                                        (usub? A `(->? ,l)))]
+                                                                        (if (usub? A `(->? ,l))
+                                                                            (usub? A `(->? ,l))
+                                                                            (usub? A `(->? ,l))))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         `(& ,A ,B))]
     [`(int+ ,e1 ,e2) #:when (and (check e1 'int env)
@@ -341,5 +352,3 @@
   (-> expr? value?)
   (when (infer e '())
     (if (value? e) e (eval (step e)))))
-
-;; (trace eval)

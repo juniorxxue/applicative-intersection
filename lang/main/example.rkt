@@ -2,7 +2,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;; TODO ;;;;;;;;;;;;;;;;;;
-
 ;; 1. better error message
 ;; 2. define or let-binding
 ;; 3. better lambda-syntax
@@ -68,7 +67,7 @@
       (λ (x : bool) x bool))
    (-> bool bool)) ;; => downcast to a boolean identity function
 
-;; we introduce some primitives
+;; we introduce some primitives: int+ and flo+
 
 ;; use int+ to add integers
 (int+ 1 3)
@@ -84,6 +83,8 @@
     (λ (x : float) (flo+ x x) float))
  1)
 
-((m (λ (x : int) (int+ x x) int)
-    (λ (x : float) (flo+ x x) float))
- #f)
+;; variadic version of merge operator
+(<~ (mm (~> 1 #t)
+        (~> 2 #f)
+        (~> 3 #t))
+    2)
