@@ -84,7 +84,13 @@
  1)
 
 ;; variadic version of merge operator
-(<~ (mm (~> 1 #t)
-        (~> 2 #f)
-        (~> 3 #t))
+(<~ (M (~> 1 #t)
+       (~> 2 #f)
+       (~> 3 #t))
     2)
+
+;; another syntactic sugar for records
+(R (1 1) (43 43) (99 99))
+
+(<~ (R (1 1) (43 43) (99 99))
+    99)

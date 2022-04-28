@@ -9,7 +9,7 @@
   (rename-out [module-begin #%module-begin]
               [app          #%app]
               [datum        #%datum])
-  λ m mm : ~> <~ int+ flo+)
+  λ m M R : ~> <~ int+ flo+)
 
 (require
   (for-syntax
@@ -34,11 +34,13 @@
   (syntax-parse stx
     [(_ e1 e2) #'(eval '(e1 e2))]))
 
-(define-syntax (mm stx)
+(define-syntax (M stx)
   (syntax-parse stx
-    #:datum-literals (mm)
-    [(_ e1) #'e1]
-    [(_ e1 e2 ...) #'(list 'm e1 (m e2 ...))]))
+    [(_ e ...) #'(eval '(M e ...))]))
+
+(define-syntax (R stx)
+  (syntax-parse stx
+    [(_ e ...) #'(eval '(R e ...))]))
 
 (define-syntax (m stx)
   (syntax-parse stx
@@ -55,7 +57,7 @@
 
 (define-syntax (<~ stx)
   (syntax-parse stx
-    [(_ e l) #'(eval `(<~ ,e l))]))
+    [(_ e l) #'(eval '(<~ e l))]))
 
 (define-syntax (int+ stx)
     (syntax-parse stx
@@ -349,6 +351,38 @@
     ))
 
 (define/contract (eval e)
-  (-> expr? value?)
-  (when (infer e '())
-    (if (value? e) e (eval (step e)))))
+  (-> any/c value?)
+  (let ([e (desugar e)])
+    (when (infer e '())
+      (if (value? e) e (eval (step e))))))
+
+;; -----------------------------------------------------------------------
+;; Non-core Features
+;; -----------------------------------------------------------------------
+
+(define (variadic->dyadic op args)
+  (match args
+    [(list last1 last2)          `(,op ,last1 ,last2)]
+    [(list a as ...)             `(,op ,a ,(variadic->dyadic op as))]))
+
+(define (unfold-field f)
+  (match f
+    [`(,l ,e)    `(~> ,l ,e)]))
+
+(define/contract (desugar e)
+  (-> any/c expr?)
+  (match e
+    [`(M ,e1 ...)                  (desugar (variadic->dyadic 'm e1))]
+    [`(R ,fs ...)                  (desugar `(M ,@(map unfold-field fs)))]
+    ;; recursive call
+    [`(λ (,x : ,A) ,e ,B)         `(λ (,x : ,A) ,(desugar e) ,B)]
+    [`(,e1 ,e2)                   `(,(desugar e1) ,(desugar e2))]
+    [`(m ,e1 ,e2)                 `(m ,(desugar e1) ,(desugar e2))]
+    [`(: ,e ,A)                   `(: ,(desugar e) ,A)]
+    [`(~> ,l ,e)                  `(~> ,l ,(desugar e))]
+    [`(<~ ,e ,l)                  `(<~ ,(desugar e) ,l)]
+    [`(int+ ,e1 ,e2)              `(int+ ,(desugar e1) ,(desugar e2))]
+    [`(flo+ ,e1 ,e2)              `(flo+ ,(desugar e1) ,(desugar e2))]
+    [_                             e]))
+
+#; (trace desugar)
