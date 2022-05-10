@@ -3,7 +3,7 @@ Require Import Metalib.LibTactics.
 Require Import Coq.Program.Equality.
 Require Import Coq.Program.Tactics.
 Require Import Strings.String.
-Require Import Psatz.
+Require Import Lia.
 
 Require Import Language.
 Require Import Tactical.
@@ -48,15 +48,10 @@ Inductive step : term -> term -> Prop :=
 | St_App_R : forall v e2 e2',
     value v ->
     step e2 e2' ->
-    step (App v e2) (App v e2')
-| St_Mrg : forall e1 e1' e2 e2',
+    step (App v e2) (App v e2')      
+| St_Mrg_L : forall e1 e1' e2,
     step e1 e1' ->
-    step e2 e2' ->
-    step (Mrg e1 e2) (Mrg e1' e2')         
-| St_Mrg_L : forall e1 v e1',
-    value v ->
-    step e1 e1' ->
-    step (Mrg e1 v) (Mrg e1' v)
+    step (Mrg e1 e2) (Mrg e1' e2)
 | St_Mrg_R : forall v e2 e2',
     value v ->
     step e2 e2' ->
@@ -76,7 +71,6 @@ Proof.
   induction v; intros; eauto.
   - intros St.
     dependent destruction Val. dependent destruction St; eauto.
-    + eapply IHv1; eauto.
     + eapply IHv1; eauto.
     + eapply IHv2; eauto.
   - dependent destruction Val.
@@ -175,8 +169,6 @@ Proof.
       eapply uunisub_complete_appsub; eauto.
   - Case "Merge".
     dependent destruction St.
-    + eapply IH in St1; eauto; try lia.
-      eapply IH in St2; eauto; try lia. destruct_conjs. eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs. eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs. eauto.
 Qed.
