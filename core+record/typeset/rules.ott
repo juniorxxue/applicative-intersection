@@ -1,0 +1,452 @@
+metavar termvar, x ::=
+
+metavar i, l ::=
+
+grammar
+
+typ, A {{ tex A }}, B {{ tex B }}, C {{ tex C }}, D {{ tex D }}, E {{ tex E }}, Ao {{ tex A^{o} }}, Bo {{ tex B^{o} }}, Co {{ tex C^{o} }}, Do {{ tex D^{o} }} :: 't_' ::=
+    | Int         :: :: Int
+    | Bool        :: :: Bool {{ com only for demo }}
+    | String      :: :: String {{ com only for demo }}
+    | Top         :: :: Top
+    | A -> B      :: :: Arrow
+    | A & B       :: :: And
+    | { l : A }   :: :: Record
+    | ( A )       :: :: Paren
+
+exp, e {{ tex e }}, v {{ tex v }}, p {{ tex p}}, One {{ tex 1 }} :: 'e_' ::=
+    | x                       :: :: Var
+    | i                       :: :: Lit
+    | \ x : A . e : B         :: :: Lam {{ tex [[\]][[x]].\,[[e]][[:]][[A]] \rightarrow [[B]] }}
+    | e1 e2                   :: :: App
+    | e1 ,, e2                :: :: Merge
+    | e : A                   :: :: Anno
+        | { l = e }               :: :: Record
+    | e . l                   :: :: Proj
+    | e1 [ x ~> e2 ]          :: M :: Subst
+    | ( e )                   :: :: Paren
+
+ctx, T {{ tex \Gamma }} :: 'ctx_' ::=
+    | []                   :: :: Empty {{ tex \cdot }}
+    | T , x : A            :: :: Cons
+
+arg, S {{ tex S }} :: 'arg_' ::=
+    | []                  :: :: None {{ tex \cdot }}
+    | A                   :: :: Type
+    | l                   :: :: Label
+
+dir {{ tex : }} :: 'dir_' ::=
+    | =>                  :: :: Inf {{ tex \Rightarrow }}
+    | <=                  :: :: Chk {{ tex \Leftarrow }}
+
+vl {{ tex vl }} :: 'vl_' ::=
+    | v                   :: :: Value
+    | l                   :: :: Label
+
+ot {{ tex \, \rightsquigarrow option \, [[B]] }} :: 'ot_' ::=
+    | ~> []                  :: :: None {{ tex }}
+    | ~> A                   :: :: Type {{ tex \colorbox{lightgray}{$ \rightsquigarrow [[A]] $} }}
+
+par, P {{ tex P }} :: 'partyp_' ::=
+    | S                   :: :: Arg
+    | PV S                :: :: ASB {{ tex [[S]] _{\rightarrow} }}
+    | PT S                :: :: AS  {{ tex [[S]] _{\rightarrow?} }}
+
+
+terminals :: 'terminals_' ::=
+    | Top         ::  :: Top        {{ tex \mathsf{Top}  }}
+    | Int         ::  :: Int        {{ tex \mathsf{Int}  }}
+    | Bool        ::  :: Bool       {{ tex \mathsf{Bool} }}
+    | String      ::  :: String     {{ tex \mathsf{String} }}
+    | ->          ::  :: Arrow      {{ tex \rightarrow }}
+    | &           ::  :: And        {{ tex \, \& \, }}
+    | ,,          ::  :: Merge      {{ tex \,,,\, }}
+    | \           ::  :: Lam        {{ tex \lambda }}
+    | ~>          ::  :: subst      {{ tex \mapsto }}
+
+
+formula :: 'formula_' ::=
+  | judgement                 ::   :: judgement
+  | not formula               :: M :: not {{ tex \neg [[formula]] }}
+  | l1 <> l2                  ::   :: labelneq {{ tex [[l1]] \neq [[l2]] }}
+  | ptype(u1) * ptype(u2)     ::   :: ptypefunc {{ tex ptype ( u_1 ) * ptype ( u_2 ) }}
+  | ptype(v1) <: PT atype(vl) ::   :: runtimejudge1 {{ tex ptype ( v_1 ) \leq atype ( vl ) _{\rightarrow} }}
+  | ptype(v2) <: PT atype(vl) ::   :: runtimejudge2 {{ tex ptype ( v_2 ) \leq atype ( vl ) _{\rightarrow} }}
+  | pvalue e                  ::   :: pvaluecon     {{ tex pvalue ~ [[e]]}}
+  | x : A in T                ::   :: incontext     {{ tex x : A ~in~ T }}
+
+
+defns
+SplitType :: '' ::=
+
+defn
+Split A A1 A2 :: :: Split :: Sp_ {{ com Splittable Types }} {{ tex [[A1]] \hookleftarrow [[A]] \hookrightarrow [[A2]] }}
+by
+
+-------------------------- :: And
+Split A & B A B
+
+
+Split B B1 B2
+---------------------------------- :: Arr
+Split A -> B A -> B1 A -> B2
+
+
+Split A A1 A2
+-------------------------------------- :: Rcd
+Split { l : A } { l : A1 } { l : A2 }
+
+defns
+Subtyping :: '' ::=
+
+defn
+A <: B :: :: Sub :: Sub_ {{ com Subtyping }} {{ tex [[A]] [[<:]] [[B]] }}
+by
+
+
+---------------------- :: Int
+Int <: Int
+
+
+---------------------- :: Top
+A <: Top
+
+
+C <: A
+B <: Do
+---------------------- :: Arr
+A -> B <: C -> Do
+
+
+A <: Bo
+------------------------ :: Rcd
+{ l : A } <: { l : Bo }
+
+
+Split B B1 B2
+A <: B1
+A <: B2
+------------------------ :: And
+A <: B
+
+
+A <: Co
+------------------------ :: And_L
+A & B <: Co
+
+
+B <: Co
+----------------------- :: And_R
+A & B <: Co
+
+defns
+IsoSub :: '' ::=
+
+defn
+A << B :: :: ISub :: ISub_ {{ com Isomorphic Subtyping }} {{ tex [[A]]\approx[[B]] }}
+by
+
+------------------ :: Refl
+A << A
+
+
+Split B B1 B2
+A1 << B1
+A2 << B2
+----------------------- :: And
+A1 & A2 << B
+
+
+defns
+UnifiedSubtyping :: '' ::=
+
+defn
+A <: P ot :: :: Usub :: S_ {{ com Applicative Subtyping }}  {{ tex [[A]] \leq [[P]] [[ot]] }}
+by
+
+
+-------------------------- :: Int
+Int <: Int ~> []
+
+
+---------------------- :: Top
+A <: Top ~> []
+
+
+B <: A ~> []
+C <: Do ~> []
+-------------------------- :: Arr
+A -> C <: B -> Do ~> []
+
+
+A <: Bo ~> []
+----------------------------- :: Rcd
+{ l : A } <: { l : Bo } ~> []
+
+
+Split B B1 B2
+A <: B1 ~> []
+A <: B2 ~> []
+--------------------------- :: And
+A <: B ~> []
+
+
+
+A <: Co ~> []
+------------------------- :: And_L
+A & B <: Co ~> []
+
+
+B <: Co ~> []
+-------------------------- :: And_R
+A & B <: Co ~> []
+
+
+B <: A1 ~> []
+------------------------------- :: V_Arr
+A1 -> A2 <: PV B ~> []
+
+
+------------------------------ :: V_Lbl
+{ l : A } <: PV l ~> []
+
+
+A1 <: PV S ~> []
+---------------------- :: V_And_L
+A1 & A2 <: PV S ~> []
+
+
+A2 <: PV S ~> []
+----------------------- :: V_And_R
+A1 & A2 <: PV S ~> []
+
+
+B <: A1 ~> []
+------------------------ :: As_Arr
+A1 -> A2 <: PT B ~> A2
+
+
+--------------------------- :: As_Lbl
+{ l : A } <: PT l ~> A
+
+
+A1 <: PT S ~> C
+not A2 <: PV S ~> []
+---------------------------- :: As_And_L
+A1 & A2 <: PT S ~> C
+
+
+A2 <: PT S ~> C
+not A1 <: PV S ~> []
+---------------------------- :: As_And_R
+A1 & A2 <: PT S ~> C
+
+
+A1 <: PT S ~> C1
+A2 <: PT S ~> C2
+---------------------------- :: As_And_P
+A1 & A2 <: PT S ~> C1 & C2
+
+defns
+Casting :: '' ::=
+
+defn
+v -> A v' :: :: Casting :: Ct_ {{ com Casting }} {{ tex [[v]] \, \longmapsto _{[[A]]} \, [[v']] }}
+by
+
+A <: Int
+------------------------ :: Refl
+i : A -> Int i : Int
+
+
+------------------------------------------- :: Top
+v  ->Top One : Top
+
+
+E <: C -> Do
+------------------------------------------------------------------ :: Arr
+(\ x : A . e : B) : E  ->(C -> Do)  (\ x : A . e : Do) : (C -> Do)
+
+
+v -> Ao v'
+----------------------------------- :: Rcd
+{ l = v } ->{ l : Ao } { l = v' }
+
+
+v1 ->Ao  v1'
+--------------------------------- :: Mrg_L
+v1 ,, v2 ->Ao  v1'
+
+
+v2 ->Ao  v2'
+--------------------------------- :: Mrg_R
+v1 ,, v2 ->Ao  v2'
+
+
+Split A A1 A2
+v ->A1 v1
+v ->A2 v2
+--------------------------------------- :: And
+v ->A v1 ,, v2
+
+
+defns
+ParallelApplication :: '' ::=
+
+defn
+v ; vl --> e :: :: Papp :: Oa_ {{ com Overloaded Application }} {{ tex ([[v]]~[[vl]])~ \rightrightarrows ~[[e]] }}
+by
+
+v ->A v'
+--------------------------------------------------- :: Lam
+(\ x : A .  e : B) : C -> D ; v --> e [ x ~> v' ] : D
+
+
+---------------------------------------- :: Proj
+{ l = v } ; l --> v
+
+
+not ptype(v2) <: PT atype(vl)
+v1 ; vl --> e
+------------------------------- :: Mrg_L
+v1 ,, v2 ; vl --> e
+
+not ptype(v1) <: PT atype(vl)
+v2 ; vl --> e
+------------------------------- :: Mrg_R
+v1 ,, v2 ; vl --> e
+
+
+ptype(v1) <: PT atype(vl)
+ptype(v2) <: PT atype(vl)
+v1 ; vl --> e1
+v2 ; vl --> e2
+------------------------------- :: Mrg_P
+v1 ,, v2 ; vl --> e1 ,, e2
+
+
+defns
+Reduction :: '' ::=
+
+defn
+e -->  e'  :: :: Step :: Step_ {{ com Small-Step Reduction }} {{ tex [[e]]~\longmapsto~[[e']] }}
+by
+
+---------------------- :: Int_Ann
+i --> i : Int
+
+
+------------------------------------------------ :: Arr_Ann
+\ x : A . e : B --> ( \ x : A . e : B ) : A -> B
+
+
+Split A A1 A2
+--------------------------------------- :: Pv_Split
+p : A --> p : A1 ,, p : A2
+
+
+v1 ; v2 --> e
+----------------------  :: App
+v1 v2 --> e
+
+
+v ; l --> v'
+-------------------------------------- :: Prj
+v.l --> v'
+
+
+v ->A v'
+------------------------------------------ :: Val_Ann
+v : A --> v'
+
+
+e1 --> e1'
+------------------------------------- :: App_L
+e1 e2 --> e1' e2
+
+
+e2 --> e2'
+------------------------------------- :: App_R
+v1 e2 --> v1 e2'
+
+
+e1 --> e1'
+------------------------------------------ :: Mrg_L
+e1 ,, e2 --> e1' ,, e2
+
+
+e2 --> e2'
+------------------------------------------ :: Mrg_R
+v1 ,, e2 --> v1 ,, e2'
+
+
+not pvalue e
+e --> e'
+------------------------------------------ :: Ann
+e : A --> e' : A
+
+
+e --> e'
+-------------------------------------- :: Rcd_R
+{ l = e } --> { l = e' }
+
+
+e --> e'
+-------------------------------------- :: Prj_L
+e.l --> e'.l
+
+defns
+Typing :: '' ::=
+
+defn
+T |- e dir A :: :: Typing :: 'T_' {{ com Bidirectional Typing }} {{ tex [[T]] \vdash [[e]] [[dir]] [[A]] }}
+by
+
+
+----------------- :: Lit
+T |- i => Int
+
+
+x : A in T
+-------------------------- :: Var
+T |- x => A
+
+
+T , x : A |- e <= B
+------------------------------------------- :: Lam
+T |- \x : A . e : B => A -> B
+
+
+T |- e => A
+--------------------------- :: Rcd
+T |- { l = e } => { l : A }
+
+
+T |- e1 => A
+T |- e2 => B
+A <: PT B ~> C
+----------------------- :: App
+T |- e1 e2 => C
+
+
+T |- e => A
+A <: PT l ~> B
+----------------------- :: Proj
+T |- e.l => B
+
+
+T |- e1 => A
+T |- e2 => B
+------------------------------ :: Mrg
+T |- e1 ,, e2 => A & B
+
+
+T |- e <= A
+--------------------- :: Ann
+T |- e : A => A
+
+
+T |- e => A
+A <: B
+--------------------- :: Sub
+T |- e <= B

@@ -9,7 +9,6 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
-Require Import Appsub.
 
 Require Import Value.
 Require Import PrincipalTyping.
@@ -31,6 +30,10 @@ Inductive casting : term -> type -> term -> Prop :=
     casting (Ann (Lam A e B) E)
             (Arr C D)
             (Ann (Lam A e D) (Arr C D))
+| Ct_Rcd : forall v v' A l,
+    ordinary A ->
+    casting v A v' ->
+    casting (Fld l v) (Rcd l A) (Fld l v')
 | Ct_Mrg_L : forall v1 v2 v A,
     casting v1 A v ->
     ordinary A ->
@@ -49,7 +52,10 @@ Hint Constructors casting : core.
 
 Notation "e ⇝ [ A ] e'" := (casting e A e') (at level 68).
 
-(** * Casting & LC & Value *)
+
+(** * Casting & Value *)
+
+(** Value property is preserved by casting *)
 
 Lemma casting_lc :
   forall v v' A,
@@ -58,9 +64,7 @@ Lemma casting_lc :
     lc v'.
 Proof.
   introv Lc Ct.
-  dependent induction Ct; eauto.
-  - econstructor; eauto.
-  - econstructor; eauto.
+  dependent induction Ct; eauto 3; econstructor; eauto.
 Qed.
 
 Lemma casting_value :
@@ -71,32 +75,13 @@ Lemma casting_value :
 Proof.
   introv Val Ct.
   induction Ct; eauto.
+  inversion Val; eauto.
 Qed.
 
 Hint Resolve casting_value : core.
 
-(** * Transitivity *)
-
-Lemma casting_transitivity :
-  forall v v1 v2 A B,
-    value v ->
-    casting v A v1 ->
-    casting v1 B v2 ->
-    casting v B v2.
-Proof.
-  introv Val Ct1 Ct2. gen B v2.
-  induction Ct1; intros; try solve [dependent induction Ct2; eauto].
-  - dependent induction Ct2; eauto.
-    dependent destruction H0; eauto.
-  - dependent induction Ct2; eauto.
-    eapply Ct_Lam; eauto. eapply sub_transitivity; eauto.
-  - dependent destruction Val.
-    dependent induction Ct2; eauto.
-  - dependent destruction Val.
-    dependent induction Ct2; eauto.
-Qed.
-
 (** * Progress *)
+
 
 Lemma casting_progress' :
   forall v A B,
@@ -122,6 +107,13 @@ Proof.
     dependent destruction Val. dependent destruction H0; eauto.
     dependent destruction Typ. dependent destruction Typ.
     dependent destruction H2; eauto.
+  - Case "Sub-Rcd".
+    dependent destruction Typ; eauto.
+    + dependent destruction Val. destruct (IHSub e); eauto.
+    + dependent destruction Val.
+      destruct H0.
+      repeat (dependent destruction Typ). dependent destruction H2; eauto.
+      repeat (dependent destruction Typ). dependent destruction H3; eauto.
   - Case "Sub-And".
     pose proof (IHSub1 _ Val Typ). pose proof (IHSub2 _ Val Typ).
     destruct_conjs; eauto.
@@ -146,9 +138,8 @@ Proof.
   eapply casting_progress'; eauto.
 Qed.
 
-Print Assumptions casting_progress.
 
- (** * Preservation *)
+(** * Preservation *)
 
 Lemma casting_preservation :
   forall v v' A B,
@@ -168,11 +159,16 @@ Proof.
     assert (Sub2: sub (Arr A D) (Arr C D)) by eauto.
     eapply Ty_Ann; eauto. eapply Ty_Sub; eauto.
     eapply Ty_Lam; eauto. intros. eapply typing_chk_sub; eauto.
+  - Case "Rcd".
+    dependent destruction Val. dependent destruction Typ; eauto.
+    pose proof (IHCt Val _ Typ). destruct H0. destruct H0.
+    exists (Rcd l x). split; eauto.
   - Case "Merge L".
     dependent destruction Val. dependent destruction Typ; eauto.
   - Case "Merge R".
     dependent destruction Val. dependent destruction Typ; eauto.
-  - pose proof (IHCt1 Val B Typ) as IH1. destruct IH1 as [x1 IH1].
+  - Case "Merge".
+    pose proof (IHCt1 Val B Typ) as IH1. destruct IH1 as [x1 IH1].
     pose proof (IHCt2 Val B Typ) as IH2. destruct IH2 as [x2 IH2].
     destruct_conjs.
     exists (And x1 x2). split; eauto.

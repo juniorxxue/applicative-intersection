@@ -38,6 +38,18 @@ Inductive pvalue : term -> Prop :=
 
 Hint Constructors pvalue : core.
 
+(** ** Universal Value *)
+
+Inductive uvalue : term -> Prop :=
+| Uv_Ann : forall e A,
+    lc e ->
+    uvalue (Ann e A)
+| Uv_Mrg : forall u1 u2,
+    uvalue u1 -> uvalue u2 ->
+    uvalue (Mrg u1 u2).
+
+Hint Constructors uvalue : core.
+
 (** ** Value *)
 
 Inductive value : term -> Prop :=
@@ -214,8 +226,34 @@ Proof.
   inversion 1; eauto.
 Qed.
 
+Lemma uvalue_inv_merge_l :
+  forall u1 u2,
+    uvalue (Mrg u1 u2) -> uvalue u1.
+Proof.
+  inversion 1; eauto.
+Qed.
+
+Lemma uvalue_inv_merge_r :
+  forall u1 u2,
+    uvalue (Mrg u1 u2) -> uvalue u2.
+Proof.
+  inversion 1; eauto.
+Qed.
+
 Hint Resolve value_inv_merge_l : core.
 Hint Resolve value_inv_merge_r : core.
+Hint Resolve uvalue_inv_merge_l : core.
+Hint Resolve uvalue_inv_merge_r : core.
+
+Lemma value_is_uvalue :
+  forall v,
+    value v -> uvalue v.
+Proof.
+  introv Hv.
+  induction Hv; eauto.
+Qed.
+
+Hint Resolve value_is_uvalue : core.
 
 (** * Properties *)
 

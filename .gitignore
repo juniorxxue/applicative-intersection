@@ -26,3 +26,9 @@ Makefile.coq.conf
 compiled/
 
 *.~undo-tree~
+
+*.pdf
+
+*.xdv
+*.fls
+*.fdb_latexmk

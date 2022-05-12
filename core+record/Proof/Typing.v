@@ -5,6 +5,7 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Appsub.
+Require Import Subtyping.Unisub.
 Require Import Value.
 Require Import PrincipalTyping.
 
@@ -28,6 +29,9 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
     (forall x, x \notin L ->
           typing ((one (x, A)) ++ T) (open e (Fvar x)) Chk B) ->
     typing T (Lam A e B) Inf (Arr A B)
+| Ty_Rcd : forall T e l A,
+    typing T e Inf A ->
+    typing T (Fld l e) Inf (Rcd l A)
 | Ty_Ann : forall T A e,
     typing T e Chk A ->
     typing T (Ann e A) Inf A
@@ -36,6 +40,10 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
     typing T e2 Inf B ->
     uunisub A (uP (Avt B)) (Some C) ->
     typing T (App e1 e2) Inf C
+| Ty_Prj : forall T e l A B,
+    typing T e Inf A ->
+    uunisub A (uP (Alt l)) (Some B) ->
+    typing T (Prj e l) Inf B
 | Ty_Mrg : forall T A B e1 e2,
     typing T e1 Inf A ->
     typing T e2 Inf B ->
@@ -54,14 +62,13 @@ Notation "T ⊢ e ⇐ A" := (typing T e Chk A) (at level 50).
 
 Lemma typing_to_ptype :
   forall u A,
-    value u ->
+    uvalue u ->
     typing nil u Inf A ->
     ptype u A.
 Proof.
-  introv Val Typ. gen A.
-  induction Val; intros.
-  - dependent destruction Typ; eauto.
-  - dependent destruction Typ; eauto.
+  introv Uval Typ. gen A.
+  induction Uval; intros;
+    dependent destruction Typ; eauto.
 Qed.
 
 Hint Resolve typing_to_ptype : core.

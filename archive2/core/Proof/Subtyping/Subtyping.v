@@ -4,6 +4,7 @@ Require Import Strings.String.
 Require Import Program.Tactics.
 Require Import Psatz. (* lia *)
 Require Import Language Tactical.
+Require Import Subtyping.Toplike.
 Require Import Subtyping.Splitable.
 
 Set Printing Parentheses.
@@ -13,8 +14,9 @@ Set Printing Parentheses.
 Inductive sub : type -> type -> Prop :=
 | Sub_Int :
     sub Int Int
-| Sub_Top : forall A,
-    sub A Top
+| Sub_Top : forall A B,
+    ordinary B -> toplike B ->
+    sub A B
 | Sub_Arrow : forall A B C D,
     sub C A -> sub B D ->
     ordinary D ->
@@ -115,6 +117,71 @@ Qed.
 
 Hint Resolve sub_splitable : subtyping.
 
+(** * Splitable & Toplike *)
+
+Lemma splitable_toplike1:
+  forall A A1 A2,
+    splitable A A1 A2 -> toplike A1 -> toplike A2 -> toplike A.
+Proof.
+  introv Spl Tl1 Tl2.
+  dependent induction Spl; eauto.
+Qed.
+
+Lemma splitable_toplike2 :
+  forall A A1 A2,
+    splitable A A1 A2 -> toplike A -> toplike A1 /\ toplike A2.
+Proof.
+  introv Spl Tl.
+  induction Spl.
+  - dependent destruction Tl; eauto.
+  - dependent destruction Tl.
+    pose proof (IHSpl Tl).
+    destruct_conjs; eauto.
+Qed.
+
+Lemma splitable_not_toplike :
+  forall A A1 A2,
+    ~ toplike A -> splitable A A1 A2 ->
+    ~ toplike A1 \/ ~ toplike A2.
+Proof.
+  introv nTl Spl. gen A1 A2.
+  induction A; intros; eauto.
+  - dependent destruction Spl.
+    destruct (toplike_decidable A2); eauto.
+    pose proof (IHA2 H _ _ Spl) as Ntls.
+    destruct Ntls.
+    + left. intros Contra. contra_toplike.
+    + right. intros Contra. contra_toplike.
+  - dependent destruction Spl.
+    destruct (toplike_decidable A1); eauto.
+Qed.
+
+(** * Subtyping & Toplike (1) *)
+
+Lemma sub_toplike:
+  forall A B,
+    toplike A -> sub A B -> toplike B.
+Proof.
+  introv Tl Sub.
+  induction Sub; eauto with subtyping.
+  - eapply splitable_toplike1; eauto.
+  - dependent destruction Tl; eauto.
+  - dependent destruction Tl; eauto.
+Qed.
+
+Hint Resolve sub_toplike : subtyping.
+Hint Resolve sub_toplike : core.
+
+Lemma sub_not_toplike :
+  forall A B,
+    ~ toplike B -> sub A B -> ~ toplike A.
+Proof.
+  introv Ntl Sub.
+  intros Contra.
+  pose proof (sub_toplike _ _ Contra Sub).
+  contradiction.
+Qed.
+
 
 (** * Inversion Lemmas *)
 
@@ -141,6 +208,25 @@ Proof.
   introv Sub Spl.
   dependent destruction Sub; eauto with subtyping.
   subst_splitable; intuition.
+Qed.
+
+Lemma sub_inv_int_arrow :
+  forall A B,
+    sub Int (Arr A B) -> ordinary B -> toplike B.
+Proof.
+  introv Sub Ord.
+  dependent destruction Sub; eauto.
+Qed.
+
+Lemma sub_inv_int :
+  forall A,
+    ~ toplike A ->
+    sub Int A ->
+    ordinary A ->
+    A = Int.
+Proof.
+  introv Ntl Sub Ord.
+  dependent destruction Sub; eauto.
 Qed.
 
 (** * Proper Types *)
@@ -209,6 +295,18 @@ Proof.
       eapply sub_inv_splitable_l in Sub2; eauto. intuition.
     + eapply sub_inv_splitable_r in Sub2; eauto.
       destruct Sub2; eauto.
+Qed.
+
+(** * Subtyping & Toplike (2) *)
+
+Lemma sub_toplike_super :
+  forall A,
+    toplike A -> forall B, sub B A.
+Proof.
+  introv Tl.
+  proper_ind A; eauto.
+  pose proof (splitable_toplike2 _ _ _ H Tl) as Spl_Tl.
+  destruct Spl_Tl; eauto.
 Qed.
 
 (** * Isomorphic Subtyping *)
