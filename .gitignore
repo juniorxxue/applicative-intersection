@@ -32,3 +32,5 @@ compiled/
 *.xdv
 *.fls
 *.fdb_latexmk
+
+dist-newstyle

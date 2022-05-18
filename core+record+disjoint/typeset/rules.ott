@@ -74,7 +74,7 @@ formula :: 'formula_' ::=
   | ptype(v1) <: PT atype(vl) ::   :: runtimejudge1 {{ tex ptype ( v_1 ) \leq atype ( vl ) _{\rightarrow} }}
   | ptype(v2) <: PT atype(vl) ::   :: runtimejudge2 {{ tex ptype ( v_2 ) \leq atype ( vl ) _{\rightarrow} }}
   | pvalue e                  ::   :: pvaluecon     {{ tex pvalue ~ [[e]]}}
-  | x : A in T                ::   :: incontext     {{ tex x : A ~in~ T }}
+  | x : A in T                ::   :: incontext     {{ tex x : A ~\in~ \Gamma }}
 
 
 defns

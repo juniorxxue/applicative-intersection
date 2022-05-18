@@ -73,14 +73,14 @@ formula :: 'formula_' ::=
   | ptype(v1) <: PT atype(vl) ::   :: runtimejudge1 {{ tex ptype ( v_1 ) \leq atype ( vl ) _{\rightarrow} }}
   | ptype(v2) <: PT atype(vl) ::   :: runtimejudge2 {{ tex ptype ( v_2 ) \leq atype ( vl ) _{\rightarrow} }}
   | pvalue e                  ::   :: pvaluecon     {{ tex pvalue ~ [[e]]}}
-  | x : A in T                ::   :: incontext     {{ tex x : A ~in~ T }}
+  | x : A in T                ::   :: incontext     {{ tex x : A ~\in~ \Gamma }}
 
 
 defns
 SplitType :: '' ::=
 
 defn
-Split A A1 A2 :: :: Split :: Sp_ {{ com Splittable Types }} {{ tex [[A1]] \hookleftarrow [[A]] \hookrightarrow [[A2]] }}
+Split A A1 A2 :: :: Split :: Sp_ {{ com Splittable Types }} {{ tex [[A1]] \mathbin{\lhd} [[A]] \mathbin{\rhd} [[A2]] }}
 by
 
 -------------------------- :: And
@@ -148,6 +148,11 @@ by
 
 ------------------ :: Refl
 A << A
+
+
+A << B
+--------------------- :: Rcd
+{l : A} << {l : B}
 
 
 Split B B1 B2
@@ -447,6 +452,6 @@ T |- e : A => A
 
 
 T |- e => A
-A <: B
+A <: B ~> []
 --------------------- :: Sub
 T |- e <= B
