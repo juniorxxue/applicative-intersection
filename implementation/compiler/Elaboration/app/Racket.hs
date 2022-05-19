@@ -8,4 +8,5 @@ data Term = Unit
           | Pair Term Term
           | Fst Term
           | Snd Term
+          | Fld Int Term
           deriving (Show, Eq)
