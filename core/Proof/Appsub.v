@@ -137,23 +137,15 @@ Proof.
   congruence.
 Qed.
 
-(** ** Soundness *)
+(** ** Completeness *)
 
-Lemma appsub_sound_v :
+(** After adding records to appsub, we lose the standard completeness property *)
+
+Lemma appsub_complete :
   forall A B C,
     appsub (Some (Avt B)) A C -> sub A (Arr B C).
 Proof.
-  intros. dependent induction H; eauto.
-  eapply Sub_And; eauto.
-Qed.
-
-Lemma appsub_sound_l :
-  forall A B l,
-    appsub (Some (Alt l)) A B -> sub A (Rcd l B).
-Proof.
-  intros. dependent induction H; eauto.
-  eapply Sub_And; eauto.
-Qed.
+Abort.
 
 (** * Appsub & Isomorphic Subtyping *)
 
@@ -424,4 +416,111 @@ Lemma appsub_iso_l :
     (exists C, appsub (Some (Alt l)) H C /\ isosub C B).
 Proof.
   eapply appsub_iso_l2.
+Qed.
+
+(** * Function Definition *)
+
+(** psub can be viewed as a simplified func version of appsub *)
+
+Axiom dec_sub : forall A B, sumbool (sub A B) (not (sub A B)).
+
+Fixpoint psub (A : type) (S : arg) : option type :=
+  match A, S with
+  | Arr A1 A2, (Avt B) => if dec_sub B A1 then Some A2 else None
+  | Rcd l1 A1, (Alt l2) => if eq_nat_dec l1 l2 then Some A1 else None
+  | And A1 A2, _ =>
+    match psub A1 S, psub A2 S with
+    | Some C1, Some C2 => Some (And C1 C2)
+    | Some C1, _       => Some C1
+    | _, Some C2       => Some C2
+    | _,_              => None
+    end
+  | _, _ => None
+  end.
+
+Require Import FunInd FMapInterface.
+Functional Scheme psub_ind := Induction for psub Sort Prop.
+
+
+(** ** Soundness *)
+
+Lemma psub_none_auxas1:
+  forall A S,
+    psub A S = None ->
+    ~ auxas (Some S) A.
+Proof.
+  introv Ps.
+  functional induction (psub A S); eauto; try (inversion Ps).
+  - intros Contra. dependent destruction Contra. contradiction.
+  - intros Contra. dependent destruction Contra; eauto.
+    + pose proof (IHo e0). contradiction.
+    + pose proof (IHo0 e1). contradiction.
+  - intros Contra. dependent destruction Contra. contradiction.
+Qed.
+
+Lemma auxas_not_and :
+  forall S A1 A2,
+    ~ auxas (Some S) (And A1 A2) ->
+    ~ auxas (Some S) A1 /\ ~ auxas (Some S) A2.
+Proof.
+  introv nAux.
+  split.
+  - intros Contra.
+    assert (auxas (Some S) (And A1 A2)) by eauto. contradiction.
+  - intros Contra.
+    assert (auxas (Some S) (And A1 A2)) by eauto. contradiction.
+Qed.
+
+Lemma psub_none_auxas2:
+  forall A S,
+    ~ auxas (Some S) A ->
+    psub A S = None.
+Proof.
+  induction A; introv nAux; simpl; eauto.
+  - induction S; eauto.
+    destruct (dec_sub t A1); eauto.
+    destruct nAux. auto.
+  - eapply auxas_not_and in nAux. destruct nAux; eauto.
+    pose proof (IHA1 _ H).
+    pose proof (IHA2 _ H0).
+    rewrite H1. rewrite H2. auto.
+  - induction S; eauto.
+    destruct (eq_nat_dec l l0); eauto. subst.
+    destruct nAux. eauto.
+Qed.
+
+Lemma psub_sound_appsub :
+  forall A S B,
+    psub A S = Some B ->
+    appsub (Some S) A B.
+Proof.
+  introv Ps. gen B.
+  functional induction (psub A S); intros; try (inversion Ps).
+  - dependent destruction Ps. eauto.
+  - dependent destruction Ps. eauto.
+  - dependent destruction Ps; eauto.
+    eapply As_And_L; eauto. eapply psub_none_auxas1; eauto.
+  - dependent destruction Ps; eauto.
+    eapply As_And_R; eauto. eapply psub_none_auxas1; eauto.
+  - dependent destruction Ps; eauto.
+Qed.
+
+(** ** Completeness *)
+
+Lemma psub_complete_appsub :
+  forall A S B,
+    appsub (Some S) A B ->
+    psub A S = Some B.
+Proof.
+  introv As.
+  dependent induction As.
+  - simpl. destruct (dec_sub C A); eauto. contradiction.
+  - simpl. destruct (eq_nat_dec l l); eauto. contradiction.
+  - simpl. pose proof (IHAs _ eq_refl). rewrite H0.
+    eapply psub_none_auxas2 in H. rewrite H. auto.
+  - simpl. pose proof (IHAs _ eq_refl). rewrite H0.
+    eapply psub_none_auxas2 in H. rewrite H. auto.
+  - simpl. pose proof (IHAs1 _ eq_refl). rewrite H.
+    simpl. pose proof (IHAs2 _ eq_refl). rewrite H0.
+    auto.
 Qed.

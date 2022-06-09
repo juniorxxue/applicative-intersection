@@ -448,6 +448,31 @@ Proof.
       Unshelve. eauto.
 Qed.
 
+Theorem preservation_chk :
+  forall e e' A,
+    typing nil e Chk A ->
+    step e e' ->
+    typing nil e' Chk A.
+Proof.
+  introv Typ St.
+  dependent destruction Typ.
+  pose proof (preservation _ _ _ Typ St). destruct_conjs.
+  eapply Ty_Sub; eauto. eapply isosub_to_sub1 in H2. eapply sub_transitivity; eauto.
+Qed.
+
+Theorem preservation_gen :
+  forall e e' A dir,
+    typing nil e dir A ->
+    step e e' ->
+    typing nil e' Chk A.
+Proof.
+  introv Typ St.
+  destruct dir.
+  - pose proof (preservation _ _ _ Typ St). destruct_conjs.
+    eapply Ty_Sub; eauto. eapply isosub_to_sub1 in H1. auto.
+  - eapply preservation_chk; eauto.
+Qed.
+
 (** * Progress *)
 
 Theorem progress :
@@ -479,4 +504,39 @@ Proof.
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
   - Case "Merge V".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
+Qed.
+
+(** * Soundness *)
+
+Definition relation (X : Type) := X -> X -> Prop.
+
+Inductive multi {X : Type} (R : relation X) : relation X :=
+| multi_refl : forall (x : X), multi R x x
+| multi_step : forall (x y z : X), R x y -> multi R y z -> multi R x z.
+
+Notation multistep := (multi step).
+
+Definition normal_form {X : Type} (R : relation X) (e : X) : Prop :=
+  not (exists e', R e e').
+
+Definition stuck (e : term) : Prop :=
+  (normal_form step) e /\ ~ value e.
+
+Corollary soundness :
+  forall e e' A dir,
+    typing nil e dir A ->
+    multistep e e' ->
+    ~ (stuck e').
+Proof.
+  introv Typ Mult. unfold stuck.
+  intros [Nf Nval]. unfold normal_form in Nf. gen A dir.
+  dependent induction Mult; intros.
+  - pose proof (progress _ _ _ Typ). destruct H; eauto.
+  - destruct dir.
+    + pose proof (preservation _ _ _ Typ H) as Prv.
+      destruct Prv. destruct H0.
+      eapply IHMult; eauto.
+    + pose proof (preservation_chk _ _ _ Typ H) as Prv.
+      dependent destruction Prv.
+      eapply IHMult; eauto.      
 Qed.
