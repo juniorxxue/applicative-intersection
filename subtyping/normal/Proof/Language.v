@@ -24,8 +24,7 @@ Inductive type : Set :=
 | Int : type
 | Top : type          
 | Arr : type -> type -> type
-| And : type -> type -> type
-| Rcd : label -> type -> type.
+| And : type -> type -> type.
 
 Hint Constructors type : core.
 
@@ -33,7 +32,6 @@ Hint Constructors type : core.
 
 Notation "A → B" := (Arr A B) (at level 20).
 Notation "A & B" := (And A B) (at level 20).
-Notation "{ l : A }" := (Rcd l A) (at level 20).
 
 (** coerce atom x to (Fvar x) *)
 
@@ -47,7 +45,6 @@ Fixpoint size_type (A : type) {struct A} : nat :=
   | Top => 1
   | Arr A B => 1 + (size_type A) + (size_type B)
   | And A B => 1 + (size_type A) + (size_type B)
-  | Rcd l A => 1 + (size_type A)
   end.
 
 (** induction on size *)
