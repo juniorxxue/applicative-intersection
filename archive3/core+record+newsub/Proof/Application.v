@@ -9,7 +9,6 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
-Require Import Subtyping.Unisub.
 Require Import Appsub.
 
 Require Import Value.

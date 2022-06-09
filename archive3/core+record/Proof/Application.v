@@ -76,8 +76,8 @@ Inductive papp : term -> vl -> term -> Prop :=
 | Pa_Mrg_P : forall v1 v2 A B vl TA e1 e2,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    uunisub A (uV TA) None ->
-    uunisub B (uV TA) None ->
+(*    uunisub A (uV TA) None -> *)
+(*    uunisub B (uV TA) None -> *)
     papp v1 vl e1 ->
     papp v2 vl e2 ->
     papp (Mrg v1 v2) vl (Mrg e1 e2).
@@ -128,6 +128,20 @@ Proof.
 Qed.
 
 Hint Resolve typing_to_atype : core.
+
+Lemma typing_and_appsub :
+  forall v1 v2 v A B S,
+    value v1 -> value v2 ->
+    typing nil (App (Mrg v1 v2) v) Inf A ->
+    atype (Av v) S -> ptype (Mrg v1 v2) B ->
+    appsub (Some S) B A.
+Proof.
+  introv Val1 Val2 Typ.
+  dependent destruction Typ.
+  intros. dependent destruction H0.
+  eapply typing_to_ptype in Typ1; eauto.
+  eapply typing_to_ptype in Typ2; eauto. subst_ptype.
+Admitted.
 
 (** * App & Value *)
 
@@ -344,7 +358,59 @@ Ltac solver1 := repeat match goal with
                        | Typ: typing nil ?v Inf ?A, Val: value ?v, At: atype (Av ?v) _ |- _ =>
                            pose proof (typing_to_atype _ _ Val Typ);
                            subst_atype; clear At
-                       end.
+                  end.
+
+
+Lemma papp_preservation_v_chk :
+  forall v vl e A B C,
+    value v -> value vl ->
+    typing nil v Inf A ->
+    typing nil vl Inf B ->
+    appsub (Some (Avt B)) A C ->
+    papp v (Av vl) e ->
+    typing nil e Chk C.
+Proof.
+  introv Val Vall Typ Typl As Pa. gen A B C.
+  dependent induction Pa; intros.
+  - Case "Lam".
+    repeat dependent destruction Typ. dependent destruction As.
+    dependent destruction Val.
+    match goal with
+    | [H: sub (Arr _ _) (Arr _ _) |- _] => (dependent destruction H; eauto)
+    end.
+    match goal with
+    | [H: casting _ _ _ |- _] => (eapply casting_preservation in H; eauto; destruct H; destruct H)
+    end.
+    pick fresh y. rewrite (subst_intro y); eauto.
+    assert (Fr': y `notin` L) by eauto.
+    pose proof (H3 y Fr').
+    rewrite_env (nil ++ [(y, A)] ++ nil) in H7.
+    pose proof (substitution_lemma nil nil y v' (open e y) A B x Chk) as Sl.
+    destruct Sl as [x' Sl']; eauto. destruct Sl'.
+    eapply Ty_Sub.
+    eapply Ty_Ann; eauto.
+    eapply isosub_to_sub1 in H9; eauto.
+    eapply typing_chk_sub; eauto.
+    eapply sub_transitivity; eauto 3.
+    eapply sub_reflexivity.
+  - Case "Merge L".
+    dependent destruction Val. dependent destruction Typ;
+      dependent destruction As; eauto 3; solver1; eauto.      
+  - Case "Merge R".
+    dependent destruction Val. dependent destruction Typ;
+      dependent destruction As; eauto 3; solver1; eauto.
+  - Case "Merge P".
+    dependent destruction Val. dependent destruction Typ.
+    solver1.
+    dependent destruction As; eauto.
+    + pose proof (IHPa1 Val1 _ Vall eq_refl _ Typ1 _ Typl _ As).
+      admit.
+    + admit.
+    + exploit (IHPa1 Val1 _ Vall); eauto.
+      exploit (IHPa2 Val2 _ Vall); eauto.
+      intros IH2 IH1.
+      admit.
+Admitted.
 
 Lemma papp_preservation_v :
   forall v vl e A B C,
@@ -387,10 +453,12 @@ Proof.
     dependent destruction Val. dependent destruction Typ.
     solver1.
     dependent destruction As; eauto.
-    exploit (IHPa1 Val1 _ Vall); eauto.
-    exploit (IHPa2 Val2 _ Vall); eauto.
-    intros IH2 IH1.
-    destruct_conjs. exists (And IH1 IH2). split; eauto. 
+    + admit.
+    + admit.
+    + exploit (IHPa1 Val1 _ Vall); eauto.
+      exploit (IHPa2 Val2 _ Vall); eauto.
+      intros IH2 IH1.
+      destruct_conjs. exists (And IH1 IH2). split; eauto. 
 Qed.
 
 

@@ -13,8 +13,7 @@ Set Printing Parentheses.
 (** ** Arguments *)
 
 Inductive arg :=
-| Avt : type -> arg
-| Alt : label -> arg.
+| Avt : type -> arg.
 
 (** ** Applicative Subtyping (Binary) *)
 
@@ -24,8 +23,6 @@ Inductive auxas : option arg -> type -> Prop :=
 | Aas_Arr : forall A B C,
     sub C A ->
     auxas (Some (Avt C)) (Arr A B)
-| Aas_Lbl : forall A l,
-    auxas (Some (Alt l)) (Rcd l A)
 | Aas_And_L : forall A B S,
     auxas (Some S) A ->
     auxas (Some S) (And A B)
@@ -44,20 +41,18 @@ Inductive appsub : option arg -> type -> type -> Prop :=
 | As_Arr : forall A B C,
     sub C A ->
     appsub (Some (Avt C)) (Arr A B) B
-| As_Lbl : forall A l,
-    appsub (Some (Alt l)) (Rcd l A) A
-| As_And_L : forall A B S C,
-    appsub (Some S) A C ->
-    not (auxas (Some S) B) ->
-    appsub (Some S) (And A B) C
-| As_And_R : forall A B S C,
-    appsub (Some S) B C ->
-    not (auxas (Some S) A) ->
-    appsub (Some S) (And A B) C
-| As_And_P : forall A B S C1 C2,
-    appsub (Some S) A C1 ->
-    appsub (Some S) B C2 ->
-    appsub (Some S) (And A B) (And C1 C2).
+| As_And_L : forall A B C D,
+    appsub (Some C) A D ->
+    not (auxas (Some C) B) ->
+    appsub (Some C) (And A B) D
+| As_And_R : forall A B C D,
+    appsub (Some C) B D ->
+    not (auxas (Some C) A) ->
+    appsub (Some C) (And A B) D
+| As_And_P : forall A B C D1 D2,
+    appsub (Some C) A D1 ->
+    appsub (Some C) B D2 ->
+    appsub (Some C) (And A B) (And D1 D2).
 
 Hint Constructors appsub : core.
 Notation "S ⊢ A <: B" := (appsub S A B) (at level 40).
@@ -70,16 +65,12 @@ Ltac solve_auxas :=
   match goal with
   | [H: auxas _ Int |- _] => (inversion H)
   | [H: auxas _ Top |- _] => (inversion H)
-  | [H: auxas (Some (Avt _)) (Rcd _ _) |- _] => (inversion H)
-  | [H: auxas (Some (Alt _)) (Arr _ _) |- _] => (inversion H)
   end.
 
 Ltac solve_appsub :=
   match goal with
   | [H: appsub _ Int _ |- _] => (inversion H)
   | [H: appsub _ Top _ |- _] => (inversion H)
-  | [H: appsub (Some (Avt _)) (Rcd _ _) _ |- _] => (inversion H)
-  | [H: appsub (Some (Alt _)) (Arr _ _) _ |- _] => (inversion H)
   end.
 
 Hint Extern 5 => solve_auxas : core.
@@ -137,22 +128,17 @@ Proof.
   congruence.
 Qed.
 
-(** ** Soundness *)
+(** ** Completeness *)
 
-Lemma appsub_sound_v :
+Lemma appsub_complete :
   forall A B C,
     appsub (Some (Avt B)) A C -> sub A (Arr B C).
 Proof.
-  intros. dependent induction H; eauto.
-  eapply Sub_And; eauto.
-Qed.
-
-Lemma appsub_sound_l :
-  forall A B l,
-    appsub (Some (Alt l)) A B -> sub A (Rcd l B).
-Proof.
-  intros. dependent induction H; eauto.
-  eapply Sub_And; eauto.
+  introv As.
+  dependent induction As; eauto.
+  - pose proof (IHAs1 B).
+    pose proof (IHAs2 B).
+    eapply Sub_And; eauto.
 Qed.
 
 (** * Appsub & Isomorphic Subtyping *)
@@ -173,7 +159,7 @@ Proof.
   dependent destruction Hspl; eauto.
   - Case "And".
     dependent destruction Has; eauto.
-    right. right. exists C1. exists C2.
+    right. right. exists D1. exists D2.
     split; eauto.
   - Case "Arr".
     right. right.
@@ -184,17 +170,13 @@ Proof.
     pose proof (IHPr2 _ _ As2).
     dependent destruction Hspl.
     * exists A0. exists B. split; eauto.
-    * exists (Arr A0 B1). exists (Arr A0 B2). split; eauto.
-    * exists (Rcd l A1). exists (Rcd l A2). split; eauto.
-  - Case "Rcd".
-    right. right.
-    dependent induction Has.
-    exists A1. exists A2. split; eauto.
+    * exists (Arr A0 B1). exists (Arr A0 B2).
+      split; eauto.
 Qed.
 
 (** ** Arguments *)
 
-Lemma auxas_iso_v1 :
+Lemma auxas_iso1 :
   forall A B H,
     auxas (Some (Avt A)) B ->
     isosub A H ->
@@ -218,7 +200,7 @@ Proof.
     + dependent destruction H; eauto.
 Qed.
 
-Lemma appsub_iso_v1 :
+Lemma appsub_iso1 :
   forall A B C H,
     appsub (Some (Avt A)) B C ->
     isosub H A ->
@@ -231,15 +213,15 @@ Proof.
   - eapply As_Arr; eauto.
     eapply sub_transitivity; eauto.
   - eapply As_And_L; eauto.
-    intros Contra. eapply auxas_iso_v1 in Contra; eauto.
+    intros Contra. eapply auxas_iso1 in Contra; eauto.
   - eapply As_And_R; eauto.
-    intros Contra. eapply auxas_iso_v1 in Contra; eauto.
+    intros Contra. eapply auxas_iso1 in Contra; eauto.
   - eapply As_And_P; eauto.
 Qed.
 
 (** ** Functions *)
 
-Lemma auxas_iso_v2 :
+Lemma auxas_iso2 :
   forall A B H,
     auxas (Some (Avt A)) B ->
     isosub B H ->
@@ -269,58 +251,11 @@ Proof.
                dependent destruction H0; eauto.
            *** pose proof (IHPr2 _ As _ Isub2).
                dependent destruction H0; eauto.
-        ** dependent destruction As.
-           *** pose proof (IHPr1 _ As _ Isub1) as IH1. inversion IH1.
-           *** pose proof (IHPr2 _ As _ Isub2) as IH2. inversion IH2.
     + SCase "Arr".
-      dependent destruction Isub; eauto.
-    + SCase "Rcd".
-      inversion As.      
-Qed.
-
-Lemma auxas_iso_l2 :
-  forall A l H,
-    auxas (Some (Alt l)) A ->
-    isosub A H ->
-    auxas (Some (Alt l)) H.
-Proof.
-  Proof.
-  introv As Isub. gen l H.
-  proper_ind A; intros; eauto.
-  - Case "Fld".
-    dependent destruction As.
-    dependent destruction Isub; eauto.
-  - Case "Split".
-    dependent destruction H.
-    + SCase "And".
-      dependent destruction Isub.
-      * SSCase "Refl".
-        assumption.
-      * SSCase "Split".
-        (* H have two cases: arrow and intersection *)
-        dependent destruction H.
-        ** SSSCase "And".
-           dependent destruction As.
-           *** pose proof (IHPr1 _ As _ Isub1). eauto.
-           *** pose proof (IHPr2 _ As _ Isub2). eauto.
-        ** SSSCase "Arr".
-           dependent destruction As.
-           *** pose proof (IHPr1 _ As _ Isub1) as IH1. inversion IH1.
-           *** pose proof (IHPr2 _ As _ Isub2) as IH2. inversion IH2.
-        ** SSSCase "Lbl".
-           dependent destruction As.
-           *** pose proof (IHPr1 _ As _ Isub1) as IH1.
-               dependent destruction IH1; eauto.
-           *** pose proof (IHPr2 _ As _ Isub2) as IH2.
-               dependent destruction IH2; eauto.
-    + SCase "Arr".
-      dependent destruction Isub; eauto.
-    + SCase "Rcd".
-      dependent destruction As; eauto.
       dependent destruction Isub; eauto.
 Qed.
 
-Lemma appsub_iso_v2 :
+Lemma appsub_iso2 :
   forall A B C H,
     appsub (Some (Avt A)) B C ->
     isosub H B ->
@@ -340,14 +275,14 @@ Proof.
       pose proof (IHPr1 _ _ H _ Isub1).
       destruct H1. destruct H1.
       exists x. split; eauto. eapply As_And_L; eauto.
-      intros Hcontra. eapply auxas_iso_v2 in Hcontra; eauto.
+      intros Hcontra. eapply auxas_iso2 in Hcontra; eauto.
     + destruct H.
       * SCase "R".
         destruct H.
         pose proof (IHPr2 _ _ H _ Isub2).
         destruct H1. destruct H1.
         exists x. split; eauto. eapply As_And_R; eauto.
-        intros Hcontra. eapply auxas_iso_v2 in Hcontra; eauto.
+        intros Hcontra. eapply auxas_iso2 in Hcontra; eauto.
       * SCase "P".
         destruct H. destruct H. destruct H. destruct H0.
         pose proof (IHPr1 _ _ H _ Isub1).
@@ -359,50 +294,9 @@ Proof.
            eapply isosub_transitivity; eauto.
 Qed.
 
-Lemma appsub_iso_l2 :
-  forall A B H l,
-    appsub (Some (Alt l)) A B ->
-    isosub H A ->
-    (exists C, appsub (Some (Alt l)) H C /\ isosub C B).
-Proof.
-  introv As Isub. gen B H l.
-  proper_ind A; intros; eauto.
-  - Case "Fld".
-    dependent destruction As; eauto.
-    dependent destruction Isub; eauto.
-  - Case "Split".
-    dependent destruction Isub; eauto.
-    dependent destruction As; eauto.
-    subst_splitable.
-    eapply appsub_split_inversion in H0; eauto.
-    destruct H0.
-    + SCase "L".
-      destruct H.
-      pose proof (IHPr1 _ _ Isub1 _ H).
-      destruct H1. destruct H1.
-      exists x. split; eauto. eapply As_And_L; eauto.
-      intros Hcontra. eapply auxas_iso_l2 in Hcontra; eauto.
-    + destruct H.
-      * SCase "R".
-        destruct H.
-        pose proof (IHPr2 _ _ Isub2 _ H).
-        destruct H1. destruct H1.
-        exists x. split; eauto. eapply As_And_R; eauto.
-        intros Hcontra. eapply auxas_iso_l2 in Hcontra; eauto.
-      * SCase "P".
-        destruct H. destruct H. destruct H. destruct H0.
-        pose proof (IHPr1 _ _ Isub1 _ H).
-        pose proof (IHPr2 _ _ Isub2 _ H0).
-        destruct H2. destruct H2. destruct H3. destruct H3.
-        exists (And x1 x2). split.
-        ** eapply As_And_P; eauto.
-        ** assert (isosub (And x1 x2) (And x x0)) by eauto.
-           eapply isosub_transitivity; eauto.
-Qed.
-
 (** ** Generalization *)
 
-Lemma appsub_iso_v :
+Lemma appsub_iso :
   forall A B C H1 H2,
     appsub (Some (Avt A)) B C ->
     isosub H1 A ->
@@ -410,18 +304,196 @@ Lemma appsub_iso_v :
     (exists D, appsub (Some (Avt H1)) H2 D /\ isosub D C).
 Proof.
   introv As Isub1 Isub2.
-  pose proof (appsub_iso_v1 A B C H1 As Isub1) as Iso1.
-  destruct Iso1. destruct H.
-  pose proof (appsub_iso_v2 _ _ _ _ H Isub2).
+  pose proof (appsub_iso1 A B C H1 As Isub1) as Iso1.
+  destruct Iso1. destruct H. 
+  pose proof (appsub_iso2 _ _ _ _ H Isub2).
   destruct_conjs. eexists. split; eauto.
   eapply isosub_transitivity; eauto.
 Qed.
 
-Lemma appsub_iso_l :
-  forall A B H l,
-    appsub (Some (Alt l)) A B ->
-    isosub H A ->
-    (exists C, appsub (Some (Alt l)) H C /\ isosub C B).
+(** * Unified Subtyping *)
+
+(** ** Definition *)
+
+Definition result := option type.
+
+Inductive upartype : Set :=
+| uT : type -> upartype
+| uV : arg -> upartype
+| uP : arg -> upartype.
+
+Inductive uunisub : type -> upartype -> result -> Prop :=
+| UUs_Int :
+    uunisub Int (uT Int) None
+| UUs_Top : forall A,
+    uunisub A (uT Top) None
+| UUs_Arr : forall A B C D,
+    uunisub C (uT A) None ->
+    uunisub B (uT D) None ->
+    uunisub (Arr A B) (uT (Arr C D)) None
+| UUs_And : forall A B B1 B2,
+    splitable B B1 B2 ->
+    uunisub A (uT B1) None ->
+    uunisub A (uT B2) None ->
+    uunisub A (uT B) None
+| UUs_And_L : forall A B C,
+    ordinary C ->
+    uunisub A (uT C) None ->
+    uunisub (And A B) (uT C) None
+| UUs_And_R : forall A B C,
+    ordinary C ->
+    uunisub B (uT C) None ->
+    uunisub (And A B) (uT C) None
+| UUs_As_Arr : forall A1 A2 B,
+    uunisub B (uT A1) None ->
+    uunisub (Arr A1 A2) (uP (Avt B)) (Some A2)
+| UUs_As_L : forall A1 A2 S C,
+    uunisub A1 (uP S) (Some C) ->
+    ~ (auxas (Some S) A2) ->
+    uunisub (And A1 A2) (uP S) (Some C)
+| UUs_As_R : forall A1 A2 S C,
+    uunisub A2 (uP S) (Some C) ->
+    ~ (auxas (Some S) A1) ->
+    uunisub (And A1 A2) (uP S) (Some C)
+| UUs_As_P : forall A1 A2 S C1 C2,
+    uunisub A1 (uP S) (Some C1) ->
+    uunisub A2 (uP S) (Some C2) ->
+    uunisub (And A1 A2) (uP S) (Some (And C1 C2))
+| UUs_V_As_Arr : forall A1 A2 B,
+    uunisub B (uT A1) None ->
+    uunisub (Arr A1 A2) (uV (Avt B)) None
+| UUs_V_As_L : forall A1 A2 S,
+    uunisub A1 (uV S) None ->
+    uunisub (And A1 A2) (uV S) None
+| UUs_V_As_R : forall A1 A2 S,
+    uunisub A2 (uV S) None ->
+    uunisub (And A1 A2) (uV S) None.
+
+Hint Constructors uunisub : core.
+
+(** ** Soundness *)
+
+Lemma uunisub_sound_normal :
+  forall A B,
+    uunisub A (uT B) None ->
+    sub A B.
 Proof.
-  eapply appsub_iso_l2.
+  introv Uusub.
+  dependent induction Uusub; eauto.
 Qed.
+
+Lemma uunisub_sound_appsub :
+  forall A S C,
+    uunisub A (uP S) (Some C) ->
+    appsub (Some S) A C.
+Proof.
+  introv UUsub.
+  dependent induction UUsub; eauto.
+  eapply As_Arr.
+  now eapply uunisub_sound_normal.
+Qed.
+
+Lemma uunisub_sound_auxas :
+  forall A S,
+    uunisub A (uV S) None ->
+    auxas (Some S) A.
+Proof.
+  introv Uusub.
+  dependent induction Uusub; eauto.
+  eapply Aas_Arr.
+  now eapply uunisub_sound_normal.
+Qed.
+
+(** ** Completeness *)
+
+Lemma uunisub_complete_normal :
+  forall A B,
+    sub A B ->
+    uunisub A (uT B) None.
+Proof.
+  introv Sub.
+  dependent induction Sub; eauto.
+Qed.
+
+Lemma uunisub_complete_appsub :
+  forall A S B,
+    appsub (Some S) A B ->
+    uunisub A (uP S) (Some B).
+Proof.
+  introv As.
+  dependent induction As; eauto.
+  eapply UUs_As_Arr.
+  now eapply uunisub_complete_normal.
+Qed.
+
+Lemma uunisub_complete_auxas :
+  forall A S,
+    auxas (Some S) A ->
+    uunisub A (uV S) None.
+Proof.
+  introv Aas.
+  dependent induction Aas; eauto.
+  eapply UUs_V_As_Arr.
+  now eapply uunisub_complete_normal.
+Qed.
+
+
+(** * Automations *)
+
+Lemma uunisub_auxas_false1 :
+  forall B S,
+    ~ uunisub B (uV S) None ->
+    auxas (Some S) B ->
+    False.
+Proof.
+  introv nUs Aux.
+  eapply uunisub_complete_auxas in Aux. contradiction.
+Qed.
+
+
+Lemma uunisub_auxas_false2 :
+  forall S B,
+    uunisub B (uV S) None ->
+    ~ auxas (Some S) B ->
+    False.
+Proof.
+  introv Us nAux.
+  eapply nAux. now eapply uunisub_sound_auxas.
+Qed.
+
+
+Lemma uunisub_appsub_false :
+  forall S B C,
+    ~ uunisub B (uV S) None ->
+    appsub (Some S) B C ->
+    False.
+Proof.
+  introv nUs As.
+  eapply appsub_to_auxas in As.
+  eapply uunisub_auxas_false1; eauto.
+Qed.
+
+
+Ltac contra_uunisub :=
+  match goal with
+  | H1: ~ uunisub ?B (uV ?S) _, H2: auxas (Some ?S) ?B |- _ =>
+      pose proof (uunisub_auxas_false1 _ _ H1 H2) as Contra; inversion Contra
+  | H1: uunisub ?B (uV ?S) _, H2: ~ auxas (Some ?S) ?B |- _ =>
+      pose proof (uunisub_auxas_false2 _ _ H1 H2) as Contra; inversion Contra
+  | H1: ~ uunisub ?B (uV ?S) _, H2: appsub (Some ?S) ?B _ |- _ =>
+      pose proof (uunisub_appsub_false _ _ _ H1 H2) as Contra; inversion Contra
+  end.
+
+Hint Extern 5 => contra_uunisub : core.
+
+Lemma appsub_to_uunisub :
+  forall S A C,
+    appsub (Some S) A C ->
+    uunisub A (uV S) None.
+Proof.
+  introv As.
+  eapply appsub_to_auxas in As.
+  now eapply uunisub_complete_auxas.
+Qed.
+
+Hint Resolve appsub_to_uunisub : core.

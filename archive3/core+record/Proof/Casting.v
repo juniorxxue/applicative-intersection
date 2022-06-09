@@ -18,7 +18,6 @@ Require Import Typing.
 
 Inductive casting : term -> type -> term -> Prop :=
 | Ct_Lit : forall n A,
-    sub A Int ->
     casting (Ann (Lit n) A) Int (Ann (Lit n) Int)
 | Ct_Top : forall v,
     lc v ->

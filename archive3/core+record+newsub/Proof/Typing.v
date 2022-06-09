@@ -5,7 +5,6 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Appsub.
-Require Import Subtyping.Unisub.
 Require Import Value.
 Require Import PrincipalTyping.
 
@@ -38,11 +37,11 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
 | Ty_App : forall T A B C e1 e2,
     typing T e1 Inf A ->
     typing T e2 Inf B ->
-    uunisub A (uP (Avt B)) (Some C) ->
+    appsub (Some (Avt A)) B C ->
     typing T (App e1 e2) Inf C
 | Ty_Prj : forall T e l A B,
     typing T e Inf A ->
-    uunisub A (uP (Alt l)) (Some B) ->
+    appsub (Some (Alt l)) A B ->
     typing T (Prj e l) Inf B
 | Ty_Mrg : forall T A B e1 e2,
     typing T e1 Inf A ->
