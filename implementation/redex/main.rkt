@@ -6,7 +6,7 @@
   (x ::= variable-not-otherwise-mentioned)
   (n ::= number)
   ;; types
-  (A B C D ::= Int Top (→ A B) (& A B))
+  (A B C D E ::= Int Top (→ A B) (& A B))
   ;; ordinary types
   (Ao Bo Co Do ::= Int Top (→ A Bo))
   ;; terms
@@ -15,7 +15,7 @@
   (p ::= n (λ (x : A) e B))
   (v ::= (: p Ao) (M v v))
   ;; evaluation contexts
-  (E ::= hole (v E) (E e) (M v E) (M e E))
+  (♦ ::= hole (v ♦) (♦ e) (M v ♦) (M e ♦))
   ;; outputs
   (O ::= fail A)
   ;; context
@@ -82,7 +82,7 @@
   [(sub? B A_1)
    ----------------------------- "As-Arr"
    (appsub (→ A_1 A_2) B A_2)]
-  [(side-condition (not (judgment-holds (sub? B A_1))))
+  [(side-condition ,(not (judgment-holds (sub? B A_1))))
    ----------------------------------------------------- "As-Arr-F"
    (appsub (→ A_1 A_2) B fail)]
   [(appsub A_1 B O_1)
@@ -90,7 +90,6 @@
    (combine O_1 O_2 O)
    -------------------------------------------- "As-And"
    (appsub (& A_1 A_2) B O)])
-
 
 ;; Int -> Int <: Int -> ?
 (check-equal? (judgment-holds (appsub (→ Int Int) Int A) A)
@@ -165,8 +164,81 @@
 (judgment-holds
  (infer () ((λ (x : Int) x Int) 1) A) A)
 
+;; id-int : Int -> Int
+;; id-fun : (Int -> Int) -> (Int -> Int)
+;; . |- id-int,,id-fun 1 => Int
 (judgment-holds
  (infer () ((M (λ (x : Int) x Int)
               (λ (x : (→ Int Int)) x (→ Int Int)))
             1)
         A) A)
+
+(define-judgment-form λi+
+  #:mode (cast I I O)
+  #:contract (cast v A v)
+  [------------------------------ "Ct-Int"
+   (cast (: n A) Int (: n Int))]
+  [----------------------------- "Ct-Top"
+   (cast v Top (: 42 Top))]
+  [(sub? E (→ C Do))
+   ----------------------------------------------------------------- "Ct-Arr"
+   (cast (: (λ (x : A) e B) E) (→ C Do) (: (λ (x : A) e Do) (→ C Do)))]
+  [(cast v_1 Ao v_1_)
+   ------------------------------ "Ct-Mrg-L"
+   (cast (M v_1 v_2) Ao v_1_)]
+  [(cast v_2 Ao v_2_)
+   ------------------------------ "Ct-Mrg-R"
+   (cast (M v_1 v_2) Ao v_2_)]
+  [(split A A_1 A_2)
+   (cast v A_1 v_1)
+   (cast v A_2 v_2)
+  -------------------------------- "Ct-And"
+  (cast v A (M v_1 v_2))])
+
+
+(judgment-holds (cast (: 1 Int) (& Int Int) v) v)
+
+(define-metafunction λi+
+  dynt : v -> A
+  [(dynt (: e A)) A]
+  [(dynt (M e_1 e_2)) (& (dynt e_1) (dynt e_2))])
+
+(define-metafunction λi+
+  [(equal O_1 O_1) #t]
+  [(equal O_1 O_2) #f])
+
+(define-judgment-form λi+
+  #:mode (dispatch I I O)
+  #:contract (dispatch v v e)
+  [(cast v A v_)
+   -------------------------------------------------- "App-Lam"
+   (dispatch (: (λ (x : A) e B) (→ C D)) v
+             (: (substitute e x v_) D))]
+  [(appsub (dynt v_2) (dynt v) A)
+   (side-condition ,(equal? (term A) 'fail))
+   (dispatch v_1 v e)
+   ---------------------------------------- "App-Mrg-L"
+   (dispatch (M v_1 v_2) v e)]
+  [(appsub (dynt v_1) (dynt v) A)
+   (side-condition ,(equal? (term A) 'fail))
+   (dispatch v_2 v e)
+   ---------------------------------------- "App-Mrg-R"
+   (dispatch (M v_1 v_2) v e)]
+  [(appsub (dynt v_1) (dynt v) A)
+   (appsub (dynt v_2) (dynt v) B)
+   (dispatch v_1 v e_1)
+   (dispatch v_2 v e_2)
+   ---------------------------------------- "App-Mrg-P"
+   (dispatch (M v_1 v_2) v (M e_1 e_2))])
+
+(judgment-holds (dispatch (: (λ (x : Int) x Int) (→ Int Int))
+                          (: 1 Int)
+                          e)
+                e)
+
+(judgment-holds (dispatch (M (: (λ (x : Int) x Int) (→ Int Int))
+                             (: (λ (x : (→ Int Int)) x (→ Int Int)) (→ (→ Int Int) (→ Int Int))))
+                          (M (: 1 Int)
+                             (: (λ (x : Int) x Int) (→ Int Int)))
+                          e)
+                e)
