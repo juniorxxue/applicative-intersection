@@ -85,20 +85,24 @@ Inductive papp : term -> vl -> term -> Prop :=
 | Pa_Mrg_L : forall v1 v2 A B vl TA e,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    not (auxas (Some TA) B) ->
+    psub B TA = None ->
+(*    not (auxas (Some TA) B) -> *)
     papp v1 vl e ->
     papp (Mrg v1 v2) vl e
 | Pa_Mrg_R : forall v1 v2 A B vl TA e,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    not (auxas (Some TA) A) ->
+(*    not (auxas (Some TA) A) -> *)
+    psub A TA = None ->
     papp v2 vl e ->
     papp (Mrg v1 v2) vl e
 | Pa_Mrg_P : forall v1 v2 A B vl TA e1 e2,
     ptype v1 A -> ptype v2 B ->
     atype vl TA ->
-    auxas (Some TA) A ->
-    auxas (Some TA) B ->
+(*    auxas (Some TA) A -> *)
+(*    auxas (Some TA) B -> *)
+    psub A TA <> None ->
+    psub B TA <> None ->
     papp v1 vl e1 ->
     papp v2 vl e2 ->
     papp (Mrg v1 v2) vl (Mrg e1 e2).
@@ -244,6 +248,7 @@ Proof.
     + f_equal; eauto.
     + f_equal; eauto.
 Qed.
+  
       
 End papp_determinism.
 
@@ -499,13 +504,19 @@ Proof.
   - Case "App".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
+    eapply psub_sound_appsub in H.
     eapply appsub_iso_v in H; eauto. destruct H. destruct H.
     exists x2. split; eauto.
+    eapply Ty_App; eauto.
+    eapply psub_complete_appsub; eauto.
   - Case "Prj".
     pose proof (IHTyp F) as IH. exploit IH; eauto. intros IH'.
     destruct IH'. destruct H0.
+    eapply psub_sound_appsub in H.
     eapply appsub_iso_l in H; eauto. destruct H. destruct H.
-    exists x1. split; eauto.                           
+    exists x1. split; eauto.
+    eapply Ty_Prj; eauto.
+    eapply psub_complete_appsub; eauto.
   - Case "Merge".
     pose proof (IHTyp1 F) as IH1. pose proof (IHTyp2 F) as IH2.
     destruct IH1; destruct IH2; eauto. destruct_conjs.
@@ -655,6 +666,7 @@ Lemma papp_preservation_v_formal :
 Proof.
   inversion 3.
   eapply papp_preservation_v; eauto.
+  eapply psub_sound_appsub; eauto.
 Qed.
 
 Lemma papp_preservation_l :
@@ -717,6 +729,7 @@ Lemma papp_preservation_l_formal:
 Proof.
   inversion 2.
   eapply papp_preservation_l; eauto.
+  eapply psub_sound_appsub; eauto.
 Qed.  
 
 End papp_preservation.
@@ -754,17 +767,21 @@ Proof.
     + dependent destruction Tf.
       * pose proof (IHVf1 _ Tf1 _ _ As _ Vv Tv) as IH. destruct IH.
         eexists. eapply Pa_Mrg_L; eauto.
+        eapply psub_none_auxas2; eauto.
       * pose proof (IHVf1 _ Tf1 _ _ As _ Vv Tv) as IH. destruct IH.
         eexists. eapply Pa_Mrg_L; eauto.
+        eapply psub_none_auxas2; eauto.
     + dependent destruction Tf.
       * pose proof (IHVf2 _ Tf2 _ _ As _ Vv Tv) as IH. destruct IH.
         eexists. eapply Pa_Mrg_R; eauto.
+        eapply psub_none_auxas2; eauto.
       * pose proof (IHVf2 _ Tf2 _ _ As _ Vv Tv) as IH. destruct IH.
         eexists. eapply Pa_Mrg_R; eauto.
+        eapply psub_none_auxas2; eauto.
     + dependent destruction Tf.
       * pose proof (IHVf1 _ Tf1 _ _ As1 _ Vv Tv) as IH1. destruct IH1.
         pose proof (IHVf2 _ Tf2 _ _ As2 _ Vv Tv) as IH2. destruct IH2.
-        eexists. eapply Pa_Mrg_P; eauto.
+        eexists. eapply Pa_Mrg_P; eauto.        
       * pose proof (IHVf1 _ Tf1 _ _ As1 _ Vv Tv) as IH1. destruct IH1.
         pose proof (IHVf2 _ Tf2 _ _ As2 _ Vv Tv) as IH2. destruct IH2.
         eexists. eapply Pa_Mrg_P; eauto.
@@ -778,6 +795,7 @@ Lemma papp_progress_v_formal :
 Proof.
   inversion 3; eauto.
   eapply papp_progress_v; eauto.
+  eapply psub_sound_appsub; eauto.
 Qed.  
 
 Lemma papp_progress_l :
@@ -805,13 +823,17 @@ Proof.
     + dependent destruction Typ.
       * pose proof (IHVal1 _ Typ1 _ _ As) as IH. destruct IH.
         eexists. eapply Pa_Mrg_L; eauto.
+        eapply psub_none_auxas2; eauto.
       * pose proof (IHVal1 _ Typ1 _ _ As) as IH. destruct IH.
         eexists. eapply Pa_Mrg_L; eauto.
+        eapply psub_none_auxas2; eauto.
     + dependent destruction Typ.
       * pose proof (IHVal2 _ Typ2 _ _ As) as IH. destruct IH.
         eexists. eapply Pa_Mrg_R; eauto.
+        eapply psub_none_auxas2; eauto.
       * pose proof (IHVal2 _ Typ2 _ _ As) as IH. destruct IH.
         eexists. eapply Pa_Mrg_R; eauto.
+        eapply psub_none_auxas2; eauto.
     + dependent destruction Typ.
       * pose proof (IHVal1 _ Typ1 _ _ As1) as IH1. destruct IH1.
         pose proof (IHVal2 _ Typ2 _ _ As2) as IH2. destruct IH2.
@@ -829,4 +851,5 @@ Lemma papp_progress_l_formal :
 Proof.
   inversion 2.
   eapply papp_progress_l; eauto.
+  eapply psub_sound_appsub; eauto.
 Qed.

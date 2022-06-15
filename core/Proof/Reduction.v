@@ -160,9 +160,11 @@ Proof.
     subst_splitable. reflexivity.
   - dependent destruction St2; solver1.
     dependent destruction Typ.
-    pose proof (papp_determinism_v f v e e0). eauto.
+    pose proof (papp_determinism_v f v e e0).
+    eapply psub_sound_appsub in H5. eauto.
   - dependent destruction St2; solver1.
     dependent destruction Typ.
+    eapply psub_sound_appsub in H3; eauto.
     pose proof (papp_determinism_l v l e e0). eauto.
   - dependent destruction St2; eauto; solver1.
     dependent destruction Typ.
@@ -393,20 +395,27 @@ Proof.
   - Case "App".
     dependent destruction St.
     + pose proof (papp_preservation_v e1 e2 e) as P.
-      eapply P; eauto.
+      eapply P; eauto. eapply psub_sound_appsub; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply psub_sound_appsub in H0.
       eapply appsub_iso_v in H0; eauto. destruct_conjs.
-      eexists; eauto.
-    + eapply IH in St; eauto; try lia. destruct_conjs.      
+      eexists. split; eauto.
+      eapply Ty_App; eauto. eapply psub_complete_appsub; eauto.
+    + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply psub_sound_appsub in H0.
       eapply appsub_iso_v in H0; eauto. destruct_conjs.
-      eexists; eauto.
+      eexists. split; eauto.
+      eapply Ty_App; eauto. eapply psub_complete_appsub; eauto.
   - Case "Prj".
     dependent destruction St.
     + pose proof (papp_preservation_l e l e0) as P.
       eapply P; eauto.
+      eapply psub_sound_appsub; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
+      eapply psub_sound_appsub in H.
       eapply appsub_iso_l in H; eauto. destruct_conjs.
-      eexists; eauto.
+      eexists; split; eauto.
+      eapply Ty_Prj; eauto. eapply psub_complete_appsub; eauto.
   - Case "Merge".
     dependent destruction St.
     + eapply IH in St1; eauto; try lia.
@@ -497,11 +506,13 @@ Proof.
   - Case "App".
     right. destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
     pose proof (papp_progress_v e1 e2 A B C) as Pa. destruct Pa; eauto.
+    eapply psub_sound_appsub; eauto.
   - Case "Prj".
     right. destruct IHTyp; eauto 3; try solve [destruct_conjs; eauto].
     pose proof (papp_progress_l e A B l) as Pa. destruct Pa; eauto.
+    eapply psub_sound_appsub; eauto.
   - Case "Merge".
-    destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
+    destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].    
   - Case "Merge V".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
 Qed.

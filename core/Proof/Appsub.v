@@ -137,16 +137,6 @@ Proof.
   congruence.
 Qed.
 
-(** ** Completeness *)
-
-(** After adding records to appsub, we lose the standard completeness property *)
-
-Lemma appsub_complete :
-  forall A B C,
-    appsub (Some (Avt B)) A C -> sub A (Arr B C).
-Proof.
-Abort.
-
 (** * Appsub & Isomorphic Subtyping *)
 
 (** ** Inversion Lemmas *)
@@ -505,6 +495,18 @@ Proof.
   - dependent destruction Ps; eauto.
 Qed.
 
+Lemma psub_sound_auxas :
+  forall A S,
+    psub A S <> None ->
+    auxas (Some S) A.
+Proof.
+  introv Ps.
+  functional induction (psub A S); intros; try solve [inversion Ps | destruct Ps; eauto | eauto].
+  - eapply Aas_And_L. eapply IHo. unfold not. intros. destruct (psub A1 S). inversion H. inversion e0.
+  - eapply Aas_And_L. eapply IHo. unfold not. intros. destruct (psub A1 S). inversion H. inversion e0.
+  - eapply Aas_And_R. eapply IHo0. unfold not. intros. destruct (psub A2 S). inversion H. inversion e1.
+Qed.
+
 (** ** Completeness *)
 
 Lemma psub_complete_appsub :
@@ -524,3 +526,38 @@ Proof.
     simpl. pose proof (IHAs2 _ eq_refl). rewrite H0.
     auto.
 Qed.
+
+
+(** ** Automations *)
+
+Lemma psub_appsub_false :
+  forall A S B,
+    psub A S = None ->
+    appsub (Some S) A B ->
+    False.
+Proof.
+  introv Ps As.
+  eapply psub_none_auxas1 in Ps.
+  eauto.
+Qed.
+
+Lemma psub_auxas_false :
+  forall A S,
+    psub A S <> None ->
+    ~ auxas (Some S) A ->
+    False.
+Proof.
+  introv Ps nAux.
+  destruct nAux.
+  now eapply psub_sound_auxas.
+Qed.
+
+Ltac contra_psub :=
+  match goal with
+  | H1: psub ?A ?S = None, H2: appsub (Some ?S) ?A _ |- _ =>
+      (pose proof (psub_appsub_false _ _ _ H1 H2) as Contra; inversion Contra)
+  | H1: psub ?A ?S <> None, H2: ~ auxas (Some ?S) ?A |- _ =>
+      (pose proof (psub_auxas_false _ _ H1 H2) as Contra; inversion Contra)
+  end.
+
+Hint Extern 5 => contra_psub : core.

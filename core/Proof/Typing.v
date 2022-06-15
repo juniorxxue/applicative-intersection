@@ -39,11 +39,13 @@ Inductive typing : ctx -> term -> mode -> type -> Prop :=
 | Ty_App : forall T A B C e1 e2,
     typing T e1 Inf A ->
     typing T e2 Inf B ->
-    appsub (Some (Avt B)) A C ->
+(*    appsub (Some (Avt B)) A C -> *)
+    psub A (Avt B) = (Some C) ->
     typing T (App e1 e2) Inf C
 | Ty_Prj : forall T e l A B,
     typing T e Inf A ->
-    appsub (Some (Alt l)) A B ->
+(*    appsub (Some (Alt l)) A B -> *)
+    psub A (Alt l) = (Some B) ->
     typing T (Prj e l) Inf B
 | Ty_Mrg : forall T A B e1 e2,
     disjoint A B ->
