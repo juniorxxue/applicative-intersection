@@ -194,6 +194,18 @@ Proof.
       f_equal; eauto.
 Qed.
 
+Theorem determinism_gen :
+  forall e e1 e2 A dir,
+    typing nil e dir A ->
+    step e e1 -> step e e2 -> e1 = e2.
+Proof.
+  introv Typ St1 St2.
+  destruct dir.
+  - eapply determinism; eauto.
+  -  dependent destruction Typ.
+     eapply determinism; eauto.
+Qed.
+
 End determinism.
 
 (** * Consistent *)
@@ -400,7 +412,7 @@ Proof.
       eapply psub_sound_appsub in H0.
       eapply appsub_iso_v in H0; eauto. destruct_conjs.
       eexists. split; eauto.
-      eapply Ty_App; eauto. eapply psub_complete_appsub; eauto.
+     eapply Ty_App; eauto. eapply psub_complete_appsub; eauto.
     + eapply IH in St; eauto; try lia. destruct_conjs.
       eapply psub_sound_appsub in H0.
       eapply appsub_iso_v in H0; eauto. destruct_conjs.
