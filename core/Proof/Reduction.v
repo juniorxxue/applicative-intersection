@@ -9,13 +9,10 @@ Require Import Language.
 Require Import Tactical.
 Require Import Subtyping.Subtyping.
 Require Import Subtyping.Splitable.
-Require Import Subtyping.Toplike.
 Require Import Appsub.
 
 Require Import Value.
-Require Import Disjoint.
 Require Import PrincipalTyping.
-Require Import Consistent.
 Require Import Typing.
 Require Import Casting.
 Require Import LocallyNameless.
@@ -62,14 +59,9 @@ Inductive step : term -> term -> Prop :=
 | St_Prj_L : forall e e' l,
     step e e' ->
     step (Prj e l) (Prj e' l)
-| St_Mrg : forall e1 e1' e2 e2',
+| St_Mrg_L : forall e1 e1' e2,
     step e1 e1' ->
-    step e2 e2' ->
-    step (Mrg e1 e2) (Mrg e1' e2')         
-| St_Mrg_L : forall e1 v e1',
-    value v ->
-    step e1 e1' ->
-    step (Mrg e1 v) (Mrg e1' v)
+    step (Mrg e1 e2) (Mrg e1' e2)
 | St_Mrg_R : forall v e2 e2',
     value v ->
     step e2 e2' ->
@@ -89,7 +81,6 @@ Proof.
   induction v; intros; eauto.
   - intros St.
     dependent destruction Val. dependent destruction St; eauto.
-    + eapply IHv1; eauto.
     + eapply IHv1; eauto.
     + eapply IHv2; eauto.
   - dependent destruction Val.
@@ -124,237 +115,6 @@ Proof.
     pose proof (papp_lc_l e l e0). eauto 3.
 Qed.
 
-Lemma step_uvalue :
-  forall u u',
-    uvalue u -> step u u' -> uvalue u'.
-Proof.
-  introv Uv St. gen u'.
-  induction Uv; intros.
-  - dependent destruction St; eauto.
-    eapply Uv_Ann. eapply step_lc; eauto.
-  - dependent destruction St; eauto.
-  - dependent destruction St; eauto.
-Qed.
-
-Hint Resolve step_uvalue : core.
-
-(** * Determinism *)
-
-Section determinism.
-
-Ltac solver1 := try solve [match goal with
-                           | [Val: value ?v, St: step ?v _ |- _] =>
-                               (pose proof (value_no_step _ Val _ St); contradiction)
-                           end].
-
-Theorem determinism:
-  forall e e1 e2 A,
-    typing nil e Inf A ->
-    step e e1 -> step e e2 -> e1 = e2.
-Proof.
-  introv Typ St1 St2. gen e2 A.
-  dependent induction St1; intros.
-  - dependent destruction St2; eauto.
-  - dependent destruction St2; eauto.
-  - dependent destruction St2; eauto.
-    subst_splitable. reflexivity.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ.
-    pose proof (papp_determinism_v f v e e0).
-    eapply psub_sound_appsub in H5. eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ.
-    eapply psub_sound_appsub in H3; eauto.
-    pose proof (papp_determinism_l v l e e0). eauto.
-  - dependent destruction St2; eauto; solver1.
-    dependent destruction Typ.
-    dependent destruction Typ.
-    eapply casting_determinism; eauto.
-  - dependent destruction St2; eauto; solver1.
-    f_equal. dependent destruction Typ.
-    dependent destruction Typ; eauto.
-  - dependent destruction St2; solver1.
-    f_equal. dependent destruction Typ; eauto.
-  - dependent destruction St2; solver1.
-    f_equal. dependent destruction Typ; eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ;
-      f_equal; eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ;
-      f_equal; eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ;
-      f_equal; eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ;
-      f_equal; eauto.
-  - dependent destruction St2; solver1.
-    dependent destruction Typ;
-      f_equal; eauto.
-Qed.
-
-Theorem determinism_gen :
-  forall e e1 e2 A dir,
-    typing nil e dir A ->
-    step e e1 -> step e e2 -> e1 = e2.
-Proof.
-  introv Typ St1 St2.
-  destruct dir.
-  - eapply determinism; eauto.
-  -  dependent destruction Typ.
-     eapply determinism; eauto.
-Qed.
-
-End determinism.
-
-(** * Consistent *)
-
-Inductive step_or_value : term -> term -> Prop :=
-| Sv_V : forall v, value v -> step_or_value v v
-| Sv_S : forall e1 e2, step e1 e2 -> step_or_value e1 e2.
-
-Hint Constructors step_or_value : core.
-
-Lemma size_term_lg_z :
-  forall e, size_term e > 0.
-Proof.
-  introv.
-  dependent induction e; try solve [eauto | simpl; lia].
-Qed.
-
-Hint Resolve size_term_lg_z : core.
-
-Lemma size_term_lg_z_any1 :
-  forall e1 e2,
-    size_term e1 < (size_term e2 + size_term e1).
-Proof.
-  introv.
-  assert (size_term e2 > 0). eapply size_term_lg_z.
-  lia.
-Qed.
-
-Lemma size_term_lg_z_any2 :
-  forall e1 e2,
-    size_term e1 < (size_term e1 + size_term e2).
-Proof.
-  introv.
-  assert (size_term e2 > 0). eapply size_term_lg_z.
-  lia.
-Qed.
-
-Hint Resolve size_term_lg_z_any1 : core.
-Hint Resolve size_term_lg_z_any2 : core.
-
-Section step_consistent.
-
-Ltac solver1 := match goal with
-                | [St: step (Ann (Lam _ _ _) _) _ |- _] => (dependent destruction St; eauto)
-                end.
-
-Ltac solver2 := match goal with
-                | [St: step (Ann _ _) _ |- _] => (dependent destruction St; eauto)
-                end.
-
-Ltac solver3 := match goal with
-                | [Val: value ?v, St: step ?v _ |- _] =>
-                    (pose proof (value_no_step _ Val _ St); contradiction)
-                end.
-
-Ltac solver4 IHC IH :=
-  eapply IHC; eauto; intros; match goal with
-                             | St: step ?e ?e' |- _ => eapply (IH e e'); eauto; simpl; lia
-                             end.
-
-Lemma step_consistent :
-  forall e1 e2 e1' e2' A B,
-    uvalue e1 -> uvalue e2 ->
-    typing nil e1 Inf A -> typing nil e2 Inf B ->
-    consistent e1 e2 ->
-    step_or_value e1 e1' -> step_or_value e2 e2' ->
-    (forall e e' A, size_term e < (size_term e1 + size_term e2) ->
-        typing nil e Inf A -> step e e' -> (exists C, typing nil e' Inf C /\ isosub C A)) ->
-    consistent e1' e2'.
-Proof.
-  introv Uv1 Uv2 Typ1 Typ2 Con Sv1 Sv2 IH. gen A B e1' e2'.
-  dependent induction Con; intros; eauto.
-  - Case "Lam Lam".
-    dependent destruction Sv1; dependent destruction Sv2; eauto; try solve [solver1].
-    dependent destruction Typ1. dependent destruction Typ2.
-    solver1. solver1. eapply Con_Mrg_L; eauto.
-  - Case "Anno Anno".
-    dependent destruction Sv1; dependent destruction Sv2; eauto; try solve [solver2].
-    dependent destruction Typ1. dependent destruction Typ2.
-    solver2.
-    * solver2. eapply Con_Mrg_L; eauto.
-    * solver2; try solve [solver3].
-      dependent destruction Typ1.
-      pose proof (casting_preservation e v' B0 A) as Cp1.
-      dependent destruction Typ2.
-      pose proof (casting_preservation e v'0 B A0) as Cp2.
-      destruct Cp1; destruct Cp2; eauto. destruct_conjs.
-      eapply casting_consistent; eauto.      
-    * solver2; try solve [solver3].
-      dependent destruction Typ1. dependent destruction Typ2.
-      assert (e' = e'0). eapply determinism; eauto. subst. econstructor; eauto.
-      eapply step_lc; eauto.
-  - Case "Rcd Rcd".
-    dependent destruction Uv1. dependent destruction Uv2.
-    dependent destruction Typ1. dependent destruction Typ2.
-    dependent destruction Sv1; dependent destruction Sv2; eauto.
-    + match goal with
-      | St: step _ _, Val: value (Fld _ _) |- _ => dependent destruction St; dependent destruction Val
-      end.
-      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'0); eauto. simpl in *. lia.
-    + match goal with
-      | St: step _ _, Val: value (Fld _ _) |- _ => dependent destruction St; dependent destruction Val
-      end.
-      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'0); eauto. simpl in *. lia.
-    + match goal with
-      | St1: step _ _, St2: step _ _ |- _ => dependent destruction St1; dependent destruction St2
-      end.
-      eapply Con_Rcd. eapply IHCon; eauto 3. intros. eapply (IH e e'1); eauto. simpl in *. lia.
-  - Case "Disjoint".    
-    dependent destruction Sv1; dependent destruction Sv2; eauto.
-    + pose proof (step_uvalue _ _ Uv2 H3).
-      eapply IH in H3; eauto; try lia.
-      destruct H3 as [x Typ]; destruct Typ as [Typ Isub].
-      eapply typing_to_ptype in Typ; eauto.
-      eapply typing_to_ptype in Typ2; eauto. subst_ptype.
-      eapply Con_Dj; eauto. eapply disjoint_iso_l; eauto.
-    + pose proof (step_uvalue _ _ Uv1 H2).
-      eapply IH in H2; eauto; try lia.
-      destruct H2 as [x Typ]; destruct Typ as [Typ Isub].
-      eapply typing_to_ptype in Typ; eauto.
-      eapply typing_to_ptype in Typ1; eauto. subst_ptype.
-      eapply Con_Dj; eauto. eapply disjoint_iso_l; eauto.
-    + pose proof (step_uvalue _ _ Uv1 H2).
-      pose proof (step_uvalue _ _ Uv2 H3).
-      eapply IH in H2; eauto; try lia.
-      eapply IH in H3; eauto; try lia.
-      destruct_conjs.
-      eapply typing_to_ptype in Typ1; eauto.
-      eapply typing_to_ptype in Typ2; eauto. repeat subst_ptype.
-      eapply Con_Dj; eauto. eapply disjoint_iso_l; eauto.
-  - Case "Merge L".
-    dependent destruction Sv1; eauto 3.
-    + dependent destruction Typ1;
-        eapply Con_Mrg_L; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-    + dependent destruction Typ1;
-        match goal with
-        | St: step (Mrg _ _) _ |- _ => dependent destruction St
-        end; eapply Con_Mrg_L; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-  - Case "Merge R".
-    dependent destruction Sv2; eauto 3.
-    + dependent destruction Typ2;
-        eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-    + dependent destruction Typ2;
-        match goal with
-        | St: step (Mrg _ _) _ |- _ => dependent destruction St
-        end; eapply Con_Mrg_R; try solve [solver4 IHCon1 IH | solver4 IHCon2 IH].
-Qed.
-    
-End step_consistent.
 
 (** * Preservation *)
 
@@ -393,7 +153,7 @@ Proof.
       dependent destruction Typ.
       exists (And A1 A2). split; eauto.
       pose proof (sub_inv_splitable_r A B A1 A2) as Sub. destruct Sub; eauto.
-      eapply Ty_Mrg_Uv; eauto.
+      eapply Ty_Mrg; eauto.
     + SCase "Value".
       dependent destruction Typ.
       eapply casting_preservation; eauto.
@@ -430,43 +190,8 @@ Proof.
       eapply Ty_Prj; eauto. eapply psub_complete_appsub; eauto.
   - Case "Merge".
     dependent destruction St.
-    + eapply IH in St1; eauto; try lia.
-      eapply IH in St2; eauto; try lia. destruct_conjs.      
-      eapply disjoint_iso_l in H; eauto.
-    + eapply IH in St; eauto; try lia. destruct_conjs.
-      eapply disjoint_iso_l in H0; eauto.
-    + eapply IH in St; eauto; try lia. destruct_conjs.
-      eapply disjoint_iso_l in H0; eauto.
-  - Case "Merge U".
-    dependent destruction St.    
-    + (* TODO: Automation *)
-      assert (exists C, (typing nil e1' Inf C) /\ (isosub C A)) by (eapply IH; eauto; lia).
-      assert (exists C, (typing nil e2' Inf C) /\ (isosub C B)) by (eapply IH; eauto; lia).
-      destruct_conjs. exists (And H3 H4).
-      pose proof (step_uvalue _ _ H0 St1).
-      pose proof (step_uvalue _ _ H1 St2).
-      split; eauto. eapply Ty_Mrg_Uv; eauto.
-      pose proof (Sv_S _ _ St1) as Sov1.
-      pose proof (Sv_S _ _ St2) as Sov2.
-      pose proof (step_consistent u1 u2 e1' e2' A B H0 H1 Typ1 Typ2 H2 Sov1 Sov2) as Sc.
-      eapply Sc. intros. eapply IH; eauto. lia.
-    + assert (exists C, (typing nil e1' Inf C) /\ (isosub C A)) by (eapply IH; eauto; lia).
-      destruct_conjs. exists (And H4 B).
-      pose proof (step_uvalue _ _ H1 St).
-      split; eauto. eapply Ty_Mrg_Uv; eauto.
-      pose proof (Sv_S _ _ St) as Sov1.
-      pose proof (Sv_V _ H) as Sov2.
-      pose proof (step_consistent u1 u2 e1' u2 A B H1 H2 Typ1 Typ2 H3 Sov1 Sov2) as Sc.
-      eapply Sc; eauto. intros. eapply IH; eauto. lia.
-    + assert (exists C, (typing nil e2' Inf C) /\ (isosub C B)) by (eapply IH; eauto; lia).
-      destruct_conjs. exists (And A H4).
-      pose proof (step_uvalue _ _ H2 St).
-      split; eauto. eapply Ty_Mrg_Uv; eauto.
-      pose proof (Sv_V _ H) as Sov1.
-      pose proof (Sv_S _ _ St) as Sov2.
-      pose proof (step_consistent u1 u2 u1 e2' A B H1 H2 Typ1 Typ2 H3 Sov1 Sov2) as Sc.
-      eapply Sc; eauto. intros. eapply IH; eauto. lia.
-      Unshelve. eauto.
+    + eapply IH in St; eauto; try lia. destruct_conjs. eauto.
+    + eapply IH in St; eauto; try lia. destruct_conjs. eauto.
 Qed.
 
 Theorem preservation_chk :
@@ -525,8 +250,6 @@ Proof.
     eapply psub_sound_appsub; eauto.
   - Case "Merge".
     destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].    
-  - Case "Merge V".
-    destruct IHTyp1; destruct IHTyp2; eauto 3; try solve [destruct_conjs; eauto].
 Qed.
 
 (** * Soundness *)

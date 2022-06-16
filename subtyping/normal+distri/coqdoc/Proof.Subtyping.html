@@ -1,0 +1,416 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Proof.Subtyping</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Metalib.Metatheory</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Equality.html#"><span class="id" title="library">Coq.Program.Equality</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Tactics.html#"><span class="id" title="library">Program.Tactics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.micromega.Lia.html#"><span class="id" title="library">Lia</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Language.html#"><span class="id" title="library">Language</span></a> <a class="idref" href="Proof.Tactical.html#"><span class="id" title="library">Tactical</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Splitable.html#"><span class="id" title="library">Splitable</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Parentheses</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h1 class="section">Definition</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="sub" class="idref" href="#sub"><span class="id" title="inductive">sub</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="Sub_Int" class="idref" href="#Sub_Int"><span class="id" title="constructor">Sub_Int</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a><br/>
+| <a id="Sub_Top" class="idref" href="#Sub_Top"><span class="id" title="constructor">Sub_Top</span></a> : <span class="id" title="keyword">forall</span> <a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:3"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a><br/>
+| <a id="Sub_Arr" class="idref" href="#Sub_Arr"><span class="id" title="constructor">Sub_Arr</span></a> : <span class="id" title="keyword">forall</span> <a id="A:4" class="idref" href="#A:4"><span class="id" title="binder">A</span></a> <a id="B:5" class="idref" href="#B:5"><span class="id" title="binder">B</span></a> <a id="C:6" class="idref" href="#C:6"><span class="id" title="binder">C</span></a> <a id="D:7" class="idref" href="#D:7"><span class="id" title="binder">D</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#C:6"><span class="id" title="variable">C</span></a> <a class="idref" href="Proof.Subtyping.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#B:5"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#D:7"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#D:7"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#A:4"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:5"><span class="id" title="variable">B</span></a>) (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#C:6"><span class="id" title="variable">C</span></a> <a class="idref" href="Proof.Subtyping.html#D:7"><span class="id" title="variable">D</span></a>)<br/>
+| <a id="Sub_Rcd" class="idref" href="#Sub_Rcd"><span class="id" title="constructor">Sub_Rcd</span></a> : <span class="id" title="keyword">forall</span> <a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a> <a id="B:9" class="idref" href="#B:9"><span class="id" title="binder">B</span></a> <a id="l:10" class="idref" href="#l:10"><span class="id" title="binder">l</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#B:9"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:9"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:10"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#A:8"><span class="id" title="variable">A</span></a>) (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:10"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#B:9"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Sub_And" class="idref" href="#Sub_And"><span class="id" title="constructor">Sub_And</span></a> : <span class="id" title="keyword">forall</span> <a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a> <a id="B:12" class="idref" href="#B:12"><span class="id" title="binder">B</span></a> <a id="B1:13" class="idref" href="#B1:13"><span class="id" title="binder">B1</span></a> <a id="B2:14" class="idref" href="#B2:14"><span class="id" title="binder">B2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#B:12"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#B1:13"><span class="id" title="variable">B1</span></a> <a class="idref" href="Proof.Subtyping.html#B2:14"><span class="id" title="variable">B2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B1:13"><span class="id" title="variable">B1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B2:14"><span class="id" title="variable">B2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:12"><span class="id" title="variable">B</span></a><br/>
+| <a id="Sub_And_L" class="idref" href="#Sub_And_L"><span class="id" title="constructor">Sub_And_L</span></a> : <span class="id" title="keyword">forall</span> <a id="A:15" class="idref" href="#A:15"><span class="id" title="binder">A</span></a> <a id="B:16" class="idref" href="#B:16"><span class="id" title="binder">B</span></a> <a id="C:17" class="idref" href="#C:17"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:15"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#C:17"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#C:17"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A:15"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:16"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Subtyping.html#C:17"><span class="id" title="variable">C</span></a><br/>
+| <a id="Sub_And_R" class="idref" href="#Sub_And_R"><span class="id" title="constructor">Sub_And_R</span></a> : <span class="id" title="keyword">forall</span> <a id="A:18" class="idref" href="#A:18"><span class="id" title="binder">A</span></a> <a id="B:19" class="idref" href="#B:19"><span class="id" title="binder">B</span></a> <a id="C:20" class="idref" href="#C:20"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#B:19"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#C:20"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#C:20"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub:1"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A:18"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:19"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Subtyping.html#C:20"><span class="id" title="variable">C</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::x_'&lt;:'_x" class="idref" href="#:::x_'&lt;:'_x"><span class="id" title="notation">&quot;</span></a>A &lt;: B" := (<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 40).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h1 class="section">Generlization</h1>
+
+<div class="paragraph"> </div>
+
+ generlization of <span class="inlinecode"><span class="id" title="var">Sub_Arrow</span></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_arrow" class="idref" href="#sub_arrow"><span class="id" title="lemma">sub_arrow</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:21" class="idref" href="#A:21"><span class="id" title="binder">A</span></a> <a id="B:22" class="idref" href="#B:22"><span class="id" title="binder">B</span></a> <a id="C:23" class="idref" href="#C:23"><span class="id" title="binder">C</span></a> <a id="D:24" class="idref" href="#D:24"><span class="id" title="binder">D</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#B:22"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#D:24"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#C:23"><span class="id" title="variable">C</span></a> <a class="idref" href="Proof.Subtyping.html#A:21"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#A:21"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:22"><span class="id" title="variable">B</span></a>) (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#C:23"><span class="id" title="variable">C</span></a> <a class="idref" href="Proof.Subtyping.html#D:24"><span class="id" title="variable">D</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+generlization of <span class="inlinecode"><a class="idref" href="Proof.Subtyping.html#Sub_Rcd"><span class="id" title="constructor">Sub_Rcd</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_record" class="idref" href="#sub_record"><span class="id" title="lemma">sub_record</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="l:25" class="idref" href="#l:25"><span class="id" title="binder">l</span></a> <a id="A:26" class="idref" href="#A:26"><span class="id" title="binder">A</span></a> <a id="B:27" class="idref" href="#B:27"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:26"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:27"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:25"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#A:26"><span class="id" title="variable">A</span></a>) (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:25"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#B:27"><span class="id" title="variable">B</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+generlization of <span class="inlinecode"><a class="idref" href="Proof.Subtyping.html#Sub_And_L"><span class="id" title="constructor">Sub_And_L</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_and_l" class="idref" href="#sub_and_l"><span class="id" title="lemma">sub_and_l</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:28" class="idref" href="#A:28"><span class="id" title="binder">A</span></a> <a id="B:29" class="idref" href="#B:29"><span class="id" title="binder">B</span></a> <a id="C:30" class="idref" href="#C:30"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:28"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#C:30"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A:28"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:29"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Subtyping.html#C:30"><span class="id" title="variable">C</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+generlization of <span class="inlinecode"><a class="idref" href="Proof.Subtyping.html#Sub_And_R"><span class="id" title="constructor">Sub_And_R</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_and_r" class="idref" href="#sub_and_r"><span class="id" title="lemma">sub_and_r</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> <a id="B:32" class="idref" href="#B:32"><span class="id" title="binder">B</span></a> <a id="C:33" class="idref" href="#C:33"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#B:32"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#C:33"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:32"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Subtyping.html#C:33"><span class="id" title="variable">C</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+add it to local and global hint base 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_arrow</span> : <span class="id" title="var">core</span>.<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_record</span> : <span class="id" title="var">core</span>.<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_and_l</span> : <span class="id" title="var">core</span>.<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_and_r</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h1 class="section">Reflexivity</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_reflexivity" class="idref" href="#sub_reflexivity"><span class="id" title="lemma">sub_reflexivity</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:34" class="idref" href="#A:34"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:34"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A:34"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">A</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_reflexivity</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section">Subtyping &amp; Splitable</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_splitable_l" class="idref" href="#sub_splitable_l"><span class="id" title="lemma">sub_splitable_l</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:35" class="idref" href="#A:35"><span class="id" title="binder">A</span></a> <a id="A1:36" class="idref" href="#A1:36"><span class="id" title="binder">A1</span></a> <a id="A2:37" class="idref" href="#A2:37"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#A:35"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:36"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:37"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:35"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:36"><span class="id" title="variable">A1</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_splitable_r" class="idref" href="#sub_splitable_r"><span class="id" title="lemma">sub_splitable_r</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:38" class="idref" href="#A:38"><span class="id" title="binder">A</span></a> <a id="A1:39" class="idref" href="#A1:39"><span class="id" title="binder">A1</span></a> <a id="A2:40" class="idref" href="#A2:40"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#A:38"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:39"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:40"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:38"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A2:40"><span class="id" title="variable">A2</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_splitable_l</span> : <span class="id" title="var">subtyping</span>.<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_splitable_r</span> : <span class="id" title="var">subtyping</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_splitable" class="idref" href="#sub_splitable"><span class="id" title="lemma">sub_splitable</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:41" class="idref" href="#A:41"><span class="id" title="binder">A</span></a> <a id="A1:42" class="idref" href="#A1:42"><span class="id" title="binder">A1</span></a> <a id="A2:43" class="idref" href="#A2:43"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#A:41"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:42"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:43"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:41"><span class="id" title="variable">A</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A1:42"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:43"><span class="id" title="variable">A2</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Subtyping.html#A1:42"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:43"><span class="id" title="variable">A2</span></a>) <a class="idref" href="Proof.Subtyping.html#A:41"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#Sub_And"><span class="id" title="constructor">Sub_And</span></a>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">sub_splitable</span> : <span class="id" title="var">subtyping</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">Inversion Lemmas</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_inv_splitable_l" class="idref" href="#sub_inv_splitable_l"><span class="id" title="lemma">sub_inv_splitable_l</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:44" class="idref" href="#A:44"><span class="id" title="binder">A</span></a> <a id="B:45" class="idref" href="#B:45"><span class="id" title="binder">B</span></a> <a id="A1:46" class="idref" href="#A1:46"><span class="id" title="binder">A1</span></a> <a id="A2:47" class="idref" href="#A2:47"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:44"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:45"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#A:44"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:46"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:47"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#B:45"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A1:46"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#B:45"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A2:47"><span class="id" title="variable">A2</span></a> <a class="idref" href="Proof.Subtyping.html#B:45"><span class="id" title="variable">B</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Sub</span> <span class="id" title="var">Spl</span> <span class="id" title="var">Ord</span>. <span class="id" title="var">gen</span> <span class="id" title="var">A1</span> <span class="id" title="var">A2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Sub</span>; <span class="id" title="tactic">eauto</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Ord</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<span class="id" title="var">IHSub2</span> <span class="id" title="var">H</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Spl</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">IH</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">IH</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Ord</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<span class="id" title="var">IHSub</span> <span class="id" title="var">Ord</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Spl</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">IH</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">IH</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">left</span>. <span class="id" title="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">right</span>. <span class="id" title="tactic">assumption</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_inv_splitable_r" class="idref" href="#sub_inv_splitable_r"><span class="id" title="lemma">sub_inv_splitable_r</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:48" class="idref" href="#A:48"><span class="id" title="binder">A</span></a> <a id="B:49" class="idref" href="#B:49"><span class="id" title="binder">B</span></a> <a id="B1:50" class="idref" href="#B1:50"><span class="id" title="binder">B1</span></a> <a id="B2:51" class="idref" href="#B2:51"><span class="id" title="binder">B2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:48"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:49"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#B:49"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#B1:50"><span class="id" title="variable">B1</span></a> <a class="idref" href="Proof.Subtyping.html#B2:51"><span class="id" title="variable">B2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:48"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B1:50"><span class="id" title="variable">B1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:48"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B2:51"><span class="id" title="variable">B2</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Sub</span> <span class="id" title="var">Spl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Sub</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">subst_splitable</span>; <span class="id" title="tactic">intuition</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h1 class="section">Proper Types</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab17"></a><h2 class="section">Definition</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="proper" class="idref" href="#proper"><span class="id" title="inductive">proper</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="Pr_Int" class="idref" href="#Pr_Int"><span class="id" title="constructor">Pr_Int</span></a> : <a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a><br/>
+| <a id="Pr_Top" class="idref" href="#Pr_Top"><span class="id" title="constructor">Pr_Top</span></a> : <a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a><br/>
+| <a id="Pr_Arr" class="idref" href="#Pr_Arr"><span class="id" title="constructor">Pr_Arr</span></a> : <span class="id" title="keyword">forall</span> <a id="A:54" class="idref" href="#A:54"><span class="id" title="binder">A</span></a> <a id="B:55" class="idref" href="#B:55"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#B:55"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:54"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#B:55"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#A:54"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:55"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Pr_Rcd" class="idref" href="#Pr_Rcd"><span class="id" title="constructor">Pr_Rcd</span></a> : <span class="id" title="keyword">forall</span> <a id="l:56" class="idref" href="#l:56"><span class="id" title="binder">l</span></a> <a id="A:57" class="idref" href="#A:57"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Subtyping.html#A:57"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:57"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:56"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#A:57"><span class="id" title="variable">A</span></a>)<br/>
+| <a id="Pr_Spl" class="idref" href="#Pr_Spl"><span class="id" title="constructor">Pr_Spl</span></a> : <span class="id" title="keyword">forall</span> <a id="A:58" class="idref" href="#A:58"><span class="id" title="binder">A</span></a> <a id="A1:59" class="idref" href="#A1:59"><span class="id" title="binder">A1</span></a> <a id="A2:60" class="idref" href="#A2:60"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Subtyping.html#A:58"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#A1:59"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Subtyping.html#A2:60"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A1:59"><span class="id" title="variable">A1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A2:60"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper:52"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:58"><span class="id" title="variable">A</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab18"></a><h2 class="section">Completeness</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="proper_arrow" class="idref" href="#proper_arrow"><span class="id" title="lemma">proper_arrow</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:61" class="idref" href="#A:61"><span class="id" title="binder">A</span></a> <a id="B:62" class="idref" href="#B:62"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:61"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#B:62"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Subtyping.html#A:61"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:62"><span class="id" title="variable">B</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Pr_A</span> <span class="id" title="var">Pr_B</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">gen</span> <span class="id" title="var">A</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Pr_B</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="proper_record" class="idref" href="#proper_record"><span class="id" title="lemma">proper_record</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="l:63" class="idref" href="#l:63"><span class="id" title="binder">l</span></a> <a id="A:64" class="idref" href="#A:64"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:64"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Subtyping.html#l:63"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Subtyping.html#A:64"><span class="id" title="variable">A</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Pr_A</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">Pr_A</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="proper_complete" class="idref" href="#proper_complete"><span class="id" title="lemma">proper_complete</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> (<a id="A:65" class="idref" href="#A:65"><span class="id" title="binder">A</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a>), <a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> <a class="idref" href="Proof.Subtyping.html#A:65"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">A</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#proper_arrow"><span class="id" title="lemma">proper_arrow</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#proper_record"><span class="id" title="lemma">proper_record</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We build a new induction principle for <span class="inlinecode"><span class="id" title="keyword">type</span></span> 
+<div class="paragraph"> </div>
+
+<a id="lab19"></a><h2 class="section">Proper Induction Principle</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">proper_ind</span> <span class="id" title="var">A</span> := <span class="id" title="tactic">assert</span> (<span class="id" title="var">Pr</span>: <a class="idref" href="Proof.Subtyping.html#proper"><span class="id" title="inductive">proper</span></a> <span class="id" title="var">A</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> (<a class="idref" href="Proof.Subtyping.html#proper_complete"><span class="id" title="lemma">proper_complete</span></a> <span class="id" title="var">A</span>); <span class="id" title="tactic">induction</span> <span class="id" title="var">Pr</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab20"></a><h1 class="section">Transitivity</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sub_transitivity" class="idref" href="#sub_transitivity"><span class="id" title="lemma">sub_transitivity</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:66" class="idref" href="#A:66"><span class="id" title="binder">A</span></a> <a id="B:67" class="idref" href="#B:67"><span class="id" title="binder">B</span></a> <a id="C:68" class="idref" href="#C:68"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:66"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:67"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#B:67"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Subtyping.html#C:68"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:66"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#C:68"><span class="id" title="variable">C</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Sub1</span> <span class="id" title="var">Sub2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">gen</span> <span class="id" title="var">A</span> <span class="id" title="var">C</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">proper_ind</span> <span class="id" title="var">B</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">clear</span> <span class="id" title="var">IHSub2_1</span> <span class="id" title="var">IHSub2_2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub1</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">clear</span> <span class="id" title="var">IHSub2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Sub1</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="var">gen</span> <span class="id" title="var">A</span> <span class="id" title="var">A1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">proper_ind</span> <span class="id" title="var">C</span>; <span class="id" title="var">introv</span> <span class="id" title="var">Sub1</span> <span class="id" title="var">Sub2</span> <span class="id" title="var">Spl</span> <span class="id" title="var">IPr</span> <span class="id" title="var">IH</span>; <span class="id" title="tactic">eauto</span> <span class="id" title="keyword">with</span> <span class="id" title="var">subtyping</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_r"><span class="id" title="lemma">sub_inv_splitable_r</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub1</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">Sub1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_l"><span class="id" title="lemma">sub_inv_splitable_l</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_r"><span class="id" title="lemma">sub_inv_splitable_r</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub1</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">Sub1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_l"><span class="id" title="lemma">sub_inv_splitable_l</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_r"><span class="id" title="lemma">sub_inv_splitable_r</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub1</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">Sub1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_l"><span class="id" title="lemma">sub_inv_splitable_l</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">intuition</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">eapply</span> <a class="idref" href="Proof.Subtyping.html#sub_inv_splitable_r"><span class="id" title="lemma">sub_inv_splitable_r</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Sub2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab21"></a><h1 class="section">Decidablility</h1>
+
+<div class="paragraph"> </div>
+
+ subtyping is decidable, refer https://github.com/andongfan/CP-Foundations/blob/main/fiplus/coq/Subtyping.vL1214 
+</div>
+<div class="code">
+<span class="id" title="keyword">Axiom</span> <a id="dec_sub" class="idref" href="#dec_sub"><span class="id" title="axiom">dec_sub</span></a> : <span class="id" title="keyword">forall</span> <a id="A:69" class="idref" href="#A:69"><span class="id" title="binder">A</span></a> <a id="B:70" class="idref" href="#B:70"><span class="id" title="binder">B</span></a>, <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Specif.html#sumbool"><span class="id" title="inductive">sumbool</span></a> (<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:69"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:70"><span class="id" title="variable">B</span></a>) (<a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#not"><span class="id" title="definition">not</span></a> (<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Subtyping.html#A:69"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Subtyping.html#B:70"><span class="id" title="variable">B</span></a>)).<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

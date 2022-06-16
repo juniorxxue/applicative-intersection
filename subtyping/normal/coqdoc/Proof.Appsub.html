@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Proof.Appsub</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Metalib.Metatheory</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Equality.html#"><span class="id" title="library">Coq.Program.Equality</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Tactics.html#"><span class="id" title="library">Program.Tactics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Language.html#"><span class="id" title="library">Language</span></a> <a class="idref" href="Proof.Tactical.html#"><span class="id" title="library">Tactical</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Subtyping.html#"><span class="id" title="library">Subtyping</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Parentheses</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab7"></a><h1 class="section">Definitions</h1>
+
+<div class="paragraph"> </div>
+
+<a id="lab8"></a><h2 class="section">Arguments</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="Result" class="idref" href="#Result"><span class="id" title="inductive">Result</span></a> :=<br/>
+| <a id="Just" class="idref" href="#Just"><span class="id" title="constructor">Just</span></a>     : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Appsub.html#Result:1"><span class="id" title="inductive">Result</span></a><br/>
+| <a id="Nothing" class="idref" href="#Nothing"><span class="id" title="constructor">Nothing</span></a>  : <a class="idref" href="Proof.Appsub.html#Result:1"><span class="id" title="inductive">Result</span></a><br/>
+| <a id="Amb" class="idref" href="#Amb"><span class="id" title="constructor">Amb</span></a>      : <a class="idref" href="Proof.Appsub.html#Result:1"><span class="id" title="inductive">Result</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="psub" class="idref" href="#psub"><span class="id" title="definition">psub</span></a> (<a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a>) (<a id="B:4" class="idref" href="#B:4"><span class="id" title="binder">B</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="Proof.Appsub.html#Result"><span class="id" title="inductive">Result</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Proof.Appsub.html#A:3"><span class="id" title="variable">A</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <span class="id" title="var">A1</span> <span class="id" title="var">A2</span> =&gt; <span class="id" title="keyword">if</span> <a class="idref" href="Proof.Subtyping.html#dec_sub"><span class="id" title="axiom">dec_sub</span></a> <a class="idref" href="Proof.Appsub.html#B:4"><span class="id" title="variable">B</span></a> <span class="id" title="var">A1</span> <span class="id" title="keyword">then</span> <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">A2</span> <span class="id" title="keyword">else</span> <a class="idref" href="Proof.Appsub.html#Nothing"><span class="id" title="constructor">Nothing</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <span class="id" title="var">A1</span> <span class="id" title="var">A2</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Proof.Appsub.html#psub:5"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A1</span> <a class="idref" href="Proof.Appsub.html#B:4"><span class="id" title="variable">B</span></a>, <a class="idref" href="Proof.Appsub.html#psub:5"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A2</span> <a class="idref" href="Proof.Appsub.html#B:4"><span class="id" title="variable">B</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a>, <span class="id" title="var">_</span>            =&gt; <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a>            =&gt; <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C1</span>, <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C2</span>  =&gt; <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a>    <span class="comment">(*&nbsp;Without&nbsp;distributivity&nbsp;we&nbsp;change&nbsp;the&nbsp;algorithm&nbsp;here&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C1</span>, <span class="id" title="var">_</span>        =&gt; <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C1</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>, <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C2</span>        =&gt; <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <span class="id" title="var">C2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span>,<span class="id" title="var">_</span>               =&gt; <a class="idref" href="Proof.Appsub.html#Nothing"><span class="id" title="constructor">Nothing</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="Proof.Appsub.html#Nothing"><span class="id" title="constructor">Nothing</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab9"></a><h1 class="section">Soundness</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.funind.FunInd.html#"><span class="id" title="library">FunInd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.FSets.FMapInterface.html#"><span class="id" title="library">FMapInterface</span></a>.<br/>
+<span class="id" title="keyword">Functional Scheme</span> <span class="id" title="var">psub_ind</span> := <span class="id" title="keyword">Induction</span> <span class="id" title="keyword">for</span> <span class="id" title="var">psub</span> <span class="id" title="keyword">Sort</span> <span class="id" title="keyword">Prop</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="sound" class="idref" href="#sound"><span class="id" title="lemma">sound</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:85" class="idref" href="#A:85"><span class="id" title="binder">A</span></a> <a id="B:86" class="idref" href="#B:86"><span class="id" title="binder">B</span></a> <a id="C:87" class="idref" href="#C:87"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <a class="idref" href="Proof.Appsub.html#A:85"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Appsub.html#B:86"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <a class="idref" href="Proof.Appsub.html#C:87"><span class="id" title="variable">C</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Appsub.html#A:85"><span class="id" title="variable">A</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Appsub.html#B:86"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Appsub.html#C:87"><span class="id" title="variable">C</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">functional</span> <span class="id" title="tactic">induction</span> <a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">try</span> (<span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>); <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab10"></a><h1 class="section">Completeness</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="complete" class="idref" href="#complete"><span class="id" title="lemma">complete</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:88" class="idref" href="#A:88"><span class="id" title="binder">A</span></a> <a id="B:89" class="idref" href="#B:89"><span class="id" title="binder">B</span></a> <a id="C:90" class="idref" href="#C:90"><span class="id" title="binder">C</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Appsub.html#A:88"><span class="id" title="variable">A</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Appsub.html#B:89"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Appsub.html#C:90"><span class="id" title="variable">C</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="D:91" class="idref" href="#D:91"><span class="id" title="binder">D</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <a class="idref" href="Proof.Appsub.html#A:88"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Appsub.html#B:89"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Appsub.html#Just"><span class="id" title="constructor">Just</span></a> <a class="idref" href="Proof.Appsub.html#D:91"><span class="id" title="variable">D</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Proof.Subtyping.html#sub"><span class="id" title="inductive">sub</span></a> <a class="idref" href="Proof.Appsub.html#D:91"><span class="id" title="variable">D</span></a> <a class="idref" href="Proof.Appsub.html#C:90"><span class="id" title="variable">C</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <a class="idref" href="Proof.Appsub.html#A:88"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Appsub.html#B:89"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Appsub.html#Amb"><span class="id" title="constructor">Amb</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">left</span>. <span class="id" title="tactic">exists</span> <span class="id" title="var">B0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Proof.Subtyping.html#dec_sub"><span class="id" title="axiom">dec_sub</span></a> <span class="id" title="var">B</span> <span class="id" title="var">A</span>); <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">contradiction</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">IHsub</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>). <span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="r:93" class="idref" href="#r:93"><span class="id" title="binder">r</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">B0</span> <span class="id" title="var">B</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Appsub.html#r:92"><span class="id" title="variable">r</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> (<a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">B0</span> <span class="id" title="var">B</span>); <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">x0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">x</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> (<span class="id" title="var">IHsub</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>). <span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="r:95" class="idref" href="#r:95"><span class="id" title="binder">r</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Appsub.html#r:94"><span class="id" title="variable">r</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> (<a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>); <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">x0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>; <span class="id" title="tactic">eauto</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>; <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">left</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exists</span> <span class="id" title="var">x</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H1</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="Proof.Appsub.html#psub"><span class="id" title="definition">psub</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>); <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Defined</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

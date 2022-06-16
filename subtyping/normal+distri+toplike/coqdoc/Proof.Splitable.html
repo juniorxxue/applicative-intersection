@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Proof.Splitable</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Equality.html#"><span class="id" title="library">Coq.Program.Equality</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Tactics.html#"><span class="id" title="library">Program.Tactics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.micromega.Lia.html#"><span class="id" title="library">Lia</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Metalib.LibTactics</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Language.html#"><span class="id" title="library">Language</span></a> <a class="idref" href="Proof.Tactical.html#"><span class="id" title="library">Tactical</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab9"></a><h1 class="section">Definitions</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="ordinary" class="idref" href="#ordinary"><span class="id" title="inductive">ordinary</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="Ord_Top" class="idref" href="#Ord_Top"><span class="id" title="constructor">Ord_Top</span></a> : <a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a><br/>
+| <a id="Ord_Tnt" class="idref" href="#Ord_Tnt"><span class="id" title="constructor">Ord_Tnt</span></a> : <a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a><br/>
+| <a id="Ord_Arr" class="idref" href="#Ord_Arr"><span class="id" title="constructor">Ord_Arr</span></a> : <span class="id" title="keyword">forall</span> <a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> <a id="B:4" class="idref" href="#B:4"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#B:4"><span class="id" title="variable">B</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Splitable.html#A:3"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B:4"><span class="id" title="variable">B</span></a>)<br/>
+| <a id="Ord_Rcd" class="idref" href="#Ord_Rcd"><span class="id" title="constructor">Ord_Rcd</span></a> : <span class="id" title="keyword">forall</span> <a id="l:5" class="idref" href="#l:5"><span class="id" title="binder">l</span></a> <a id="A:6" class="idref" href="#A:6"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#A:6"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary:1"><span class="id" title="inductive">ordinary</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Splitable.html#l:5"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Splitable.html#A:6"><span class="id" title="variable">A</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="splitable" class="idref" href="#splitable"><span class="id" title="inductive">splitable</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+| <a id="Spl_And" class="idref" href="#Spl_And"><span class="id" title="constructor">Spl_And</span></a> : <span class="id" title="keyword">forall</span> <a id="A:9" class="idref" href="#A:9"><span class="id" title="binder">A</span></a> <a id="B:10" class="idref" href="#B:10"><span class="id" title="binder">B</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable:7"><span class="id" title="inductive">splitable</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <a class="idref" href="Proof.Splitable.html#A:9"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B:10"><span class="id" title="variable">B</span></a>) <a class="idref" href="Proof.Splitable.html#A:9"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B:10"><span class="id" title="variable">B</span></a><br/>
+| <a id="Spl_Arr" class="idref" href="#Spl_Arr"><span class="id" title="constructor">Spl_Arr</span></a> : <span class="id" title="keyword">forall</span> <a id="A:11" class="idref" href="#A:11"><span class="id" title="binder">A</span></a> <a id="B:12" class="idref" href="#B:12"><span class="id" title="binder">B</span></a> <a id="B1:13" class="idref" href="#B1:13"><span class="id" title="binder">B1</span></a> <a id="B2:14" class="idref" href="#B2:14"><span class="id" title="binder">B2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable:7"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#B:12"><span class="id" title="variable">B</span></a> <a class="idref" href="Proof.Splitable.html#B1:13"><span class="id" title="variable">B1</span></a> <a class="idref" href="Proof.Splitable.html#B2:14"><span class="id" title="variable">B2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable:7"><span class="id" title="inductive">splitable</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Splitable.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B:12"><span class="id" title="variable">B</span></a>) (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Splitable.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B1:13"><span class="id" title="variable">B1</span></a>) (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <a class="idref" href="Proof.Splitable.html#A:11"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#B2:14"><span class="id" title="variable">B2</span></a>)<br/>
+| <a id="Spl_Rcd" class="idref" href="#Spl_Rcd"><span class="id" title="constructor">Spl_Rcd</span></a> : <span class="id" title="keyword">forall</span> <a id="l:15" class="idref" href="#l:15"><span class="id" title="binder">l</span></a> <a id="A:16" class="idref" href="#A:16"><span class="id" title="binder">A</span></a> <a id="A1:17" class="idref" href="#A1:17"><span class="id" title="binder">A1</span></a> <a id="A2:18" class="idref" href="#A2:18"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable:7"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:16"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A1:17"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Splitable.html#A2:18"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable:7"><span class="id" title="inductive">splitable</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Splitable.html#l:15"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Splitable.html#A:16"><span class="id" title="variable">A</span></a>) (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Splitable.html#l:15"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Splitable.html#A1:17"><span class="id" title="variable">A1</span></a>) (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <a class="idref" href="Proof.Splitable.html#l:15"><span class="id" title="variable">l</span></a> <a class="idref" href="Proof.Splitable.html#A2:18"><span class="id" title="variable">A2</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="480fc7fecf1e486ce724beb563ec1182" class="idref" href="#480fc7fecf1e486ce724beb563ec1182"><span class="id" title="notation">&quot;</span></a>A1 ↩ A ↪ A2" := (<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <span class="id" title="var">A</span> <span class="id" title="var">A1</span> <span class="id" title="var">A2</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 40).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab10"></a><h1 class="section">Splitable and Ordinary</h1>
+
+<div class="paragraph"> </div>
+
+ splitable is not ordinary 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="splitable_not_ordinary" class="idref" href="#splitable_not_ordinary"><span class="id" title="lemma">splitable_not_ordinary</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:19" class="idref" href="#A:19"><span class="id" title="binder">A</span></a> <a id="A1:20" class="idref" href="#A1:20"><span class="id" title="binder">A1</span></a> <a id="A2:21" class="idref" href="#A2:21"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:19"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A1:20"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Splitable.html#A2:21"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#A:19"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Spl</span> <span class="id" title="var">Ord</span>. <span class="id" title="var">gen</span> <span class="id" title="var">A1</span> <span class="id" title="var">A2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Ord</span>; <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">solve</span> [<span class="id" title="tactic">inversion</span> <span class="id" title="var">Spl</span>; <span class="id" title="tactic">eauto</span> | <span class="id" title="tactic">eauto</span>].<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h1 class="section">Automations</h1>
+
+<div class="paragraph"> </div>
+
+ add this lemma to hint base to exclude absurd cases 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_splitable</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> ?<span class="id" title="var">A</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>, <span class="id" title="var">H2</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="Proof.Splitable.html#splitable_not_ordinary"><span class="id" title="lemma">splitable_not_ordinary</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">H1</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Contra</span>; <span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <span class="id" title="var">_</span> ?<span class="id" title="var">B</span>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>, <span class="id" title="var">H2</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">B</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="Proof.Splitable.html#splitable_not_ordinary"><span class="id" title="lemma">splitable_not_ordinary</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">H1</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Contra</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <span class="id" title="var">_</span> ?<span class="id" title="var">A</span>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>, <span class="id" title="var">H2</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="Proof.Splitable.html#splitable_not_ordinary"><span class="id" title="lemma">splitable_not_ordinary</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">H1</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Contra</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Extern</span> 5 =&gt; <span class="id" title="var">solve_splitable</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_ordinary</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| [<span class="id" title="var">H</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>) |- <span class="id" title="var">_</span>] =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Extern</span> 5 =&gt; <span class="id" title="var">solve_ordinary</span> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">contra_ordinary</span></span> solves contradiction cases of ordinary 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">contra_ordinary</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span>, <span class="id" title="var">H2</span>: <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#not"><span class="id" title="definition">not</span></a> (<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span>) |- <span class="id" title="var">_</span> =&gt; <span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <span class="id" title="var">_</span> ?<span class="id" title="var">A</span>), <span class="id" title="var">H2</span>: <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#not"><span class="id" title="definition">not</span></a> (<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span>) |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H1</span>; <span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <span class="id" title="var">_</span> ?<span class="id" title="var">A</span>), <span class="id" title="var">H2</span>: <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#not"><span class="id" title="definition">not</span></a> (<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> ?<span class="id" title="var">A</span>) |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H1</span>; <span class="id" title="var">contradiction</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h1 class="section">Splitable or Ordinary</h1>
+
+<div class="paragraph"> </div>
+
+ For any type A, it's <span class="inlinecode"><a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a></span> or <span class="inlinecode"><a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="splitable_or_ordinary" class="idref" href="#splitable_or_ordinary"><span class="id" title="lemma">splitable_or_ordinary</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:22" class="idref" href="#A:22"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#A:22"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="A1:23" class="idref" href="#A1:23"><span class="id" title="binder">A1</span></a> <a id="A2:24" class="idref" href="#A2:24"><span class="id" title="binder">A2</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:22"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A1:23"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Splitable.html#A2:24"><span class="id" title="variable">A2</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">A</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA1</span>; <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>. <span class="id" title="var">destruct_conjs</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>. <span class="id" title="var">destruct_conjs</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">right</span>. <span class="id" title="var">destruct_conjs</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h1 class="section">Determinism of Splitable</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="splitable_determinism" class="idref" href="#splitable_determinism"><span class="id" title="lemma">splitable_determinism</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:25" class="idref" href="#A:25"><span class="id" title="binder">A</span></a> <a id="A1:26" class="idref" href="#A1:26"><span class="id" title="binder">A1</span></a> <a id="A2:27" class="idref" href="#A2:27"><span class="id" title="binder">A2</span></a> <a id="A3:28" class="idref" href="#A3:28"><span class="id" title="binder">A3</span></a> <a id="A4:29" class="idref" href="#A4:29"><span class="id" title="binder">A4</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:25"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A1:26"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Splitable.html#A2:27"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:25"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A3:28"><span class="id" title="variable">A3</span></a> <a class="idref" href="Proof.Splitable.html#A4:29"><span class="id" title="variable">A4</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#A1:26"><span class="id" title="variable">A1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Splitable.html#A3:28"><span class="id" title="variable">A3</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Proof.Splitable.html#A2:27"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="Proof.Splitable.html#A4:29"><span class="id" title="variable">A4</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">Spl1</span> <span class="id" title="var">Spl2</span>. <span class="id" title="var">gen</span> <span class="id" title="var">A3</span> <span class="id" title="var">A4</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Spl1</span>; <span class="id" title="tactic">eauto</span>; <span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">Spl2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">f_equal</span>; <span class="id" title="tactic">eapply</span> <span class="id" title="var">IHSpl1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">Spl2</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">f_equal</span>; <span class="id" title="tactic">eapply</span> <span class="id" title="var">IHSpl1</span>; <span class="id" title="tactic">eauto</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section">Unify Splitable Varialbes</h1>
+
+<div class="paragraph"> </div>
+
+ unify variables into same names 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">subst_splitable</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">H1</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> ?<span class="id" title="var">A</span> ?<span class="id" title="var">A1</span> ?<span class="id" title="var">A2</span>, <span class="id" title="var">H2</span>: <a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> ?<span class="id" title="var">A</span> ?<span class="id" title="var">A3</span> ?<span class="id" title="var">A4</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">pose</span> <span class="id" title="var">proof</span> (<a class="idref" href="Proof.Splitable.html#splitable_determinism"><span class="id" title="lemma">splitable_determinism</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">H1</span> <span class="id" title="var">H2</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">Eqs</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Eqs</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">clear</span> <span class="id" title="var">H1</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">Decidablility of Ordinary</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="ordinary_decidable" class="idref" href="#ordinary_decidable"><span class="id" title="lemma">ordinary_decidable</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:30" class="idref" href="#A:30"><span class="id" title="binder">A</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#A:30"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#not"><span class="id" title="definition">not</span></a> (<a class="idref" href="Proof.Splitable.html#ordinary"><span class="id" title="inductive">ordinary</span></a> <a class="idref" href="Proof.Splitable.html#A:30"><span class="id" title="variable">A</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span>. <span class="id" title="tactic">induction</span> <span class="id" title="var">A</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA1</span>; <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA2</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">Contra</span>. <span class="id" title="var">contra_ordinary</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">right</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">Contra</span>. <span class="id" title="var">contra_ordinary</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">destruct</span> <span class="id" title="var">IHA</span>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">right</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">Contra</span>. <span class="id" title="var">contra_ordinary</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h1 class="section">Splitable &amp; Size</h1>
+
+<div class="paragraph"> </div>
+
+ If A can split into A1 and A2, the size of A1 and A2 is smaller than A 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="splitable_decrease_size" class="idref" href="#splitable_decrease_size"><span class="id" title="lemma">splitable_decrease_size</span></a>:<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">forall</span> <a id="A:31" class="idref" href="#A:31"><span class="id" title="binder">A</span></a> <a id="A1:32" class="idref" href="#A1:32"><span class="id" title="binder">A1</span></a> <a id="A2:33" class="idref" href="#A2:33"><span class="id" title="binder">A2</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="Proof.Splitable.html#splitable"><span class="id" title="inductive">splitable</span></a> <a class="idref" href="Proof.Splitable.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="Proof.Splitable.html#A1:32"><span class="id" title="variable">A1</span></a> <a class="idref" href="Proof.Splitable.html#A2:33"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#size_type"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Splitable.html#A1:32"><span class="id" title="variable">A1</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> <a class="idref" href="Proof.Language.html#size_type"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Splitable.html#A:31"><span class="id" title="variable">A</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="Proof.Language.html#size_type"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Splitable.html#A2:33"><span class="id" title="variable">A2</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> <a class="idref" href="Proof.Language.html#size_type"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Splitable.html#A:31"><span class="id" title="variable">A</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">introv</span> <span class="id" title="var">H</span>. <span class="id" title="tactic">dependent</span> <span class="id" title="tactic">induction</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">simpl</span>; <span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

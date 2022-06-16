@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="config.js"></script>
+<script type="text/javascript" src="coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <span class="right">
+      <a href="../">Project Page</a>
+      <a href="./indexpage.html"> Index </a>
+      <a href="./toc.html"> Table of Contents </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Proof.Language</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Metalib.Metatheory</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Program.Equality.html#"><span class="id" title="library">Coq.Program.Equality</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Strings.String.html#"><span class="id" title="library">Coq.Strings.String</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="Proof.Tactical.html#"><span class="id" title="library">Tactical</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Lists.List.html#ListNotations"><span class="id" title="module">ListNotations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Parentheses</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab1"></a><h1 class="section">Types</h1>
+
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><span class="id" title="keyword">type</span></span> is:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a></span> is integer type
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a></span> is top type (supertype of all types)
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a></span> is function type
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a></span> is intersection type
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="label" class="idref" href="#label"><span class="id" title="definition">label</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="type" class="idref" href="#type"><span class="id" title="inductive">type</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
+| <a id="Int" class="idref" href="#Int"><span class="id" title="constructor">Int</span></a> : <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a><br/>
+| <a id="Top" class="idref" href="#Top"><span class="id" title="constructor">Top</span></a> : <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a>          <br/>
+| <a id="Arr" class="idref" href="#Arr"><span class="id" title="constructor">Arr</span></a> : <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a><br/>
+| <a id="And" class="idref" href="#And"><span class="id" title="constructor">And</span></a> : <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a><br/>
+| <a id="Rcd" class="idref" href="#Rcd"><span class="id" title="constructor">Rcd</span></a> : <a class="idref" href="Proof.Language.html#label"><span class="id" title="definition">label</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="Proof.Language.html#type:1"><span class="id" title="inductive">type</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint Constructors</span> <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> : <span class="id" title="var">core</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Notation is only used for prettifying goals, we never explicity write customized notation 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="bb8d9050f9df35c0476eae46ff96b3be" class="idref" href="#bb8d9050f9df35c0476eae46ff96b3be"><span class="id" title="notation">&quot;</span></a>A → B" := (<a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+<span class="id" title="keyword">Notation</span> <a id=":::x_'&amp;'_x" class="idref" href="#:::x_'&amp;'_x"><span class="id" title="notation">&quot;</span></a>A &amp; B" := (<a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+<span class="id" title="keyword">Notation</span> <a id="c81b37bc36785cdbaa2c7c1211ba7de2" class="idref" href="#c81b37bc36785cdbaa2c7c1211ba7de2"><span class="id" title="notation">&quot;</span></a>{ l : A }" := (<a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <span class="id" title="var">l</span> <span class="id" title="var">A</span>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+coerce atom x to (Fvar x) 
+<div class="paragraph"> </div>
+
+<a id="lab2"></a><h1 class="section">Size of types</h1>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="Proof.Language.html#size_type"><span class="id" title="definition">size_type</span></a></span> and <span class="inlinecode"><span class="id" title="var">size_term</span></span> are defined for more powerful induction principle: induction on size 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="size_type" class="idref" href="#size_type"><span class="id" title="definition">size_type</span></a> (<a id="A:3" class="idref" href="#A:3"><span class="id" title="binder">A</span></a> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a>) {<span class="id" title="keyword">struct</span> <span class="id" title="var">A</span>} : <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="Proof.Language.html#A:3"><span class="id" title="variable">A</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#Int"><span class="id" title="constructor">Int</span></a> =&gt; 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#Top"><span class="id" title="constructor">Top</span></a> =&gt; 1<br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#Arr"><span class="id" title="constructor">Arr</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span> =&gt; 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Language.html#size_type:4"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Language.html#A:3"><span class="id" title="variable">A</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Language.html#size_type:4"><span class="id" title="definition">size_type</span></a> <span class="id" title="var">B</span><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#And"><span class="id" title="constructor">And</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span> =&gt; 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Language.html#size_type:4"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Language.html#A:3"><span class="id" title="variable">A</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Language.html#size_type:4"><span class="id" title="definition">size_type</span></a> <span class="id" title="var">B</span><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="Proof.Language.html#Rcd"><span class="id" title="constructor">Rcd</span></a> <span class="id" title="var">l</span> <span class="id" title="var">A</span> =&gt; 1 <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">(</span></a><a class="idref" href="Proof.Language.html#size_type:4"><span class="id" title="definition">size_type</span></a> <a class="idref" href="Proof.Language.html#A:3"><span class="id" title="variable">A</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#0dacc1786c5ba797d47dd85006231633"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+induction on size 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">ind_type_size</span> <span class="id" title="var">s</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="var">SizeInd</span>: <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="i:6" class="idref" href="#i:6"><span class="id" title="binder">i</span></a><a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <span class="id" title="var">s</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> <a class="idref" href="Proof.Language.html#i:6"><span class="id" title="variable">i</span></a>) <span class="id" title="tactic">by</span> <span class="id" title="tactic">eauto</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">SizeInd</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">i</span> <span class="id" title="var">SizeInd</span>];<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [ <span class="id" title="var">h</span> : <a class="idref" href="Proof.Language.html#type"><span class="id" title="inductive">type</span></a> |- <span class="id" title="var">_</span> ] =&gt; (<span class="id" title="var">gen</span> <span class="id" title="var">h</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">i</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">i</span> <span class="id" title="var">IH</span>]; [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>; <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [ <span class="id" title="var">H</span> : <span class="id" title="var">_</span> <a class="idref" href="http://coq.inria.fr/distrib/V8.15.0/stdlib//Coq.Init.Peano.html#::nat_scope:x_'&lt;'_x"><span class="id" title="notation">&lt;</span></a> 0 |- <span class="id" title="var">_</span> ] =&gt; (<span class="id" title="tactic">dependent</span> <span class="id" title="tactic">destruction</span> <span class="id" title="var">H</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="tactic">intros</span> ].<br/>
+</div>
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
