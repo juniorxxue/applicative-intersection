@@ -6,5 +6,4 @@ core+disjoint: a type sound and deterministic calculus with applicative subtypin
 
 subtyping: proof of sound/complete lemma of applicative subtyping with respect to (BCD) subtyping
 
-implementation: interpreter and compiler in Racket, PLT Redex Mode and Haskell implementation of Subtyping
-
+implementation: interpreter and compiler in Racket, PLT Redex Mode and Haskell implementation of subtyping
