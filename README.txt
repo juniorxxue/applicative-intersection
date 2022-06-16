@@ -1,13 +1,10 @@
+archive*: previous (some failed) development of the formalization
+
 core: a type sound calculus with applicative subtyping
 
-core+record: add record types
+core+disjoint: a type sound and deterministic calculus with applicative subtyping
 
-core+record+disjoint: a type sound and coherent calculus with disjointness
+subtyping: proof of sound/complete lemma of applicative subtyping with respect to (BCD) subtyping
 
-*/typeset: typeset files, run "rake" to generate pdf
+implementation: interpreter and compiler in Racket, PLT Redex Mode and Haskell implementation of Subtyping
 
-*/Proof: coq formalization, run "make" to generate coqdoc htmls
-
-implementation: interpreter and compiler in Racket
-
-subtyping: Haskell's implementation of applicative subtyping
