@@ -74,7 +74,8 @@
 ;; -----------------------------------------------------------------------
 
 ;; e ::= x                   variable
-;;    |  n                   number
+;;    |  n                   number (integer, float)
+;;    |  s                   string
 ;;    |  #t                  true
 ;;    |  #f                  false
 ;;    |  (λ (x : t) e t)     abstraction
@@ -98,7 +99,7 @@
 ;; -----------------------------------------------------------------------
 
 (define (fail? t)
-  (not t))
+  (equal? t #f))
 
 (define label?
   number?)  
@@ -117,7 +118,7 @@
 (define (expr? e)
   (match e
     [(? symbol?)                                            #t]
-    [(? exact-integer?)                                           #t]
+    [(? exact-integer?)                                     #t]
     [(? flonum?)                                            #t]
     ['#t                                                    #t]
     ['#f                                                    #t]
@@ -152,46 +153,45 @@
     [`(& ,A ,B)                       `(,A ,B)]
     [_                                 (error "fail to split" t)]))
 
-
-(define/contract (selector? s)
-  (-> any/c boolean?)
-  (match s
-    [`(-> ,(? type?))     #t]
-    [`(-> ,(? label?))    #t]
-    [`(->? ,(? type?))    #t]
-    [`(->? ,(? label?))   #t]
-    [_                    #f]))
-
+(define selector? (or/c type? label?))
+  
 (require racket/trace)
 
-(define/contract (usub? t pt)
-  (-> type? (or/c selector? type?) (or/c boolean? type?))
-  (if (type? pt)
-      (match* (t pt)
-        [('int 'int)                                                           #t]
-        [('float 'float)                                                       #t]
-        [('bool 'bool)                                                         #t]
-        [(_ 'top)                                                              #t]
-        [(`(-> ,A ,B) `(-> ,C ,D))                                             (and (usub? C A) (usub? B D))]
-        [(`(* ,l ,A) `(* ,l ,(? ordinary? B)))                                 (usub? A B)]
-        [(A (? (not/c ordinary?) B))                                           (let ([Bs (split B)])
-                                                                                 (and (usub? A (car Bs)) (usub? A (cadr Bs))))]
-        [(`(& ,A ,B) (? ordinary? C))                                          (or (usub? A C) (usub? B C))]
-        [(_ _)                                                                 #f])
-      (match* (t pt)
-        [(`(-> ,A1 ,A2) `(-> ,B))                                              (usub? B A1)]
-        [(`(* ,l ,A) `(-> ,l))                                                 #t]
-        [(`(& ,A1 ,A2) `(-> ,S))                                               (or (usub? A1 `(-> ,S))
-                                                                                   (usub? A2 `(-> ,S)))]
-        [(`(-> ,A1 ,A2) `(->? ,B)) #:when (usub? B A1)                         A2]
-        [(`(* ,l ,A) `(->? ,l))                                                A]
-        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (not (usub? A2 `(-> ,S)))
-                                              (usub? A1 `(-> ,S)))             (usub? A1 `(->? ,S))]
-        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (not (usub? A1 `(-> ,S)))
-                                              (usub? A2 `(-> ,S)))             (usub? A2 `(->? ,S))]
-        [(`(& ,A1 ,A2) `(->? ,S)) #:when (and (usub? A1 `(-> ,S))
-                                              (usub? A2 `(-> ,S)))            `(& ,(usub? A1 `(->? ,S)) ,(usub? A2 `(->? ,S)))]
-        [(_ _)                                                                 #f])))
+(define/contract (sub? t1 t2)
+  (-> type? type? boolean?)
+  (match* (t1 t2)
+    [('int 'int)                                                           #t]
+    [('float 'float)                                                       #t]
+    [('bool 'bool)                                                         #t]
+    [(_ 'top)                                                              #t]
+    [(`(-> ,A ,B) `(-> ,C ,D))                                             (and (sub? C A) (sub? B D))]
+    [(`(* ,l ,A) `(* ,l ,(? ordinary? B)))                                 (sub? A B)]
+    [(A (? (not/c ordinary?) B))                                           (let ([Bs (split B)])
+                                                                             (and (sub? A (car Bs)) (sub? A (cadr Bs))))]
+    [(`(& ,A ,B) (? ordinary? C))                                          (or (sub? A C) (sub? B C))]
+    [(_ _)                                                                 #f]))
+
+(define output? (or/c type? fail?))
+
+(define/contract (combine o1 o2)
+  (-> output? output? output?)
+  (match* (o1 o2)
+    [((? type? A1) (? type? A2)) `(& ,A1 ,A2)]
+    [((? fail?) (? type? A))      A]
+    [((? type? A) (? fail?))      A]
+    [((? fail?) (? fail?))        #f]))
+
+(define/contract (appsub t s)
+  (-> type? selector? output?)
+  (match* (t s)
+    [(`(-> ,A1 ,A2) (? type? B)) #:when (sub? B A1)      A2]
+    [(`(-> ,A1 ,A2) (? type? B))                         #f]
+    [(`(* ,l1 ,A) (? label? l2)) #:when (equal? l1 l2)  A]
+    [(`(* ,l1 ,A) (? label? l2))                        #f]
+    [(`(& ,A1 ,A2) S)                                    (combine (appsub A1 S)
+                                                                  (appsub A2 S))]
+    [(_ _)                                               #f]
+  ))
 
 (define (lookup env var)
   (if (equal? (caar env) var)
@@ -210,13 +210,13 @@
     [`(~> ,l ,e)                                                     `(* ,l ,(infer e env))]
     [`(: ,e ,A) #:when (check e A env)                                A]
     [`(,e1 ,e2)                                                       (let ([A (infer e1 env)] [B (infer e2 env)])
-                                                                        (if (usub? A `(->? ,B))
-                                                                            (usub? A `(->? ,B))
+                                                                        (if (appsub A B)
+                                                                            (appsub A B)
                                                                             (error "error when checking the application")))]
     [`(<~ ,e ,l)                                                      (let ([A (infer e env)])
-                                                                        (if (usub? A `(->? ,l))
-                                                                            (usub? A `(->? ,l))
-                                                                            (usub? A `(->? ,l))))]
+                                                                        (if (appsub A l)
+                                                                            (appsub A l)
+                                                                            (error "error when checking the projection")))]
     [`(m ,e1 ,e2)                                                     (let ([A (infer e1 env)] [B (infer e2 env)])
                                                                         `(& ,A ,B))]
     [`(int+ ,e1 ,e2) #:when (and (check e1 'int env)
@@ -225,10 +225,12 @@
                                  (check e2 'float env))              'float]
     [_                                                                (error "cannot infer the type of" e "under" env)]))
 
+#; (trace appsub)
+
 (define/contract (check e t env)
   (-> expr? type? list? boolean?)
   (let ([A (infer e env)])
-    (usub? A t)))
+    (sub? A t)))
 
 ;; -----------------------------------------------------------------------
 ;; Dynamics
@@ -237,7 +239,7 @@
 (define/contract (pvalue? e)
   (-> expr? boolean?)
   (match e
-    [(? exact-integer?)           #t]
+    [(? exact-integer?)     #t]
     [(? flonum?)            #t]
     ['#t                    #t]
     ['#f                    #t]
@@ -255,13 +257,13 @@
 (define/contract (cast e t)
   (-> value? type? (or/c value? fail?))
   (match* (e t)
-    [(`(: ,n ,A) 'int) #:when (usub? A 'int)                                      `(: ,n int)]
-    [(`(: ,n ,A) 'float) #:when (usub? A 'float)                                  `(: ,n float)]
-    [(`(: #t ,A) 'bool) #:when (usub? A 'bool)                                    '(: #t bool)]
-    [(`(: #f ,A) 'bool) #:when (usub? A 'bool)                                    '(: #f bool)]
+    [(`(: ,n ,A) 'int) #:when (sub? A 'int)                                      `(: ,n int)]
+    [(`(: ,n ,A) 'float) #:when (sub? A 'float)                                  `(: ,n float)]
+    [(`(: #t ,A) 'bool) #:when (sub? A 'bool)                                    '(: #t bool)]
+    [(`(: #f ,A) 'bool) #:when (sub? A 'bool)                                    '(: #f bool)]
     [(v  'top)                                                                    '(: 1 top)]
     [(`(: (λ (,x : ,A) ,e ,B) ,E) `(-> ,C ,(? ordinary? D)))
-     #:when (usub? E `(-> ,C ,D))                                                 `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
+     #:when (sub? E `(-> ,C ,D))                                                 `(: (λ (,x : ,A) ,e ,D) (-> ,C ,D))]
     [(`(~> ,l ,v) `(* ,l ,(? ordinary? A)))                                       `(~> ,l ,(cast v A))]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v1 A)                             (cast v1 A)]
     [(`(m ,v1 ,v2) (? ordinary? A)) #:when (cast v2 A)                             (cast v2 A)]
@@ -303,15 +305,15 @@
     [`(m ,e1 ,e2)                  `(& ,(atype e1) ,(atype e2))]
     [(? label? l)                   l]))
   
-(define/contract (papp v vl)
+(define/contract (dispatch v vl)
   (-> value? (or/c label? value?) expr?)
   (match v
-    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))                              `(: ,(subst e x (cast vl A)) ,D)]
-    [`(~> ,l ,v)  #:when (equal? l vl)                                 v]
-    [`(m ,v1 ,v2) #:when (not (usub? (ptype v2) `(-> ,(atype vl))))    (papp v1 vl)]
-    [`(m ,v1 ,v2) #:when (not (usub? (ptype v1) `(-> ,(atype vl))))    (papp v2 vl)]
-    [`(m ,v1 ,v2) #:when (and (usub? (ptype v1) `(-> ,(atype vl)))
-                              (usub? (ptype v2) `(-> ,(atype vl))))   `(m ,(papp v1 vl) ,(papp v2 vl))]))
+    [`(: (λ (,x : ,A) ,e ,B) (-> ,C ,D))                            `(: ,(subst e x (cast vl A)) ,D)]
+    [`(~> ,l ,v)  #:when (equal? l vl)                                v]
+    [`(m ,v1 ,v2) #:when (not (appsub (ptype v2)  (atype vl)))       (dispatch v1 vl)]
+    [`(m ,v1 ,v2) #:when (not (appsub (ptype v1)  (atype vl)))       (dispatch v2 vl)]
+    [`(m ,v1 ,v2) #:when (and (appsub (ptype v1)  (atype vl))
+                              (appsub (ptype v2)  (atype vl)))      `(m ,(dispatch v1 vl) ,(dispatch v2 vl))]))
 
 (define/contract (plus v1 v2)
   (-> value? value? value?)
@@ -324,17 +326,17 @@
 (define/contract (step e)
   (-> expr? expr?)
   (match e
-    [(? exact-integer? n)                                 `(: ,n int)]
+    [(? exact-integer? n)                           `(: ,n int)]
     [(? flonum? n)                                  `(: ,n float)]
     ['#t                                            '(: #t bool)]
     ['#f                                            '(: #f bool)]                             
     [`(λ (,x : ,A) ,e ,B)                           `(: (λ (,x : ,A) ,e ,B) (-> ,A ,B))]
     [`(: ,(? pvalue? p) ,(? (not/c ordinary?) A))    (let ([As (split A)])
                                                        `(m (: ,p ,(car As)) (: ,p ,(cadr As))))]
-    [`(<~ ,(? value? v) ,(? label? l))               (papp v l)]
+    [`(<~ ,(? value? v) ,(? label? l))               (dispatch v l)]
     [`(<~ ,(? (not/c value?) e) ,(? label? l))      `(<~ ,(step e) ,l)]
     [`(~> ,(? label? l) ,(? (not/c value?) e))      `(~> ,l ,(step e))]
-    [`(,(? value? v) ,(? value? vl))                 (papp v vl)]
+    [`(,(? value? v) ,(? value? vl))                 (dispatch v vl)]
     [`(: ,(? value? v) ,A)                           (cast v A)]
     [`(: ,(? (not/c pvalue?) e) ,A)                 `(: ,(step e) ,A)]
     [`(,(? (not/c value?) e1) ,e2)                  `(,(step e1) ,e2)]
